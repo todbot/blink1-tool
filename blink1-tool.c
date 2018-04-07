@@ -172,6 +172,41 @@ void parsecolor(rgb_t* color, char* colorstr)
     }
 }
 
+// 
+// Parse pattern into an array of patternlines
+// - number repeats
+// - pattern array (contains {color,millis,ledn}
+// - pattern length
+int parsePattern( char* str, int* repeats, patternline_t* pattern )
+{
+    char* s;
+    s = strtok( str, ",");
+    if(  s != NULL ) {
+      *repeats = strtol(s,NULL,0);
+    }
+    
+    int i=0;
+    s = strtok(NULL, ","); // prep next parse
+    while( s != NULL ) {
+        parsecolor( &pattern[i].color, s );
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
+        pattern[i].millis = atof(s) * 1000;
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) { msg("bad pattern: no led\n"); break; }
+        pattern[i].ledn = strtol(s,NULL,0);
+        
+        i++;
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) break;
+    }
+    int pattlen = i;
+    return pattlen;
+}
+
 
 
 // --------------------------------------------------------------------------- 
@@ -200,12 +235,13 @@ static void usage(char *myName)
 "  --rgbread                   Read last RGB color sent (post gamma-correction)\n"
 "  --setpattline <pos>         Write pattern RGB val at pos (--rgb/hsb to set)\n"
 "  --getpattline <pos>         Read pattern RGB value at pos\n" 
-"  --savepattern               Save color pattern to flash (mk2)\n"
-"  --play <1/0,pos>            Start playing color sequence (at pos)\n"
-"  --play <1/0,start,end,cnt>  Playing color sequence sub-loop (mk2)\n"
-"  --playpattern <patternstr>  Play Blink1Control pattern string\n"            
+"  --savepattern               Save RAM color pattern to flash (mk2)\n"
+"  --play <1/0,pos>            Start playing color pattern (at pos)\n"
+"  --play <1/0,start,end,cnt>  Playing color pattern sub-loop (mk2)\n"
+"  --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool\n"
+"  --writepattern <patternstr> Write Blink1Control pattern string to blink(1)\n"
 "  --servertickle <1/0>[,1/0]  Turn on/off servertickle (w/on/off, uses -t msec)\n"
-"  --chase, --chase=<num,start,stop> Multi-LED chase effect. <num>=0 runs forever.\n"
+"  --chase, --chase=<num,start,stop> Multi-LED chase effect. <num>=0 runs forever\n"
 "  --random, --random=<num>    Flash a number of random colors, num=1 if omitted \n"
 "  --glimmer, --glimmer=<num>  Glimmer a color with --rgb (num times)\n"
 " Nerd functions: \n"
@@ -218,7 +254,7 @@ static void usage(char *myName)
 "  -q, --quiet                 Mutes all stdout output (supercedes --verbose)\n"
 "  -t ms,   --delay=millis     Set millisecs between events (default 500)\n"
 "  -l <led>, --led=<led>       Which LED to use, 0=all/1=top/2=bottom (mk2 only)\n"
-"  -l 1,3,5,7                  Can also specify list of LEDs to light\n"
+"  --ledn 1,3,5,7              Can also specify list of LEDs to light\n"
 "  -v, --verbose               verbose debugging msgs\n"
 "\n"
 "Examples \n"
@@ -227,9 +263,12 @@ static void usage(char *myName)
 "  blink1-tool --led 2 --random=100      # random colors on both LEDs \n"
 "  blink1-tool --rgb 0xff,0x00,0x00 --blink 3  # blink red 3 times\n"
 "  blink1-tool --rgb '#FF9900'           # make blink1 pumpkin orange\n"
-"  blink1-tool --rgb FF9900 --led 2      # make blink1 pumpkin orange on lower LED\n"
-"  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
+"  blink1-tool --rgb FF9900 --led 2      # make blink1 orange on lower LED\n"
 "  blink1-tool --chase=5,3,18            # chase 5 times, on leds 3-18\n"
+"Pattern Examples \n"
+"  # Play purple-green flash 10 times (pattern runs in blink1-tool so it blocks)\n" 
+"  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
+"\n"
 "\n"
 "Notes \n"
 " - To blink a color with specific timing, specify 'blink' command last:\n"
@@ -273,6 +312,8 @@ enum {
     CMD_FWVERSION,
     CMD_SERVERDOWN,
     CMD_PLAYPATTERN,
+    CMD_WRITEPATTERN,
+    CMD_READPATTERN,
     CMD_WRITENOTE,
     CMD_READNOTE,
     CMD_TESTTEST
@@ -302,6 +343,7 @@ int blink1_fadeToRGBForDevices( uint16_t mils, uint8_t rr,uint8_t gg, uint8_t bb
     }
     return 0; // FIXME
 }
+
 
 
 //
@@ -350,6 +392,7 @@ int main(int argc, char** argv)
         {"rgb",        required_argument, &cmd,   CMD_RGB },
         {"hsb",        required_argument, &cmd,   CMD_HSB },
         {"rgbread",    no_argument,       &cmd,   CMD_RGBREAD},
+        {"readrgb",    no_argument,       &cmd,   CMD_RGBREAD},
         {"savepattline",required_argument,&cmd,   CMD_SETPATTLINE },//backcompat
         {"setpattline",required_argument, &cmd,   CMD_SETPATTLINE },
         {"getpattline",required_argument, &cmd,   CMD_GETPATTLINE },
@@ -376,8 +419,10 @@ int main(int argc, char** argv)
         {"fwversion",  no_argument,       &cmd,   CMD_FWVERSION },
         //{"serialnumread", no_argument,    &cmd,   CMD_SERIALNUMREAD },
         //{"serialnumwrite",required_argument, &cmd,CMD_SERIALNUMWRITE },
-        {"servertickle",  required_argument, &cmd,CMD_SERVERDOWN },
-        {"playpattern",required_argument, &cmd,   CMD_PLAYPATTERN },
+        {"servertickle", required_argument, &cmd, CMD_SERVERDOWN },
+        {"playpattern",  required_argument, &cmd, CMD_PLAYPATTERN },
+        {"writepattern", required_argument, &cmd, CMD_WRITEPATTERN },
+        {"readpattern",  no_argument, &cmd, CMD_READPATTERN },
         {"testtest",   no_argument,       &cmd,   CMD_TESTTEST },
         {"reportid",   required_argument, 0,      'i' },
         {"writenote",  required_argument, &cmd,   CMD_WRITENOTE},
@@ -419,6 +464,7 @@ int main(int argc, char** argv)
                 arg = (optarg) ? strtol(optarg,NULL,0) : 0;// cmd w/ number arg
                 break;
             case CMD_PLAYPATTERN:
+            case CMD_WRITEPATTERN:
                 strncpy( (char*)argbuf, optarg, sizeof(argbuf) );
                 break;
             case CMD_ON:
@@ -793,7 +839,7 @@ int main(int argc, char** argv)
         } while( loopcnt-- );
     }
     else if( cmd == CMD_BLINK ) { 
-        uint16_t n = arg; 
+        int16_t n = arg; 
         uint8_t r = rgbbuf.r;
         uint8_t g = rgbbuf.g;
         uint8_t b = rgbbuf.b;
@@ -802,20 +848,13 @@ int main(int argc, char** argv)
         }
         blink1_close(dev);
         msg("blink %d times rgb:%x,%x,%x: \n", n,r,g,b);
-        for( int i=0; i<n; i++ ) { 
+        if( n == 0 ) n = -1; // repeat forever
+        while( n==-1 || n-- ) { 
             rc = blink1_fadeToRGBForDevices( millis,r,g,b,ledn);
             blink1_sleep(delayMillis);
             rc = blink1_fadeToRGBForDevices( millis,0,0,0,ledn);
             blink1_sleep(delayMillis);
          }
-        /*
-        for( int i=0; i<n; i++ ) { 
-            rc = blink1_fadeToRGBN(dev, millis,r,g,b,ledn);
-            blink1_sleep(delayMillis);
-            rc = blink1_fadeToRGBN(dev, millis,0,0,0,ledn);
-            blink1_sleep(delayMillis);
-         }
-        */
     }
     else if( cmd == CMD_GLIMMER ) {
         uint8_t n = arg;
@@ -849,45 +888,55 @@ int main(int argc, char** argv)
     else if( cmd == CMD_PLAYPATTERN ) {
         blink1_close(dev);
         msg("play pattern: %s\n",argbuf);
-        int repeats = -1;
-        
-        char* s;
-        s = strtok( (char*)argbuf, ",");
-        if(  s != NULL ) {
-            repeats = strtol(s,NULL,0);
-        }
-        msg("repeats: %d\n", repeats);
-        
-        patternline_t pattern[32];
-        int i=0;
-        s = strtok(NULL, ","); // prep next parse
-        while( s != NULL ) {
-            parsecolor( &pattern[i].color, s );
-            
-            s = strtok(NULL, ",");
-            if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
-            pattern[i].millis = atof(s) * 1000;
 
-            s = strtok(NULL, ",");
-            if( s == NULL ) { msg("bad pattern: no led\n"); break; }
-            pattern[i].ledn = strtol(s,NULL,0);
-            
-            i++;
-            
-            s = strtok(NULL, ",");
-            if( s == NULL ) break;
-        }
-        int pattlen = i;
+        int repeats = -1;
+        patternline_t pattern[32];
+        int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
+        msg("repeats: %d\n", repeats);
+        if( repeats==0 ) repeats=-1;
         
-        int r = repeats;
-        while( r-- ) { 
+        while( repeats==-1 || repeats-- ) { 
             for( int i=0; i<pattlen; i++ ) {
                 patternline_t pat = pattern[i];
                 //msg("%d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
+                msg("%d:",repeats);
                 blink1_fadeToRGBForDevices( pat.millis/2, pat.color.r,pat.color.g,pat.color.b, pat.ledn);
                 blink1_sleep( pat.millis );
             }
         }
+    }
+    else if( cmd == CMD_WRITEPATTERN ) {
+        msg("write pattern: %s\n", argbuf);
+
+        int repeats = -1;
+        patternline_t pattern[32];
+        int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
+        //msg("repeats: %d is ignored for writepattern\n", repeats);
+        
+        for( int i=0; i<pattlen; i++ ) {
+            patternline_t pat = pattern[i];
+              
+            if( pat.ledn>0 ) {
+                blink1_setLEDN(dev, pat.ledn);
+            }
+            msg("writing %d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
+            rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
+        }
+
+    }
+    else if( cmd == CMD_READPATTERN ) {
+        msg("read pattern:\n");
+        uint8_t r,g,b,n;
+        uint16_t msecs;
+        char str[1024] = "{0"; // repeats forever
+        for( int i=0; i<32; i++ ) {
+            rc = blink1_readPatternLineN(dev, &msecs, &r,&g,&b, &n, i );
+            //if( !(msecs==0 && r==0 && g==0 && b==0) ) { 
+            sprintf(str, "%s,#%2.2x%2.2x%2.2x,%0.2f,%d", str, r,g,b, (msecs/1000.0),n);
+            //}
+        }
+        sprintf(str,"%s}",str);
+        msg("%s\n",str);        
     }
     else if( cmd == CMD_WRITENOTE ) {
       uint8_t noteid = arg;
