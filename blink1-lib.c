@@ -156,11 +156,7 @@ int blink1_getVersion(blink1_device *dev)
     char buf[blink1_buf_size] = {blink1_report_id, 'v' };
     int len = sizeof(buf);
 
-    //hid_set_nonblocking(dev, 0);
-    int rc = blink1_write(dev, buf, sizeof(buf));
-    blink1_sleep( 50 ); //FIXME:
-    if( rc != -1 ) // no error
-        rc = blink1_read(dev, buf, len);
+    int rc = blink1_read(dev, buf, len);
     if( rc != -1 ) // also no error
         rc = ((buf[3]-'0') * 100) + (buf[4]-'0'); 
     // rc is now version number or error  
@@ -313,10 +309,7 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
     }
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'r', 0,0,0, 0,0,ledn };
 
-    int rc = blink1_write(dev, buf, sizeof(buf) );
-    blink1_sleep( 50 ); // FIXME:
-    if( rc != -1 ) // no error
-        rc = blink1_read(dev, buf, sizeof(buf) );
+    int rc = blink1_read(dev, buf, sizeof(buf) );
     if( rc != -1 ) {
         *r = buf[2];
         *g = buf[3];
@@ -387,10 +380,7 @@ int blink1_readPlayState(blink1_device *dev, uint8_t* playing,
 {
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'S', 0,0,0, 0,0,0 };
 
-    int rc = blink1_write(dev, buf, sizeof(buf) );
-    blink1_sleep( 50 ); // FIXME:
-    if( rc != -1 ) // no error
-        rc = blink1_read(dev, buf, sizeof(buf) );
+    int rc = blink1_read(dev, buf, sizeof(buf) );
     if( rc != -1 ) {
         *playing   = buf[2];
         *playstart = buf[3];
@@ -433,10 +423,7 @@ int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis,
 {
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'R', 0,0,0, 0,0, pos };
 
-    int rc = blink1_write(dev, buf, sizeof(buf) );
-    blink1_sleep( 50 ); // FIXME:
-    if( rc != -1 ) // no error
-        rc = blink1_read(dev, buf, sizeof(buf) );
+    int rc = blink1_read(dev, buf, sizeof(buf) );
     if( rc != -1 ) {
         *r = buf[2];
         *g = buf[3];
@@ -494,8 +481,6 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 {
     uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'f', noteid  };
 
-    //int rc = blink1_write(dev, buf, blink1_report2_size );
-    //blink1_sleep( 50 ); // FIXME:
     int rc = blink1_read(dev, buf, blink1_report2_size );
     
     uint8_t* notedata = buf+3;
