@@ -49,21 +49,9 @@ uint32_t  deviceIds[blink1_max_devices];
 int verbose;
 int quiet=0;
 
-typedef struct {
-    uint8_t r; uint8_t g; uint8_t b;
-} rgb_t;
-
-typedef struct {
-    rgb_t color;
-    uint16_t millis; 
-    uint8_t ledn;     // number of led, or 0 for all
-} patternline_t;
-
-
-//---------------------------------------------------------------------------- 
 /*
   TBD: replace printf()s with something like this
-  void logpri(int loglevel, char* fmt, ...)
+void logpri(int loglevel, char* fmt, ...)
 {
     if( loglevel < verbose ) return;
     va_list ap;
@@ -72,142 +60,6 @@ typedef struct {
     va_end(ap);
 }
 */
-
-// printf that can be shut up
-void msg(char* fmt, ...)
-{
-    va_list args;
-    va_start(args,fmt);
-    if( !quiet ) {
-        vprintf(fmt,args);
-    }
-    va_end(args);
-}
-
-// take an array of bytes and spit them out as a hex string
-static void hexdump(uint8_t *buffer, int len)
-{
-    int     i;
-    FILE    *fp = stdout;
-    
-    for(i = 0; i < len; i++){
-        if(i != 0){
-            if(i % 16 == 0){
-                fprintf(fp, "\n");
-            }else{
-                fprintf(fp, " ");
-            }
-        }
-        fprintf(fp, "0x%02x", buffer[i] & 0xff);
-    }
-    if(i != 0)
-        fprintf(fp, "\n");
-}
-
-// parse a comma-delimited string containing numbers (dec,hex) into a byte arr
-static int  hexread(uint8_t *buffer, char *string, int buflen)
-{
-    char    *s;
-    int     pos = 0;
-    if( string==NULL ) return -1;
-    memset(buffer,0,buflen);  // bzero() not defined on Win32?
-    while((s = strtok(string, ", ")) != NULL && pos < buflen){
-        string = NULL;
-        buffer[pos++] = (char)strtol(s, NULL, 0);
-    }
-    return pos;
-}
-
-// integer-only hsbtorgb
-// from: http://web.mit.edu/storborg/Public/hsvtorgb.c
-static void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
-{
-    uint8_t h = hsb[0];
-    uint8_t s = hsb[1];
-    uint8_t v = hsb[2];
-
-    unsigned char region, fpart, p, q, t;
-    uint8_t r,g,b;
-
-    if(s == 0) {          // color is grayscale 
-        r = g = b = v;
-        return;
-    }
-    
-    region = h / 43;      // make hue 0-5 
-    fpart = (h - (region * 43)) * 6; // find remainder part, make it from 0-255 
-    
-    // calculate temp vars, doing integer multiplication 
-    p = (v * (255 - s)) >> 8;
-    q = (v * (255 - ((s * fpart) >> 8))) >> 8;
-    t = (v * (255 - ((s * (255 - fpart)) >> 8))) >> 8;
-        
-    // assign temp vars based on color cone region 
-    switch(region) {
-        case 0:   r = v; g = t; b = p; break;
-        case 1:   r = q; g = v; b = p; break;
-        case 2:   r = p; g = v; b = t; break;
-        case 3:   r = p; g = q; b = v; break;
-        case 4:   r = t; g = p; b = v; break;
-        default:  r = v; g = p; b = q; break;
-    }    
-    rgb->r=r;
-    rgb->g=g;
-    rgb->b=b;
-}
-
-// parse a color in form either "#ff00ff" or "FF00FF"
-// or "255,0,255" or "0xff,0x00,0xff"
-void parsecolor(rgb_t* color, char* colorstr)
-{
-    // parse hex color code like "#FF00FF" or "FF00FF"
-    if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) { 
-        colorstr = (colorstr[0] == '#') ? colorstr+1 : colorstr;
-        uint32_t colorint = strtol(colorstr, NULL, 16); 
-        color->r = (colorint >> 16) & 0xff; 
-        color->g = (colorint >>  8) & 0xff;
-        color->b = (colorint >>  0) & 0xff;
-    } else { // else it's a list like "0xff,0x00,0xff" or "255,0,255"
-        hexread((uint8_t*)color, colorstr, 3);  // FIXME: hardcoded size
-    }
-}
-
-// 
-// Parse pattern into an array of patternlines
-// - number repeats
-// - pattern array (contains {color,millis,ledn}
-// - pattern length
-int parsePattern( char* str, int* repeats, patternline_t* pattern )
-{
-    char* s;
-    s = strtok( str, ",");
-    if(  s != NULL ) {
-      *repeats = strtol(s,NULL,0);
-    }
-    
-    int i=0;
-    s = strtok(NULL, ","); // prep next parse
-    while( s != NULL ) {
-        parsecolor( &pattern[i].color, s );
-        
-        s = strtok(NULL, ",");
-        if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
-        pattern[i].millis = atof(s) * 1000;
-        
-        s = strtok(NULL, ",");
-        if( s == NULL ) { msg("bad pattern: no led\n"); break; }
-        pattern[i].ledn = strtol(s,NULL,0);
-        
-        i++;
-        
-        s = strtok(NULL, ",");
-        if( s == NULL ) break;
-    }
-    int pattlen = i;
-    return pattlen;
-}
-
-
 
 // --------------------------------------------------------------------------- 
 
@@ -240,6 +92,7 @@ static void usage(char *myName)
 "  --play <1/0,start,end,cnt>  Playing color pattern sub-loop (mk2)\n"
 "  --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool\n"
 "  --writepattern <patternstr> Write Blink1Control pattern string to blink(1)\n"
+"  --readpattern               Download full blink(1) patt as Blink1Control str\n"
 "  --servertickle <1/0>[,1/0]  Turn on/off servertickle (w/on/off, uses -t msec)\n"
 "  --chase, --chase=<num,start,stop> Multi-LED chase effect. <num>=0 runs forever\n"
 "  --random, --random=<num>    Flash a number of random colors, num=1 if omitted \n"
@@ -316,6 +169,8 @@ enum {
     CMD_READPATTERN,
     CMD_WRITENOTE,
     CMD_READNOTE,
+    CMD_GOBOOTLOAD,
+    CMD_SETRGB,
     CMD_TESTTEST
 };
 
@@ -428,6 +283,8 @@ int main(int argc, char** argv)
         {"writenote",  required_argument, &cmd,   CMD_WRITENOTE},
         {"readnote",   required_argument, &cmd,   CMD_READNOTE},
         {"notestr",    required_argument, 0,      'n'},
+        {"gobootload", no_argument,       &cmd,   CMD_GOBOOTLOAD},
+        {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
         {NULL,         0,                 0,      0}
     };
     while(1) {
@@ -437,6 +294,7 @@ int main(int argc, char** argv)
          case 0:             // deal with long opts that have no short opts
             switch(cmd) {
             case CMD_RGB:
+            case CMD_SETRGB:
                 parsecolor( &rgbbuf, optarg);
                 break;
             case CMD_HSB:
@@ -515,6 +373,7 @@ int main(int argc, char** argv)
         case 'q':
             if( optarg==NULL ) quiet++;
             else quiet = strtol(optarg,NULL,0);
+            msg_setquiet(quiet);
             break;
         case 'v':
             if( optarg==NULL ) verbose++;
@@ -685,6 +544,10 @@ int main(int argc, char** argv)
             blink1_fadeToRGBForDevices( millis, r,g,b, ledns[i] );
         }
     }
+    else if( cmd == CMD_SETRGB ) { // for testing the 'n' protocol option
+      msg("set rgb to %d,%d,%d\n", rgbbuf.r, rgbbuf.g, rgbbuf.b, ledn );
+      blink1_setRGB( dev, rgbbuf.r, rgbbuf.g, rgbbuf.b);
+    }
     else if( cmd == CMD_RGBREAD ) { 
         uint8_t r,g,b;
         uint16_t msecs;
@@ -789,10 +652,10 @@ int main(int argc, char** argv)
     else if( cmd == CMD_CHASE) {
         if( ledn == 0 ) ledn = 18;
 
-        int loopcnt = (chasebuf[0] > 0) ? ((int)(chasebuf[0]))-1 : -1;
+        int loopcnt       = (chasebuf[0] > 0) ? ((int)(chasebuf[0]))-1 : -1;
         uint8_t led_start = (chasebuf[1]) ? chasebuf[1] : 1;
-        uint8_t led_end = (chasebuf[2]) ? chasebuf[2] : 18;
-        int chase_length = led_end-led_start+1;
+        uint8_t led_end   = (chasebuf[2]) ? chasebuf[2] : 18;
+        int chase_length  = led_end-led_start+1;
 
         // pick the color
         uint8_t do_rand = 0;
@@ -954,6 +817,12 @@ int main(int argc, char** argv)
     
       blink1_readNote( dev, noteid, &notebufp);
       printf("note %d: %s\n", noteid, notebuf);
+    }
+    else if( cmd == CMD_GOBOOTLOAD ) {
+      msg("Changing blink(1) mk3 to bootloader...\n");
+      msg("Use dfu-util to upload new firmare\n");
+      msg("Or replug device to go back to normal\n");
+      blink1_goBootloader(dev);
     }
     else if( cmd == CMD_TESTTEST ) {
       msg("test test reportid:%d\n",reportid);

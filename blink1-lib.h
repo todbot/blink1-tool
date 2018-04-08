@@ -13,6 +13,7 @@
 #define __BLINK1_LIB_H__
 
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,7 @@ extern "C" {
 #define pathstrmax 128
 
 #define blink1mk2_serialstart 0x20000000
+#define blink1mk3_serialstart 0x30000000
 
 #define  BLINK1_VENDOR_ID       0x27B8 /* = 0x27B8 = 10168 = thingm */
 #define  BLINK1_DEVICE_ID       0x01ED /* = 0x01ED */
@@ -36,11 +38,12 @@ extern "C" {
 #define blink1_report2_size 128
 #define blink1_buf_size (blink1_report_size+1)
 
-enum { 
+typedef enum  { 
     BLINK1_UNKNOWN = 0,
     BLINK1_MK1,   // the original one from the kickstarter
-    BLINK1_MK2    // the updated one 
-}; 
+    BLINK1_MK2,   // the updated one with 2 LEDs
+    BLINK1_MK3    // 2018 one (unreleased as of yet)
+} blink1Type_t;
 
 struct blink1_device_;
 
@@ -57,6 +60,17 @@ typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
 //
 // -------- BEGIN PUBLIC API ----------
 //
+
+typedef struct {
+    uint8_t r; uint8_t g; uint8_t b;
+} rgb_t;
+
+typedef struct {
+    rgb_t color;
+    uint16_t millis; 
+    uint8_t ledn;     // number of led, or 0 for all
+} patternline_t;
+
 
 /**
  * Scan USB for blink(1) devices.
@@ -311,6 +325,15 @@ int blink1_savePattern(blink1_device *dev);
  */
 int blink1_setLEDN( blink1_device* dev, uint8_t ledn);
 
+/**
+ * Tell blink(1) to reset into bootloader.
+ * mk3 devices only
+ */
+int blink1_goBootloader( blink1_device* dev );
+
+/**
+ * Internal testing
+ */
 int blink1_testtest(blink1_device *dev, uint8_t reportid);
 
 
@@ -402,6 +425,7 @@ int          blink1_clearCacheDev( blink1_device* dev );
  * @return 8-hexdigit serial number string
  */
 const char*  blink1_getSerialForDev(blink1_device* dev);
+
 /**
  * Return number of entries in blink1 device cache.
  * @note This is the number of devices found with blink1_enumerate()
@@ -416,12 +440,47 @@ int          blink1_getCachedCount(void);
  */
 int          blink1_isMk2ById(int i);
 
+
 /**
  * Returns if given blink1_device is a mk2 or not
  * @param dev blink1 device to check
  * @return mk2=1, mk1=0
  */
 int          blink1_isMk2(blink1_device* dev);
+
+
+/**
+ *
+ */
+void hexdump(FILE* fp, uint8_t *buffer, int len);
+
+/**
+ *
+ */
+int hexread(uint8_t *buffer, char *string, int buflen);
+
+/**
+ *
+ */
+void hsbtorgb( rgb_t* rgb, uint8_t* hsb );
+
+/**
+ *
+ */
+void parsecolor(rgb_t* color, char* colorstr);
+
+/**
+ *
+ */
+int parsePattern( char* str, int* repeats, patternline_t* pattern );
+
+/**
+ * printf that can be shut up
+ *
+ */
+void msg(char* fmt, ...);
+
+void msg_setquiet(int q);
 
 
 #ifdef __cplusplus

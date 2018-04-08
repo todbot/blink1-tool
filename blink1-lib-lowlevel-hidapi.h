@@ -28,7 +28,10 @@ int blink1_enumerateByVidPid(int vid, int pid)
                 //uint32_t sn = wcstol( cur_dev->serial_number, NULL, 16);
                 uint32_t serialnum = strtol( blink1_infos[p].serial, NULL, 16);
                 blink1_infos[p].type = BLINK1_MK1;
-                if( serialnum >= blink1mk2_serialstart ) {
+                if(      serialnum >= blink1mk3_serialstart ) {
+                    blink1_infos[p].type = BLINK1_MK3;
+                }
+                else if( serialnum >= blink1mk2_serialstart ) {
                     blink1_infos[p].type = BLINK1_MK2;
                 }
                 p++;

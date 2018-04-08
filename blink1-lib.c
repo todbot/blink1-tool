@@ -23,6 +23,8 @@
 
 #include "blink1-lib.h"
 
+int msg_quiet = 0;
+
 // blink1 copy of some hid_device_info and other bits. 
 // this seems kinda dumb, though. is there a better way?
 typedef struct blink1_info_ {
@@ -70,6 +72,10 @@ void blink1_sortCache(void);
 // everything below here doesn't need to know about USB details
 // except for a "blink1_device*"
 // -------------------------------------------------------------------------
+
+//
+// blink1 hardware api
+// 
 
 //
 int blink1_getCachedCount(void)
@@ -137,6 +143,23 @@ int blink1_clearCacheDev( blink1_device* dev )
     if( i>=0 ) blink1_infos[i].dev = NULL; // FIXME: hmmmm
     return i;
 }
+
+#if 0
+blink1Type_t blink1_deviceTypeById( int i )
+{
+    //if( i>=0  && blink1_infos[i].type == BLINK1_MK2 ) return 1;
+    if( i>= 0 ) {
+      return blink1_infos[i].type;
+    }
+    return 0;
+}
+
+// returns BLINK1_MK2, BLINK1_MK3, or BLINK1
+blink1Type_t blink1_deviceType( blink1_device* dev )
+{
+  return blink1_deviceTypeById( blink1_getCacheIndexByDev(dev) );
+}
+#endif
 
 int blink1_isMk2ById( int i )
 {
@@ -490,6 +513,18 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 }
 
 //
+int blink1_goBootloader( blink1_device* dev )
+{
+  uint8_t buf[blink1_report_size] = { blink1_report_id, 'G', 'o','B','o','o','t',0 };
+  int rc = blink1_read(dev, buf, blink1_report_size);
+  if( rc == -1 ) {
+    printf("blink1_goBootlaoder: oops error\n");
+  }
+  printf("blink1 response: %s\n", buf+1);
+  return rc;
+}
+
+//
 int blink1_testtest( blink1_device *dev, uint8_t reportid )
 {
     uint8_t count = (reportid==1) ? blink1_report_size : blink1_report2_size; 
@@ -609,5 +644,155 @@ void blink1_sleep(uint32_t millis)
             usleep( millis * 1000);
 #endif
 }
+
+
+//
+// blink1 utility api
+//
+
+// take an array of bytes and spit them out as a hex string
+void hexdump(FILE* fp, uint8_t *buffer, int len)
+{
+    int     i;
+    //FILE    *fp = stdout;
+    
+    for(i = 0; i < len; i++){
+        if(i != 0){
+            if(i % 16 == 0){
+                fprintf(fp, "\n");
+            }else{
+                fprintf(fp, " ");
+            }
+        }
+        fprintf(fp, "0x%02x", buffer[i] & 0xff);
+    }
+    if(i != 0)
+        fprintf(fp, "\n");
+}
+
+// parse a comma-delimited string containing numbers (dec,hex) into a byte arr
+int hexread(uint8_t *buffer, char *string, int buflen)
+{
+    char    *s;
+    int     pos = 0;
+    if( string==NULL ) return -1;
+    memset(buffer,0,buflen);  // bzero() not defined on Win32?
+    while((s = strtok(string, ", ")) != NULL && pos < buflen){
+        string = NULL;
+        buffer[pos++] = (char)strtol(s, NULL, 0);
+    }
+    return pos;
+}
+
+// integer-only hsbtorgb
+// from: http://web.mit.edu/storborg/Public/hsvtorgb.c
+void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
+{
+    uint8_t h = hsb[0];
+    uint8_t s = hsb[1];
+    uint8_t v = hsb[2];
+
+    unsigned char region, fpart, p, q, t;
+    uint8_t r,g,b;
+
+    if(s == 0) {          // color is grayscale 
+        r = g = b = v;
+        return;
+    }
+    
+    region = h / 43;      // make hue 0-5 
+    fpart = (h - (region * 43)) * 6; // find remainder part, make it from 0-255 
+    
+    // calculate temp vars, doing integer multiplication 
+    p = (v * (255 - s)) >> 8;
+    q = (v * (255 - ((s * fpart) >> 8))) >> 8;
+    t = (v * (255 - ((s * (255 - fpart)) >> 8))) >> 8;
+        
+    // assign temp vars based on color cone region 
+    switch(region) {
+        case 0:   r = v; g = t; b = p; break;
+        case 1:   r = q; g = v; b = p; break;
+        case 2:   r = p; g = v; b = t; break;
+        case 3:   r = p; g = q; b = v; break;
+        case 4:   r = t; g = p; b = v; break;
+        default:  r = v; g = p; b = q; break;
+    }    
+    rgb->r=r;
+    rgb->g=g;
+    rgb->b=b;
+}
+
+// parse a color in form either "#ff00ff" or "FF00FF"
+// or "255,0,255" or "0xff,0x00,0xff"
+void parsecolor(rgb_t* color, char* colorstr)
+{
+    // parse hex color code like "#FF00FF" or "FF00FF"
+    if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) { 
+        colorstr = (colorstr[0] == '#') ? colorstr+1 : colorstr;
+        uint32_t colorint = strtol(colorstr, NULL, 16); 
+        color->r = (colorint >> 16) & 0xff; 
+        color->g = (colorint >>  8) & 0xff;
+        color->b = (colorint >>  0) & 0xff;
+    } else { // else it's a list like "0xff,0x00,0xff" or "255,0,255"
+        hexread((uint8_t*)color, colorstr, 3);  // FIXME: hardcoded size
+    }
+}
+
+// 
+// Parse pattern into an array of patternlines
+// - number repeats
+// - pattern array (contains {color,millis,ledn}
+// - pattern length
+int parsePattern( char* str, int* repeats, patternline_t* pattern )
+{
+    char* s;
+    s = strtok( str, ",");
+    if(  s != NULL ) {
+      *repeats = strtol(s,NULL,0);
+    }
+    
+    int i=0;
+    s = strtok(NULL, ","); // prep next parse
+    while( s != NULL ) {
+        parsecolor( &pattern[i].color, s );
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
+        pattern[i].millis = atof(s) * 1000;
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) { msg("bad pattern: no led\n"); break; }
+        pattern[i].ledn = strtol(s,NULL,0);
+        
+        i++;
+        
+        s = strtok(NULL, ",");
+        if( s == NULL ) break;
+    }
+    int pattlen = i;
+    return pattlen;
+}
+
+/**
+ * printf that can be shut up
+ */
+void msg(char* fmt, ...)
+{
+    va_list args;
+    va_start(args,fmt);
+    if( !msg_quiet ) {
+        vprintf(fmt,args);
+    }
+    va_end(args);
+}
+
+/**
+ * set the level of quiet for msg  FIXME: 
+ */
+void msg_setquiet(int q)
+{
+    msg_quiet = q;
+}
+
 
 
