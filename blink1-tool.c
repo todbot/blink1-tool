@@ -88,8 +88,10 @@ static void usage(char *myName)
 "  --setpattline <pos>         Write pattern RGB val at pos (--rgb/hsb to set)\n"
 "  --getpattline <pos>         Read pattern RGB value at pos\n" 
 "  --savepattern               Save RAM color pattern to flash (mk2)\n"
+"  --clearpattern              Erase color pattern completely \n"            
 "  --play <1/0,pos>            Start playing color pattern (at pos)\n"
 "  --play <1/0,start,end,cnt>  Playing color pattern sub-loop (mk2)\n"
+"  --playstate                 Return current status of pattern playing (mk2)\n"
 "  --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool\n"
 "  --writepattern <patternstr> Write Blink1Control pattern string to blink(1)\n"
 "  --readpattern               Download full blink(1) patt as Blink1Control str\n"
@@ -166,6 +168,7 @@ enum {
     CMD_SERVERDOWN,
     CMD_PLAYPATTERN,
     CMD_WRITEPATTERN,
+    CMD_CLEARPATTERN,
     CMD_READPATTERN,
     CMD_WRITENOTE,
     CMD_READNOTE,
@@ -277,7 +280,8 @@ int main(int argc, char** argv)
         {"servertickle", required_argument, &cmd, CMD_SERVERDOWN },
         {"playpattern",  required_argument, &cmd, CMD_PLAYPATTERN },
         {"writepattern", required_argument, &cmd, CMD_WRITEPATTERN },
-        {"readpattern",  no_argument, &cmd, CMD_READPATTERN },
+        {"readpattern",  no_argument,     &cmd,   CMD_READPATTERN },
+        {"clearpattern", no_argument,     &cmd,   CMD_CLEARPATTERN },
         {"testtest",   no_argument,       &cmd,   CMD_TESTTEST },
         {"reportid",   required_argument, 0,      'i' },
         {"writenote",  required_argument, &cmd,   CMD_WRITENOTE},
@@ -786,6 +790,13 @@ int main(int argc, char** argv)
             rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
         }
 
+    }
+    else if( cmd == CMD_CLEARPATTERN ) {
+        msg("clearing pattern...");
+        for( int i=0; i<16; i++ ) { // FIXME: pattern length
+          rc = blink1_writePatternLine(dev, 0, 0,0,0, i );            
+        }
+        msg("done\n");
     }
     else if( cmd == CMD_READPATTERN ) {
         msg("read pattern:\n");
