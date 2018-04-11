@@ -1,0 +1,34 @@
+
+
+# Windows image file caches
+Thumbs.db
+
+# Folder config file
+Desktop.ini
+
+
+# Mac crap
+.DS_Store
+
+#### tod stuff
+
+# emacs
+*~
+
+# C build results
+*.o
+*.so
+*.dylib
+*.dll
+
+
+# misc
+*.pro
+*.sav
+*.pro.user*
+*.a
+*.def
+*.exp
+
+# build products
+blink1-tool
