@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <ctype.h>  // for toupper()
 #include <unistd.h>
 
@@ -493,6 +494,8 @@ int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf
 {
   uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'F', noteid };
   memcpy( buf+3, notebuf, 100); // FIXME: notes are 100 bytes
+  //hexdump(stdout, (char*)notebuf, 15);
+  //hexdump(stdout, buf, 15);
   int rc = blink1_write(dev, buf, blink1_report2_size);
   if( rc == -1 ) {
     printf("blink1_writeNote: oops error\n");
@@ -520,7 +523,12 @@ int blink1_goBootloader( blink1_device* dev )
   if( rc == -1 ) {
     printf("blink1_goBootlaoder: oops error\n");
   }
-  printf("blink1 response: %s\n", buf+1);
+  else { 
+    printf("blink1 response: %s\n", buf+1);
+    if( strncmp("GOBOOT", (char*)buf+1, 6) != 0 ) {
+      rc = -1;
+    }
+  }  
   return rc;
 }
 

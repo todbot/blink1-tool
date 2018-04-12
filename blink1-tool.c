@@ -108,22 +108,28 @@ static void usage(char *myName)
 "  -m ms,   --millis=millis    Set millisecs for color fading (default 300)\n"
 "  -q, --quiet                 Mutes all stdout output (supercedes --verbose)\n"
 "  -t ms,   --delay=millis     Set millisecs between events (default 500)\n"
-"  -l <led>, --led=<led>       Which LED to use, 0=all/1=top/2=bottom (mk2 only)\n"
-"  --ledn 1,3,5,7              Can also specify list of LEDs to light\n"
+"  -l <led>, --led=<led>       Which LED to use, 0=all/1=top/2=bottom (mk2)\n"
+"  --ledn 1,3,5,7              Specify a list of LEDs to light\n"
 "  -v, --verbose               verbose debugging msgs\n"
 "\n"
 "Examples \n"
-"  blink1-tool -m 100 --rgb=255,0,255    # fade to #FF00FF in 0.1 seconds \n"
-"  blink1-tool -t 2000 --random=100      # every 2 seconds new random color\n"
-"  blink1-tool --led 2 --random=100      # random colors on both LEDs \n"
+"  blink1-tool -m 100 --rgb=255,0,255    # Fade to #FF00FF in 0.1 seconds \n"
+"  blink1-tool -t 2000 --random=100      # Every 2 seconds new random color\n"
+"  blink1-tool --led 2 --random=100      # Random colors on both LEDs \n"
 "  blink1-tool --rgb 0xff,0x00,0x00 --blink 3  # blink red 3 times\n"
-"  blink1-tool --rgb '#FF9900'           # make blink1 pumpkin orange\n"
-"  blink1-tool --rgb FF9900 --led 2      # make blink1 orange on lower LED\n"
-"  blink1-tool --chase=5,3,18            # chase 5 times, on leds 3-18\n"
+"  blink1-tool --rgb '#FF9900'           # Make blink1 pumpkin orange\n"
+"  blink1-tool --rgb FF9900 --led 2      # Make blink1 orange on lower LED\n"
+"  blink1-tool --chase=5,3,18            # Chase pattern 5 times, on leds 3-18\n"
 "Pattern Examples \n"
 "  # Play purple-green flash 10 times (pattern runs in blink1-tool so it blocks)\n" 
 "  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
-"\n"
+"  # Change the 2nd color pattern line to #112233 with a 0.5 sec fade\n"
+"  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
+"  # Erase all lines of the color pattern and save to flash \n"
+"  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
+"User notes (mk3 only)\n"
+"  blink1-tool --writenote 1 -n 'hello there' \n"
+"  blink1-tool --readnote 1 \n"
 "\n"
 "Notes \n"
 " - To blink a color with specific timing, specify 'blink' command last:\n"
@@ -814,26 +820,28 @@ int main(int argc, char** argv)
     }
     else if( cmd == CMD_WRITENOTE ) {
       uint8_t noteid = arg;
-      uint8_t* notebuf = (uint8_t*)argbuf;
+      uint8_t* notebuf = (uint8_t*)argbuf; 
       blink1_writeNote( dev, noteid, notebuf);
     }
     else if( cmd == CMD_READNOTE ) {
       uint8_t noteid = arg;
       uint8_t notebuf[100];
       uint8_t* notebufp = notebuf; // why do I need to do this?
-      notebuf[0] = 't';
-      notebuf[1] = 'o';
-      notebuf[2] = 'd';
-      notebuf[3] = 0;
     
       blink1_readNote( dev, noteid, &notebufp);
+
       printf("note %d: %s\n", noteid, notebuf);
     }
     else if( cmd == CMD_GOBOOTLOAD ) {
       msg("Changing blink(1) mk3 to bootloader...\n");
       msg("Use dfu-util to upload new firmare\n");
       msg("Or replug device to go back to normal\n");
-      blink1_goBootloader(dev);
+      rc = blink1_goBootloader(dev);
+      if( rc == 0 ) {
+        msg("blink(1) in bootloader mode\n");
+      } else {
+        msg("error triggering bootloader\n");
+      }
     }
     else if( cmd == CMD_TESTTEST ) {
       msg("test test reportid:%d\n",reportid);
