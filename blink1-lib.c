@@ -472,9 +472,10 @@ int blink1_savePattern( blink1_device *dev )
     buf[6] = 0x00;
     buf[7] = 0x00;
     int rc = blink1_write(dev, buf, sizeof(buf) );
+    rc = 0; // assume success
     // note rc will always return -1 
     // because of issue with flash programming timing out USB 
-    return 0; // assume success
+    return rc; 
 }
 
 // only for unreleased mk2a devices
@@ -566,6 +567,7 @@ void blink1_disableDegamma()
     blink1_enable_degamma = 0;
 }
 
+#if 0
 // a simple logarithmic -> linear mapping as a sort of gamma correction
 // maps from 0-255 to 0-255
 static int blink1_degamma_log2lin( int n )  
@@ -573,6 +575,8 @@ static int blink1_degamma_log2lin( int n )
   //return  (int)(1.0* (n * 0.707 ));  // 1/sqrt(2)
     return (((1<<(n/32))-1) + ((1<<(n/32))*((n%32)+1)+15)/32);
 }
+#endif
+
 // from http://rgb-123.com/ws2812-color-output/
 //   GammaE=255*(res/255).^(1/.45)
 //

@@ -229,7 +229,7 @@ int main(int argc, char** argv)
 
     int  rc;
     uint8_t tmpbuf[100]; // only used for hsb parsing
-    char serialnumstr[serialstrmax] = {'\0'}; 
+    //char serialnumstr[serialstrmax] = {'\0'}; 
     uint8_t reportid = 1; // unused normally, just for testing
     
     srand( time(NULL) * getpid() );
@@ -404,7 +404,7 @@ int main(int argc, char** argv)
             } 
             else { // if( strcmp(optarg,",") != -1 ) { // comma-separated list
                 char* pch;
-                int base = 0;
+                //int base = 0;
                 pch = strtok( optarg, " ,");
                 numDevicesToUse = 0;
                 while( pch != NULL ) { 
