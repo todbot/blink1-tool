@@ -755,8 +755,10 @@ int main(int argc, char** argv)
         //int on  = arg;
         int on = cmdbuf[0];
         int st = cmdbuf[1];
+        int startpos = cmdbuf[2];
+        int endpos   = cmdbuf[3];
         msg("setting servertickle %s (@ %ld millis)\n",((on)?"ON":"OFF"),delayMillis);
-        blink1_serverdown( dev, on, delayMillis, st );
+        blink1_serverdown( dev, on, delayMillis, st, startpos,endpos );
     }
     else if( cmd == CMD_PLAYPATTERN ) {
         blink1_close(dev);

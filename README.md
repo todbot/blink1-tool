@@ -1,13 +1,13 @@
-Command-line Tools and C library for blink(1)
-============================================
+# Command-line Tools and C library for blink(1) USB RGB LED
 
 This code lives at the repository: https://github.com/todbot/blink1-tool
 It originally lived as a directory https://github.com/todbot/blink1 but now has its own repository.
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
+
 To build, see the Makefile.
 
-The current tools are are:
+The current tools are:
 
 - `blink1-lib` -- C library for controlling blink(1)
 - `blink1-tool` -- command-line tool for controlling blink(1)
@@ -20,6 +20,8 @@ Type `make help` for a full list.
 
 Also see in this directory:
 - `scripts` -- examples shell scripts using blink1-tool
+
+## Supported platforms
 
 Supported platforms for `blink1-tool` and `blink1-lib`:
 
@@ -37,9 +39,13 @@ eliminating the need for shared library dependencies on the target.
 However, static builds can be problematic for some systems with "different" 
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
+## Using blink1-lib in your C/C++ project
+[tbd, but basically look at the makefile for blink1-tool]
 
-Docker and blink(1)
-==========
+
+## Docker and blink(1)
+[this may be out of date after the repo move]
+
 To build the image from the `Dockerfile`
 
 - `docker build -t robtec/blink1 .`

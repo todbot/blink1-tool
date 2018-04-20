@@ -349,13 +349,14 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
 // - on == 1 or 0, enable or disable
 // - millis == milliseconds to wait until triggering 
 // - st == 1 or 0, stay lit or set off()  (mk2 firmware only)
-// FIXME: bug in firmware?
+// FIXME: bug in firmware? yes in v204 devices, max time is 62 secs
 // - millis = 100000 => dms = 10000, dms_hi =  39, dms_lo =  16 :: real time = 34 secs
 // - millis =  50000 => dms =  5000, dms_hi =  19, dms_lo = 136 :: real time = 50 secs
 // - millis = 652800 => dms = 65280, dms_hi = 255, dms_lo =   0 :: real time = 62 secs
 // - millis =  62000 => dms =  6200, dms_hi =  24, dms_lo =  56 :: real time = 62 secs
 // 
-int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, uint8_t st)
+int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, uint8_t st,
+                      uint8_t startpos, uint8_t endpos)
 {
     uint16_t dms = millis / 10;  // millis_divided_by_10
 
@@ -367,8 +368,8 @@ int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, uint8_t s
     buf[3] = (dms>>8);
     buf[4] = (dms % 0xff);
     buf[5] = st;  // mk2 only
-    buf[6] = 0;
-    buf[7] = 0;
+    buf[6] = startpos;
+    buf[7] = endpos;
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
     return rc;
@@ -478,7 +479,7 @@ int blink1_savePattern( blink1_device *dev )
     return rc; 
 }
 
-// only for unreleased mk2a devices
+// only for mk2a devices (fw val '204')
 int blink1_setLEDN( blink1_device* dev, uint8_t ledn)
 {
     uint8_t buf[blink1_buf_size];

@@ -233,9 +233,11 @@ int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr);
  * @param on  enable or disable: enable=1, disable=0
  * @param millis milliseconds to wait until triggering (up to 65,355 millis)
  * @param stay lit (st=1) or set off() (st=0)
+ * @param startpos pattern start position (fw 205+)
+ * @param endpos pattern end pos (fw 205+)
  */
 int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, 
-                      uint8_t st);
+                      uint8_t st, uint8_t startpos, uint8_t endpos);
 
 /**
  * Play color pattern stored in blink1.
