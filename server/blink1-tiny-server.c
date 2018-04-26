@@ -27,38 +27,6 @@ static const char *s_http_port = "8000";
 static struct mg_serve_http_opts s_http_server_opts;
 
 
-// parse a comma-delimited string containing numbers (dec,hex) into a byte arr
-// FIXME: copy of same func in blink1-tool.c
-static int  hexread(uint8_t *buffer, char *string, int buflen)
-{
-    char    *s;
-    int     pos = 0;
-
-    memset(buffer,0,buflen);  // bzero() not defined on Win32?
-    while((s = strtok(string, ", ")) != NULL && pos < buflen){
-        string = NULL;
-        buffer[pos++] = (char)strtol(s, NULL, 0);
-    }
-    return pos;
-}
-
-// given a string of hex color code ("#FF3322") or rgb triple ("255,0,0" or
-// "0xff,0x23,0x00"), produce a parsed byte array
-static void parse_rgbstr(uint8_t* rgb, char* rgbstr)
-{
-    if( rgbstr != NULL && strlen(rgbstr) ) {
-        if( rgbstr[0] == '#' ) {
-            uint32_t rgbval = strtoul(rgbstr+1,NULL,16); // FIXME: hack
-            rgb[0] = ((rgbval >> 16) & 0xff);
-            rgb[1] = ((rgbval >>  8) & 0xff);
-            rgb[2] = ((rgbval >>  0) & 0xff);
-        }
-        else {
-            hexread(rgb, rgbstr, 3);
-        }
-    }
-}
-
 // used in ev_handler below
 #define do_blink1_color() \
     blink1_device* dev = blink1_open(); \
@@ -71,7 +39,9 @@ static void parse_rgbstr(uint8_t* rgb, char* rgbstr)
     } \
     blink1_close(dev); 
 
-static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
+
+static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
+{
     struct http_message *hm = (struct http_message *) ev_data;
 
     if( ev != MG_EV_HTTP_REQUEST ) {
@@ -84,7 +54,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
     char tmpstr[1000];
     int rc;
     uint16_t millis = 100;
-    uint8_t rgb[3] = {0,0,0};
+    rgb_t rgb = {0,0,0};
     uint8_t count = 1;
 
     struct mg_str* uri = &hm->uri;
@@ -99,8 +69,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
         millis = 1000 * strtof(tmpstr,NULL);
     }
     if( mg_get_http_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
-        parse_rgbstr( rgb, tmpstr);
-        r = rgb[0]; g = rgb[1]; b = rgb[2];
+        //parse_rgbstr( rgb, tmpstr);
+        parsecolor( &rgb, tmpstr);
+        r = rgb.r; g = rgb.g; b = rgb.b;
     }
     if( mg_get_http_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
