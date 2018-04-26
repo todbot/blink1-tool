@@ -127,9 +127,11 @@ static void usage(char *myName)
 "  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
 "  # Erase all lines of the color pattern and save to flash \n"
 "  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
+#if 0
 "User notes (mk3 only)\n"
 "  blink1-tool --writenote 1 -n 'hello there' \n"
 "  blink1-tool --readnote 1 \n"
+#endif
 "\n"
 "Notes \n"
 " - To blink a color with specific timing, specify 'blink' command last:\n"
