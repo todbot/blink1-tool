@@ -303,7 +303,7 @@ int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis,
                            uint8_t pos);
 /**
  * Read a color pattern line to blink1.
- * @note ledn param only works on unreleased mk2a devices
+ * @note ledn param only works on fw204+ devices
  * @param dev blink1 device to command
  * @param fadeMillis pointer to milliseconds to fade to RGB color
  * @return -1 on error, 0 on success
@@ -323,9 +323,22 @@ int blink1_savePattern(blink1_device *dev);
 
 /**
  * Sets 'ledn' parameter for blink1_savePatternLine()
- * @note only for unreleased mk2a devices
+ * @note only works on fw 204+ devices
  */
 int blink1_setLEDN( blink1_device* dev, uint8_t ledn);
+
+/**
+ * @note only for devices with fw val 206+ or mk3
+ */
+int blink1_getStartupParams( blink1_device* dev, uint8_t* bootmode,
+                             uint8_t* playstart, uint8_t* playend, uint8_t* playcount);
+
+/**
+ * @note only for devices with fw val 206+ or mk3
+ * FIXME: make 'params' a struct
+ */
+int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
+                             uint8_t playstart, uint8_t playend, uint8_t playcount);
 
 /**
  * Tell blink(1) to reset into bootloader.

@@ -29,6 +29,9 @@
 
 #include "blink1-lib.h"
 
+// set to 1 to enable mk3 features 
+#define ENABLE_MK3  1
+
 #ifndef BLINK1_VERSION
 #define BLINK1_VERSION "v0.0"
 #endif
@@ -102,6 +105,9 @@ static void usage(char *myName)
 " Nerd functions: \n"
 "  --fwversion                 Display blink(1) firmware version \n"
 "  --version                   Display blink1-tool version info \n"
+#if 0
+"  --gobootload                Enable bootloader (mk3 only)\n"
+#endif
 "and [options] are: \n"
 "  -d dNums --id all|deviceIds Use these blink(1) ids (from --list) \n"
 "  -g -nogamma                 Disable autogamma correction\n"
@@ -127,10 +133,16 @@ static void usage(char *myName)
 "  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
 "  # Erase all lines of the color pattern and save to flash \n"
 "  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
-#if 0
-"User notes (mk3 only)\n"
+#if ENABLE_MK3 == 1
+"\n"            
+"User notes (mk3 feature):\n"
 "  blink1-tool --writenote 1 -n 'hello there' \n"
 "  blink1-tool --readnote 1 \n"
+"\n"
+"Setting startup params (mk3 feature):\n"
+"  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
+"  blink1-tool --savepattern  # must do this to save to flash \n"
+""
 #endif
 "\n"
 "Notes \n"
@@ -180,6 +192,8 @@ enum {
     CMD_READPATTERN,
     CMD_WRITENOTE,
     CMD_READNOTE,
+    CMD_SETSTARTUP,
+    CMD_GETSTARTUP,
     CMD_GOBOOTLOAD,
     CMD_SETRGB,
     CMD_TESTTEST
@@ -290,6 +304,8 @@ int main(int argc, char** argv)
         {"writepattern", required_argument, &cmd, CMD_WRITEPATTERN },
         {"readpattern",  no_argument,     &cmd,   CMD_READPATTERN },
         {"clearpattern", no_argument,     &cmd,   CMD_CLEARPATTERN },
+        {"setstartup", required_argument, &cmd,   CMD_SETSTARTUP},
+        {"getstartup", no_argument,       &cmd,   CMD_GETSTARTUP},
         {"testtest",   no_argument,       &cmd,   CMD_TESTTEST },
         {"reportid",   required_argument, 0,      'i' },
         {"writenote",  required_argument, &cmd,   CMD_WRITENOTE},
@@ -320,6 +336,7 @@ int main(int argc, char** argv)
             case CMD_GETPATTLINE:
             case CMD_PLAY:
             case CMD_SERVERDOWN:
+            case CMD_SETSTARTUP: // FIXME
                 hexread(cmdbuf, optarg, sizeof(cmdbuf));  // cmd w/ hexlist arg
                 break;
             case CMD_BLINK:
@@ -610,7 +627,7 @@ int main(int argc, char** argv)
         uint8_t b = rgbbuf.b;
         uint8_t p = cmdbuf[0];
         msg("saving rgb: 0x%2.2x,0x%2.2x,0x%2.2x @ %d, ms:%d\n",r,g,b,p,millis);
-        if( ledn>=0 ) { // NOTE: only works for unreleased mk2a
+        if( ledn>=0 ) { // NOTE: only works for fw 204+ devices
             blink1_setLEDN(dev, ledn);  // FIXME: doesn't check return code
         }
         rc = blink1_writePatternLine(dev, millis, r,g,b, p );
@@ -821,6 +838,29 @@ int main(int argc, char** argv)
         }
         sprintf(str,"%s}",str);
         msg("%s\n",str);        
+    }
+    else if( cmd == CMD_SETSTARTUP ) {
+      msg("set startup params:");
+      uint8_t bootmode  = cmdbuf[0];
+      uint8_t playstart = cmdbuf[1];
+      uint8_t playend   = cmdbuf[2];
+      uint8_t playcount = cmdbuf[3];
+      msg(" bootmode: %d, play start/end/count: %d/%d/%d\n",
+          bootmode, playstart,playend,playcount);
+      rc = blink1_setStartupParams(dev, bootmode, playstart, playend, playcount);
+      if( rc == -1 ) {
+        msg("error: %d\n",rc);
+      }
+    }
+    else if( cmd == CMD_GETSTARTUP ) {
+      msg("get startup params:");
+      uint8_t bootmode;
+      uint8_t playstart;
+      uint8_t playend;
+      uint8_t playcount;
+      rc = blink1_getStartupParams(dev, &bootmode, &playstart, &playend, &playcount);
+      msg(" bootmode: %d, play start/end/count: %d/%d/%d\n",
+          bootmode, playstart,playend,playcount);
     }
     else if( cmd == CMD_WRITENOTE ) {
       uint8_t noteid = arg;

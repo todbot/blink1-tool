@@ -479,7 +479,7 @@ int blink1_savePattern( blink1_device *dev )
     return rc; 
 }
 
-// only for mk2a devices (fw val '204')
+// only for devcies with fw val 204+
 int blink1_setLEDN( blink1_device* dev, uint8_t ledn)
 {
     uint8_t buf[blink1_buf_size];
@@ -491,7 +491,41 @@ int blink1_setLEDN( blink1_device* dev, uint8_t ledn)
     return rc;
 }
 
-//
+// only for devices with fw val 206+ or mk3
+int blink1_getStartupParams( blink1_device* dev, uint8_t* bootmode,
+                             uint8_t* playstart, uint8_t* playend, uint8_t* playcount)
+{
+  uint8_t buf[blink1_buf_size] = { blink1_report_id, 'b', 0,0,0, 0,0, 0 };
+
+  int rc = blink1_read(dev, buf, sizeof(buf) );
+  if( rc != -1 ) {
+    *bootmode  = buf[2];
+    *playstart = buf[3];
+    *playend   = buf[4];
+    *playcount = buf[5];
+  }
+  return rc;
+}
+
+// only for devices with fw val 206+ or mk3
+// FIXME: make 'params' a struct
+int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
+                             uint8_t playstart, uint8_t playend, uint8_t playcount)
+{
+    uint8_t buf[blink1_buf_size];
+    buf[0] =  blink1_report_id;
+    buf[1] = 'B';  
+    buf[2] = bootmode;   // (0=normal, 1=play, 2=off)
+    buf[3] = playstart;
+    buf[4] = playend;
+    buf[5] = playcount;
+    buf[6] = 0;          // unused1
+    buf[7] = 0;          // unused2
+    int rc = blink1_write(dev, buf, sizeof(buf) );
+    return rc;   
+}
+
+// only for mk3
 int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf)
 {
   uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'F', noteid };
@@ -517,7 +551,7 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
     return rc;
 }
 
-//
+// only for mk3
 int blink1_goBootloader( blink1_device* dev )
 {
   uint8_t buf[blink1_report_size] = { blink1_report_id, 'G', 'o','B','o','o','t',0 };

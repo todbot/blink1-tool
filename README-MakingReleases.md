@@ -25,7 +25,8 @@ Assumptions
 General Process
 ---------------
 
-1. `cd  blink1/commmandline`
+1. `cd  blink1-tool`
+2. git tag release
 2. Build code with `make clean && make`
 3. Package up zipfile with `make package`
 4. Copy zip package to and test on separate test systems
