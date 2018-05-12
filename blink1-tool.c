@@ -32,6 +32,7 @@
 // set to 1 to enable mk3 features 
 #define ENABLE_MK3  1
 
+// normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
 #define BLINK1_VERSION "v0.0"
 #endif
@@ -521,11 +522,15 @@ int main(int argc, char** argv)
 
     // begin command processing
 
-    if( cmd == CMD_LIST ) { 
+    if( cmd == CMD_LIST ) {
+        blink1_close(dev);
         printf("blink(1) list: \n");
         for( int i=0; i< count; i++ ) {
-            printf("id:%d - serialnum:%s %s\n", i, blink1_getCachedSerial(i), 
-                   (blink1_isMk2ById(i)) ? "(mk2)":"");
+            dev = blink1_openBySerial( blink1_getCachedSerial(i) );
+            rc = blink1_getVersion(dev);
+            blink1_close(dev);
+            printf("id:%d - serialnum:%s %s fw version:%d\n", i, blink1_getCachedSerial(i), 
+                   (blink1_isMk2ById(i)) ? "(mk2)":"", rc);
         }
 #ifdef USE_HIDDATA
         printf("(Listing not supported in HIDDATA builds)\n"); 
