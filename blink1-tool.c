@@ -29,8 +29,8 @@
 
 #include "blink1-lib.h"
 
-// set to 1 to enable mk3 features 
-#define ENABLE_MK3  1
+// set to 1 to enable mk3 features (or really the display of those features)
+#define ENABLE_MK3  0
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -128,22 +128,22 @@ static void usage(char *myName)
 "  blink1-tool --rgb FF9900 --led 2      # Make blink1 orange on lower LED\n"
 "  blink1-tool --chase=5,3,18            # Chase pattern 5 times, on leds 3-18\n"
 "Pattern Examples \n"
-"  # Play purple-green flash 10 times (pattern runs in blink1-tool so it blocks)\n" 
+"    # Play purple-green flash 10 times (pattern runs in blink1-tool so blocks)\n" 
 "  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
-"  # Change the 2nd color pattern line to #112233 with a 0.5 sec fade\n"
+"    # Change the 2nd color pattern line to #112233 with a 0.5 sec fade\n"
 "  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
-"  # Erase all lines of the color pattern and save to flash \n"
+"    # Erase all lines of the color pattern and save to flash \n"
 "  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
+"Setting Startup Params Examples (mk2 v206+ & mk3 only):\n"
+"  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
+"  blink1-tool --savepattern          # must do this to save to flash \n"
+""
 #if ENABLE_MK3 == 1
 "\n"            
-"User notes (mk3 feature):\n"
+"User notes (mk3 only):\n"
 "  blink1-tool --writenote 1 -n 'hello there' \n"
 "  blink1-tool --readnote 1 \n"
 "\n"
-"Setting startup params (mk3 feature):\n"
-"  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
-"  blink1-tool --savepattern  # must do this to save to flash \n"
-""
 #endif
 "\n"
 "Notes \n"
