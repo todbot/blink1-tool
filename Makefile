@@ -483,11 +483,14 @@ help:
 	@echo "make OS=macosx  ... build Mac OS X blink1-lib and blink1-tool"
 	@echo "make OS=wrt     ... build OpenWrt blink1-lib and blink1-tool"
 	@echo "make OS=wrtcross... build for OpenWrt using cross-compiler"
-	@echo "make USBLIB_TYPE=HIDDATA OS=linux ... build using low-dep method"
+	@echo "make USBLIB_TYPE=HIDDATA OS=linux ... build using low-deps method"
 	@echo "make lib        ... build blink1-lib shared library"
+	@echo "make blink1-tool... build blink1-tool program"
 	@echo "make blink1-tiny-server ... build tiny REST server"
+	@echo "make blink1control-tool ... build blink1control-tool (w/Blink1Control)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
 	@echo "make package-tiny-server ... package tiny REST server"
+	@echo "make package-all... package everything"
 	@echo "make clean      ... delete build products, leave binaries & libs"
 	@echo "make distclean  ... delele binaries and libs too"
 	@echo
@@ -509,18 +512,30 @@ blink1-tiny-server: $(OBJS) server/blink1-tiny-server.c
 	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c ./server/mongoose/mongoose.c -o ./server/mongoose/mongoose.o
 	$(CC) -g $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) -lpthread  blink1-tiny-server.o -o blink1-tiny-server$(EXE)
 
-lib: $(OBJS)
+$(LIBTARGET): $(OBJS)
 	$(CC) $(LIBFLAGS) $(CFLAGS) $(OBJS) $(LIBS)
 	$(LIB_EXTRA)
+
+lib: $(LIBTARGET)
+
+blink1control-tool:
+	make -C blink1control-tool
 
 package: lib blink1-tool
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
 	zip blink1-tool-$(PKGOS).zip blink1-tool$(EXE)
 	zip blink1-lib-$(PKGOS).zip $(LIBTARGET) blink1-lib.h
-	#@mkdir -f builds && cp blink1-tool-$(PKGOKS).zip builds
 
 package-tiny-server: blink1-tiny-server
 	zip blink1-tiny-server-$(PKGOS).zip blink1-tiny-server$(EXE)
+
+package-blink1control-tool: blink1control-tool
+	zip blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
+
+package-all: package package-tiny-server package-blink1control-tool
+	@mkdir -p builds
+	@mv blink1*$(PKGOS).zip builds
+	@echo "Look in 'builds' for zipfiles to publish"
 
 install: all
 	$(INSTALL) blink1-tool$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)

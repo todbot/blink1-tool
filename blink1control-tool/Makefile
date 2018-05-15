@@ -119,7 +119,7 @@ all: msg depcheck blink1control-tool
 
 msg:
 #	@echo "Be sure to 'make curl-setup' and 'make json-parser-setup' if you have not already"
-	@echo "Building for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION)"
+	@echo "Building blink1control-tool for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION)"
 
 curl-setup:
 	@echo "setting up curl..."
@@ -142,9 +142,9 @@ depcheck:
 	@if [ ! -d json-parser ] ; then \
 		make json-parser-setup; \
 	else \
- 	  echo "  json-parser set up"; \
+	  echo "  json-parser set up"; \
 	fi
-		
+
 
 #blink1control-tool: $(OBJS) blink1control-tool.o
 blink1control-tool: blink1control-tool.c 
