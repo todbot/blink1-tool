@@ -41,7 +41,8 @@ ifeq "$(UNAME)" "FreeBSD"
 endif
 
 MACH_TYPE="$(strip $(shell uname -m))"
-GIT_TAG=$(strip $(shell cat ../../VERSIONS.txt | tail -1 | cut -f1 -d' '))
+#GIT_TAG=$(strip $(shell cat ../../VERSIONS.txt | tail -1 | cut -f1 -d' '))
+GIT_TAG?="$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))"
 #GIT_TAG="$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))"
 # deal with case of no git or no git tags, check for presence of "v" (i.e. "v1.93")
 #ifneq ($(findstring v,$(GIT_TAG)), v)
@@ -96,7 +97,9 @@ CFLAGS += -Wall
 CFLAGS += -std=gnu99
 #CFLAGS += -std=c99
 CFLAGS += -g
+
 CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
+
 CFLAGS += -lm
 # to fix usleep() not being found on Ubuntu14
 CFLAGS += -D_BSD_SOURCE
@@ -112,10 +115,10 @@ JSFILES = json-parser/json.c
 #	$(CC) $(CFLAGS) -c $< -o $@
 
 #all: bjsmn blink1control-tool
-all: msg blink1control-tool
+all: msg depcheck blink1control-tool
 
 msg:
-	@echo "Be sure to 'make curl-setup' and 'make json-parser-setup' if you have not already"
+#	@echo "Be sure to 'make curl-setup' and 'make json-parser-setup' if you have not already"
 	@echo "Building for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION)"
 
 curl-setup:
@@ -128,8 +131,23 @@ json-parser-setup:
 	@echo "setting up json-parser"
 	unzip json-parser.zip
 
+depcheck:
+	@echo "Checking if curl and json-parser are setup"
+	@if [ ! -d curl-7.37.1 ] ; then \
+		make curl-setup; \
+	else \
+ 	  echo "  curl set up"; \
+	fi
+
+	@if [ ! -d json-parser ] ; then \
+		make json-parser-setup; \
+	else \
+ 	  echo "  json-parser set up"; \
+	fi
+		
+
 #blink1control-tool: $(OBJS) blink1control-tool.o
-blink1control-tool: blink1control-tool.c FORCE
+blink1control-tool: blink1control-tool.c 
 	$(CC) -o blink1control-tool$(EXE)  blink1control-tool.c $(JSFILES) $(CFLAGS)
 
 package: blink1control-tool
@@ -143,5 +161,10 @@ clean:
 	rm -f blink1control-tool$(EXE)
 	#pushd jsmn-example &
 	#pushd jsmn && make clean && popd
+
+distclean:
+	make clean
+	rm -rf curl-7.37.1
+	rm -rf json-parser
 
 FORCE:

@@ -571,6 +571,7 @@ int main(int argc, char** argv)
 
     if( cmd == CMD_VERSION ) {
         // FIXME: do something here
+      msg("blink1control-tool version "BLINK1_VERSION"\n");
     }
     else if( cmd == CMD_RGB || cmd == CMD_ON  || cmd == CMD_OFF ||
              cmd == CMD_RED || cmd == CMD_BLU || cmd == CMD_GRN ||
