@@ -1,4 +1,6 @@
-
+#
+# Makefile for blink1control-tool
+#
 
 # On Mac:
 # % wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
@@ -40,14 +42,14 @@ ifeq "$(UNAME)" "FreeBSD"
 	OS=freebsd
 endif
 
-MACH_TYPE="$(strip $(shell uname -m))"
-#GIT_TAG=$(strip $(shell cat ../../VERSIONS.txt | tail -1 | cut -f1 -d' '))
+# allow overriding of GIT_TAG & BLINK1_VERSION on commandline for automated builds
+
+MACH_TYPE:="$(strip $(shell uname -m))"
 GIT_TAG?="$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))"
-#GIT_TAG="$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))"
 # deal with case of no git or no git tags, check for presence of "v" (i.e. "v1.93")
-#ifneq ($(findstring v,$(GIT_TAG)), v)
-#  GIT_TAG = "v0"
-#endif
+ifneq ($(findstring v,$(GIT_TAG)), v)
+  GIT_TAG:="v0"
+endif
 
 BLINK1_VERSION="$(GIT_TAG)-$(OS)-$(MACH_TYPE)"
 
@@ -65,7 +67,7 @@ EXE=
 
 endif
 
-#################  Mac OS X  ##################################################
+#################  Windows  ##################################################
 ifeq "$(OS)" "windows"
 
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
@@ -136,7 +138,7 @@ depcheck:
 	@if [ ! -d curl-7.37.1 ] ; then \
 		make curl-setup; \
 	else \
- 	  echo "  curl set up"; \
+	  echo "  curl set up"; \
 	fi
 
 	@if [ ! -d json-parser ] ; then \
@@ -146,7 +148,6 @@ depcheck:
 	fi
 
 
-#blink1control-tool: $(OBJS) blink1control-tool.o
 blink1control-tool: blink1control-tool.c 
 	$(CC) -o blink1control-tool$(EXE)  blink1control-tool.c $(JSFILES) $(CFLAGS)
 
@@ -159,8 +160,6 @@ clean:
 	rm -f $(OBJS)
 	rm -f *.o
 	rm -f blink1control-tool$(EXE)
-	#pushd jsmn-example &
-	#pushd jsmn && make clean && popd
 
 distclean:
 	make clean

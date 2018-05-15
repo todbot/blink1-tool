@@ -468,6 +468,8 @@ OBJS +=  blink1-lib.o
 
 PKGOS = $(BLINK1_VERSION)
 
+.PHONY: all install help blink1control-tool
+
 #all: msg blink1-tool blink1-server-simple
 all: msg blink1-tool lib
 
@@ -490,13 +492,14 @@ help:
 	@echo "make blink1control-tool ... build blink1control-tool (w/Blink1Control)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
 	@echo "make package-tiny-server ... package tiny REST server"
-	@echo "make package-all... package everything"
+	@echo "make package-all... package everything (and build everything first)"
 	@echo "make clean      ... delete build products, leave binaries & libs"
 	@echo "make distclean  ... delele binaries and libs too"
 	@echo
 
 msg:
-	@echo "Building for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION) USBLIB_TYPE=$(USBLIB_TYPE)"
+	@echo "Building blink1-tool for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION) USBLIB_TYPE=$(USBLIB_TYPE)"
+	@echo "Type 'make help' for other build products"
 
 
 $(OBJS): %.o: %.c
@@ -518,7 +521,7 @@ $(LIBTARGET): $(OBJS)
 
 lib: $(LIBTARGET)
 
-blink1control-tool:
+blink1control-tool: 
 	make -C blink1control-tool
 
 package: lib blink1-tool
@@ -530,7 +533,7 @@ package-tiny-server: blink1-tiny-server
 	zip blink1-tiny-server-$(PKGOS).zip blink1-tiny-server$(EXE)
 
 package-blink1control-tool: blink1control-tool
-	zip blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
+	zip -j blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
 
 package-all: package package-tiny-server package-blink1control-tool
 	@mkdir -p builds
@@ -542,23 +545,22 @@ install: all
 	$(INSTALL) $(LIBTARGET) $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
 	$(INSTALL) blink1-lib.h $(DESTDIR)$(INCLOCATION)/blink1-lib.h
 
-.PHONY: install
-
 clean:
 	rm -f $(OBJS)
 	rm -f $(LIBTARGET)
 	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
+	make -C blink1control-tool clean
 
 distclean: clean
 	#rm -f blink1-tool$(EXE)
 	rm -f blink1-tiny-server$(EXE)
 	rm -f $(LIBTARGET) $(LIBTARGET).a
-	#rm blink1-lib.{a,lib,exp,dll,def}
 	rm -f libblink1.so
 	rm -f blink1-tool
 	rm -f blink1-tool.exe
+	make -C blink1control-tool distclean
 
 # show shared library use
 # in general we want minimal to no dependecies for blink1-tool
