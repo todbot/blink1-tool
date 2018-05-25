@@ -544,9 +544,9 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 {
     uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'f', noteid  };
 
-    //int rc = blink1_read(dev, buf, sizeof(buf) );
-    int rc = blink1_write(dev, buf, sizeof(buf)-1 );
-    rc = blink1_read_nosend(dev, buf, sizeof(buf) );
+    int rc = blink1_read(dev, buf, sizeof(buf) );
+    //int rc = blink1_write(dev, buf, sizeof(buf)-1 ); // why does this need to be one shorter?
+    //rc = blink1_read_nosend(dev, buf, sizeof(buf) );
     
     uint8_t* notedata = buf+3;
     memcpy( *notebuf, notedata, blink1_note_size); // skip over report id, cmd FIXME: harccoded 100

@@ -107,7 +107,7 @@ USBLIB_TYPE ?= HIDAPI
 
 # uncomment for debugging HID stuff
 # or make with:   CFLAGS=-DDEBUG_PRINTF make
-#CFLAGS += -DDEBUG_PRINTF
+CFLAGS += -DDEBUG_PRINTF
 
 
 # try to do some autodetecting
