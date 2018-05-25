@@ -528,11 +528,11 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
 // only for mk3
 int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf)
 {
-  uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'F', noteid };
+  uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'F', noteid };
   memcpy( buf+3, notebuf, 100); // FIXME: notes are 100 bytes
   //hexdump(stdout, (char*)notebuf, 15);
   //hexdump(stdout, buf, 15);
-  int rc = blink1_write(dev, buf, blink1_report2_size);
+  int rc = blink1_write(dev, buf, sizeof(buf));
   if( rc == -1 ) {
     printf("blink1_writeNote: oops error\n");
   }
@@ -541,9 +541,9 @@ int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf
 //
 int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 {
-    uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'f', noteid  };
+    uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'f', noteid  };
 
-    int rc = blink1_read(dev, buf, blink1_report2_size );
+    int rc = blink1_read(dev, buf, sizeof(buf) );
     
     uint8_t* notedata = buf+3;
     memcpy( *notebuf, notedata, 100); // skip over report id, cmd FIXME: harccoded 100
