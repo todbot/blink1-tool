@@ -151,6 +151,18 @@ int blink1_write( blink1_device* dev, void* buf, int len)
     return rc;
 }
 
+int blink1_read_nosend( blink1_device* dev, void* buf, int len)
+{
+  if( dev==NULL ) {
+    return -1; // BLINK1_ERR_NOTOPEN;
+  }
+  int rc = 0;
+  if( (rc = hid_get_feature_report(dev, buf, len) == -1) ) {
+    LOG("error reading data: %s\n",blink1_error_msg(rc));
+  }
+  return rc;
+}
+
 // len should contain length of buf
 // after call, len will contain actual len of buf read
 int blink1_read( blink1_device* dev, void* buf, int len)

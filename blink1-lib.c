@@ -538,12 +538,16 @@ int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf
   }
   return rc;
 }
-//
+
+// only for mk3
 int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 {
     uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'f', noteid  };
 
-    int rc = blink1_read(dev, buf, sizeof(buf) );
+    //int rc = blink1_read(dev, buf, sizeof(buf) );
+    int rc = blink1_write(dev, buf, sizeof(buf)-1 );
+
+    rc = blink1_read_nosend(dev, buf, sizeof(buf) );
     
     uint8_t* notedata = buf+3;
     memcpy( *notebuf, notedata, 100); // skip over report id, cmd FIXME: harccoded 100

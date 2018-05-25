@@ -36,7 +36,7 @@ extern "C" {
 #define blink1_report_size 8
 #define blink1_report2_id  2
 #define blink1_report2_size 128
-#define blink1_buf_size (blink1_report_size+1)
+#define blink1_buf_size  (blink1_report_size+1)
 #define blink1_buf2_size (blink1_report2_size+1)
 
 typedef enum  { 
@@ -133,6 +133,8 @@ int blink1_write( blink1_device* dev, void* buf, int len);
  * Used internally by blink1-lib
  */
 int blink1_read( blink1_device* dev, void* buf, int len);
+
+int blink1_read_nosend( blink1_device* dev, void* buf, int len);
 
 /**
  * Get blink1 firmware version.
