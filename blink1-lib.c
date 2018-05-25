@@ -529,7 +529,7 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
 int blink1_writeNote( blink1_device* dev, uint8_t noteid, const uint8_t* notebuf)
 {
   uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'F', noteid };
-  memcpy( buf+3, notebuf, 100); // FIXME: notes are 100 bytes
+  memcpy( buf+3, notebuf, blink1_note_size ); // FIXME: notes are 100 bytes
   //hexdump(stdout, (char*)notebuf, 15);
   //hexdump(stdout, buf, 15);
   int rc = blink1_write(dev, buf, sizeof(buf));
@@ -546,11 +546,10 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 
     //int rc = blink1_read(dev, buf, sizeof(buf) );
     int rc = blink1_write(dev, buf, sizeof(buf)-1 );
-
     rc = blink1_read_nosend(dev, buf, sizeof(buf) );
     
     uint8_t* notedata = buf+3;
-    memcpy( *notebuf, notedata, 100); // skip over report id, cmd FIXME: harccoded 100
+    memcpy( *notebuf, notedata, blink1_note_size); // skip over report id, cmd FIXME: harccoded 100
 
     return rc;
 }

@@ -874,7 +874,7 @@ int main(int argc, char** argv)
     }
     else if( cmd == CMD_READNOTE ) {
       uint8_t noteid = arg;
-      uint8_t notebuf[100];
+      uint8_t notebuf[blink1_note_size];
       uint8_t* notebufp = notebuf; // why do I need to do this?
     
       blink1_readNote( dev, noteid, &notebufp);
