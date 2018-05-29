@@ -140,6 +140,9 @@ void blink1_close( blink1_device* dev )
 //
 int blink1_write( blink1_device* dev, void* buf, int len)
 {
+    uint8_t* b = buf;
+    LOG("blink1_write: %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
+        b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]);
     if( dev==NULL ) {
         return -1; // BLINK1_ERR_NOTOPEN;
     }

@@ -28,6 +28,7 @@
 #include <unistd.h>    // getuid()
 
 #include "blink1-lib.h"
+extern int blink1_lib_verbose;
 
 // set to 1 to enable mk3 features (or really the display of those features)
 #define ENABLE_MK3  0
@@ -141,7 +142,7 @@ static void usage(char *myName)
 #if ENABLE_MK3 == 1
 "\n"            
 "User notes (mk3 only):\n"
-"  blink1-tool --writenote 1 -n 'hello there' \n"
+"  blink1-tool --writenote 1 --notestr 'hello there' \n"
 "  blink1-tool --readnote 1 \n"
 "\n"
 #endif
@@ -409,6 +410,7 @@ int main(int argc, char** argv)
             if( optarg==NULL ) verbose++;
             else verbose = strtol(optarg,NULL,0);
             if( verbose > 3 ) {
+                blink1_lib_verbose = 1;
                 fprintf(stderr,"going REALLY verbose\n");
             }
             break;

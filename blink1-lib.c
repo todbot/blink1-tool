@@ -40,11 +40,13 @@ static int blink1_cached_count = 0;  // number of cached entities
 
 static int blink1_enable_degamma = 1;
 
+int blink1_lib_verbose = 0;
+
 // set in Makefile to debug HIDAPI stuff
 #ifdef DEBUG_PRINTF
 #define LOG(...) fprintf(stderr, __VA_ARGS__)
 #else
-#define LOG(...) do {} while (0)
+#define LOG(...) { if(blink1_lib_verbose) { fprintf(stderr, __VA_ARGS__); } }
 #endif
 
 // addresses in EEPROM for mk1 blink(1) devices

@@ -64,6 +64,9 @@ typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
 // -------- BEGIN PUBLIC API ----------
 //
 
+// you can define "extern int blink1_lib_verbose"
+// and set it to "1" to enable low-level debugging 
+
 typedef struct {
     uint8_t r; uint8_t g; uint8_t b;
 } rgb_t;
