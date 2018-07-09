@@ -132,12 +132,47 @@ json_value* json_convert_value( json_value* jv)
     return NULL;
 }
 
-//
-char* curl_fetch(const char* urlstr)
+// in-place remove of duplicate char (like '//')
+void dedupe(char* str, char ch)
+{
+    int len,len1;
+    // calculate length
+    for(len=0; str[len]!='\0'; len++);
+ 
+    // assign 0 to len1 - length of removed characters
+    len1=0;
+ 
+    // Remove consecutive repeated characters from string
+    for(int i=0; i<(len-len1);) {
+        if(str[i] == ch && str[i]==str[i+1]) {
+            // shift all characters
+            for(int j=i;j<(len-len1);j++) {
+                str[j]=str[j+1];
+            }
+            len1++;
+        }
+        else {
+            i++;
+        }
+    }
+}
+
+// do the actual fetch using curl lib
+char* curl_fetch( char* baseUrl, char* urlbuf)
 {
     CURL *curl_handle;
     CURLcode res;
 
+    const int urlmaxsize = 1024; // 
+    char urlstr[urlmaxsize];
+    // combine baseUrl to urltsr, making sure not to double-up forward-slashes
+    if( baseUrl[strlen(baseUrl) - 1] == '/' ) { // ends in a slash
+      urlbuf++;
+    }
+    snprintf(urlstr, urlmaxsize, "%s%s", baseUrl, urlbuf);
+
+    printf("curl_fetch:%s\n", urlstr);
+    
     struct curlMemoryStruct chunk;
 
     chunk.memory = malloc(1);  /* will be grown as needed by the realloc above */
@@ -178,10 +213,7 @@ char* curl_fetch(const char* urlstr)
 //
 void blink1control_printIds()
 {
-    sprintf(urlbuf, "%s/blink1/id", baseUrl);
-    if( verbose > 0 ) msg("url: %s\n",urlbuf);
-
-    char* js = curl_fetch( urlbuf );
+    char* js = curl_fetch( baseUrl, "/blink1/id" );
     if( js==NULL ) return; // FIXME:
     json_value* jv = json_parse( js, strlen(js));
 
@@ -220,11 +252,11 @@ int blink1control_fadeToRGBN( int tmillis, int r, int g, int b, char* idstr, int
         sprintf(idarg, "id=%s",idstr);
     }
     sprintf(urlbuf,
-            "%s/blink1/fadeToRGB?rgb=%%23%2.2x%2.2x%2.2x&time=%2.2f&ledn=%d&%s",
-            baseUrl, r,g,b, (tmillis/1000.0), ledn, idarg);
-    if( verbose > 0 ) msg("url: %s\n",urlbuf);
+            "/blink1/fadeToRGB?rgb=%%23%2.2x%2.2x%2.2x&time=%2.2f&ledn=%d&%s",
+            r,g,b, (tmillis/1000.0), ledn, idarg);
+    if( verbose > 0 ) msg("url: %s -- %s\n",baseUrl, urlbuf);
 
-    char* js = curl_fetch( urlbuf );
+    char* js = curl_fetch( baseUrl, urlbuf );
 
     free(js);
 
