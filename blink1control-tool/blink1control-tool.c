@@ -132,31 +132,6 @@ json_value* json_convert_value( json_value* jv)
     return NULL;
 }
 
-// in-place remove of duplicate char (like '//')
-void dedupe(char* str, char ch)
-{
-    int len,len1;
-    // calculate length
-    for(len=0; str[len]!='\0'; len++);
- 
-    // assign 0 to len1 - length of removed characters
-    len1=0;
- 
-    // Remove consecutive repeated characters from string
-    for(int i=0; i<(len-len1);) {
-        if(str[i] == ch && str[i]==str[i+1]) {
-            // shift all characters
-            for(int j=i;j<(len-len1);j++) {
-                str[j]=str[j+1];
-            }
-            len1++;
-        }
-        else {
-            i++;
-        }
-    }
-}
-
 // do the actual fetch using curl lib
 char* curl_fetch( char* baseUrl, char* urlbuf)
 {
