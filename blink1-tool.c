@@ -31,7 +31,7 @@
 extern int blink1_lib_verbose;
 
 // set to 1 to enable mk3 features (or really the display of those features)
-#define ENABLE_MK3  0
+#define ENABLE_MK3  1
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -144,6 +144,7 @@ static void usage(char *myName)
 "User notes (mk3 only):\n"
 "  blink1-tool --writenote 1 --notestr 'hello there' \n"
 "  blink1-tool --readnote 1 \n"
+"  blink1-tool --readnotes    # reads all notes out \n"
 "\n"
 #endif
 "\n"
@@ -194,6 +195,7 @@ enum {
     CMD_READPATTERN,
     CMD_WRITENOTE,
     CMD_READNOTE,
+    CMD_READNOTES_ALL,
     CMD_SETSTARTUP,
     CMD_GETSTARTUP,
     CMD_GOBOOTLOAD,
@@ -312,6 +314,7 @@ int main(int argc, char** argv)
         {"reportid",   required_argument, 0,      'i' },
         {"writenote",  required_argument, &cmd,   CMD_WRITENOTE},
         {"readnote",   required_argument, &cmd,   CMD_READNOTE},
+        {"readnotes",  no_argument,       &cmd,   CMD_READNOTES_ALL},
         {"notestr",    required_argument, 0,      'n'},
         {"gobootload", no_argument,       &cmd,   CMD_GOBOOTLOAD},
         {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
@@ -820,7 +823,7 @@ int main(int argc, char** argv)
             if( pat.ledn>0 ) {
                 blink1_setLEDN(dev, pat.ledn);
             }
-            msg("writing %d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
+            msg("writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.g,pat.color.b, pat.millis,pat.ledn );
             rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
         }
 
@@ -870,18 +873,28 @@ int main(int argc, char** argv)
           bootmode, playstart,playend,playcount);
     }
     else if( cmd == CMD_WRITENOTE ) {
+      msg("writenote:");
       uint8_t noteid = arg;
       uint8_t* notebuf = (uint8_t*)argbuf; 
       blink1_writeNote( dev, noteid, notebuf);
     }
     else if( cmd == CMD_READNOTE ) {
+      msg("readnote:");
       uint8_t noteid = arg;
       uint8_t notebuf[blink1_note_size];
       uint8_t* notebufp = notebuf; // why do I need to do this?
-    
+      
       blink1_readNote( dev, noteid, &notebufp);
 
       printf("note %d: %s\n", noteid, notebuf);
+    }
+    else if( cmd == CMD_READNOTES_ALL ) {
+      uint8_t notebuf[blink1_note_size];
+      uint8_t* notebufp = notebuf; // why do I need to do this?
+      for( int i=0; i<10; i++) {
+        blink1_readNote( dev, i, &notebufp);
+        printf("%d: %s\n", i, notebuf);
+      }
     }
     else if( cmd == CMD_GOBOOTLOAD ) {
       msg("Changing blink(1) mk3 to bootloader...\n");
