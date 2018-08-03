@@ -774,6 +774,16 @@ void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
     rgb->b=b;
 }
 
+void remove_whitespace(char *str)
+{
+    char *p;
+    size_t len = strlen(str);
+ 
+    for(p = str; *p; p ++, len --) {
+        while(isspace(*p)) memmove(p, p+1, len--);
+    }
+}
+
 // parse a color in form either "#ff00ff" or "FF00FF"
 // or "255,0,255" or "0xff,0x00,0xff"
 void parsecolor(rgb_t* color, char* colorstr)
@@ -797,8 +807,9 @@ void parsecolor(rgb_t* color, char* colorstr)
 // - pattern length
 int parsePattern( char* str, int* repeats, patternline_t* pattern )
 {
+    remove_whitespace(str);
     char* s;
-    s = strtok( str, ",");
+    s = strtok( str, ", ");
     if(  s != NULL ) {
       *repeats = strtol(s,NULL,0);
     }
@@ -806,6 +817,7 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern )
     int i=0;
     s = strtok(NULL, ","); // prep next parse
     while( s != NULL ) {
+      printf("s:'%s'\n",s);
         parsecolor( &pattern[i].color, s );
         
         s = strtok(NULL, ",");
