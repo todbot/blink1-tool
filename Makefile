@@ -540,10 +540,23 @@ package-all: package package-tiny-server package-blink1control-tool
 	@mv blink1*$(PKGOS).zip builds
 	@echo "Look in 'builds' for zipfiles to publish"
 
-install: all
-	$(INSTALL) blink1-tool$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
+install-lib:
 	$(INSTALL) $(LIBTARGET) $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
+
+install-dev: install-lib
 	$(INSTALL) blink1-lib.h $(DESTDIR)$(INCLOCATION)/blink1-lib.h
+
+install: all install-lib
+	$(INSTALL) blink1-tool$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
+
+uninstall-lib:
+	rm -f $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
+
+uninstall-dev: uninstall-lib
+	rm -f $(DESTDIR)$(INCLOCATION)/blink2-lib.h
+
+uninstall: uninstall-lib
+	rm -f $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
 
 clean:
 	rm -f $(OBJS)
