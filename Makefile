@@ -460,7 +460,6 @@ endif
 
 #CFLAGS += -O -Wall -std=gnu99 -I ../hardware/firmware
 CFLAGS += -std=gnu99
-CFLAGS += -g
 CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
 
 OBJS +=  blink1-lib.o
@@ -468,10 +467,13 @@ OBJS +=  blink1-lib.o
 
 PKGOS = $(BLINK1_VERSION)
 
-.PHONY: all install help blink1control-tool
+.PHONY: all install help blink1control-tool debug
 
 #all: msg blink1-tool blink1-server-simple
 all: msg blink1-tool lib
+
+debug: CFLAGS += -DDEBUG -g
+debug: all
 
 # symbolic targets:
 help:
@@ -507,13 +509,13 @@ $(OBJS): %.o: %.c
 
 blink1-tool: $(OBJS) blink1-tool.o
 	$(CC) $(CFLAGS) -c blink1-tool.c -o blink1-tool.o
-	$(CC) $(CFLAGS) $(EXEFLAGS) -g $(OBJS) $(LIBS) blink1-tool.o -o blink1-tool$(EXE) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(EXEFLAGS) $(OBJS) $(LIBS) blink1-tool.o -o blink1-tool$(EXE) $(LDFLAGS)
 
 blink1-tiny-server: $(OBJS) server/blink1-tiny-server.c
 #	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c server/blink1-tiny-server.c -o blink1-tiny-server.o
 	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c server/blink1-tiny-server.c -o blink1-tiny-server.o
 	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c ./server/mongoose/mongoose.c -o ./server/mongoose/mongoose.o
-	$(CC) -g $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) -lpthread  blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
+	$(CC) $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) -lpthread  blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
 
 $(LIBTARGET): $(OBJS)
 	$(CC) $(LIBFLAGS) $(CFLAGS) $(OBJS) $(LIBS)
