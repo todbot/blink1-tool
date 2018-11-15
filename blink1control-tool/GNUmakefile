@@ -136,19 +136,19 @@ json-parser-setup:
 depcheck:
 	@echo "Checking if curl and json-parser are setup"
 	@if [ ! -d curl-7.37.1 ] ; then \
-		make curl-setup; \
+		$(MAKE) curl-setup; \
 	else \
 	  echo "  curl set up"; \
 	fi
 
 	@if [ ! -d json-parser ] ; then \
-		make json-parser-setup; \
+		$(MAKE) json-parser-setup; \
 	else \
 	  echo "  json-parser set up"; \
 	fi
 
 
-blink1control-tool: blink1control-tool.c 
+blink1control-tool: blink1control-tool.c
 	$(CC) -o blink1control-tool$(EXE)  blink1control-tool.c $(JSFILES) $(CFLAGS)
 
 package: blink1control-tool
@@ -162,7 +162,7 @@ clean:
 	rm -f blink1control-tool$(EXE)
 
 distclean:
-	make clean
+	$(MAKE) clean
 	rm -rf curl-7.37.1
 	rm -rf json-parser
 

@@ -521,8 +521,8 @@ $(LIBTARGET): $(OBJS)
 
 lib: $(LIBTARGET)
 
-blink1control-tool: 
-	make -C blink1control-tool
+blink1control-tool:
+	$(MAKE) -C blink1control-tool
 
 package: lib blink1-tool
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
@@ -564,7 +564,7 @@ clean:
 	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
-	make -C blink1control-tool clean
+	$(MAKE) -C blink1control-tool clean
 
 distclean: clean
 	#rm -f blink1-tool$(EXE)
@@ -573,7 +573,7 @@ distclean: clean
 	rm -f libblink1.so
 	rm -f blink1-tool
 	rm -f blink1-tool.exe
-	make -C blink1control-tool distclean
+	$(MAKE) -C blink1control-tool distclean
 
 # show shared library use
 # in general we want minimal to no dependecies for blink1-tool
