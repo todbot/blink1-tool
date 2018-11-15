@@ -82,6 +82,9 @@
 #
 #
 
+# Enable 'all' warnings, and treat them as errors.
+CFLAGS = -Wall -Werror
+
 # deal with stupid Windows not having 'cc'
 ifeq (default,$(origin CC))
   CC = gcc
