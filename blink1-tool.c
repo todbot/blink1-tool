@@ -109,6 +109,7 @@ static void usage(char *myName)
 "  --version                   Display blink1-tool version info \n"
 #if 0
 "  --gobootload                Enable bootloader (mk3 only)\n"
+"  --lockbootload              Lock bootloader (mk3 only)\n"
 #endif
 "and [options] are: \n"
 "  -d dNums --id all|deviceIds Use these blink(1) ids (from --list) \n"
@@ -128,6 +129,7 @@ static void usage(char *myName)
 "  blink1-tool --rgb '#FF9900'           # Make blink1 pumpkin orange\n"
 "  blink1-tool --rgb FF9900 --led 2      # Make blink1 orange on lower LED\n"
 "  blink1-tool --chase=5,3,18            # Chase pattern 5 times, on leds 3-18\n"
+"\n"
 "Pattern Examples \n"
 "    # Play purple-green flash 10 times (pattern runs in blink1-tool so blocks)\n" 
 "  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
@@ -135,6 +137,7 @@ static void usage(char *myName)
 "  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
 "    # Erase all lines of the color pattern and save to flash \n"
 "  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
+"\n"
 "Setting Startup Params Examples (mk2 v206+ & mk3 only):\n"
 "  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
 "  blink1-tool --savepattern          # must do this to save to flash \n"
@@ -199,6 +202,7 @@ enum {
     CMD_SETSTARTUP,
     CMD_GETSTARTUP,
     CMD_GOBOOTLOAD,
+    CMD_LOCKBOOTLOAD,
     CMD_SETRGB,
     CMD_TESTTEST
 };
@@ -256,6 +260,8 @@ int main(int argc, char** argv)
     memset( cmdbuf, 0, sizeof(cmdbuf));
 
     static int cmd  = CMD_NONE;
+
+    setbuf(stdout, NULL);  // turn off buffering of stdout
 
     // parse options
     int option_index = 0, opt;
@@ -317,6 +323,7 @@ int main(int argc, char** argv)
         {"readnotes",  no_argument,       &cmd,   CMD_READNOTES_ALL},
         {"notestr",    required_argument, 0,      'n'},
         {"gobootload", no_argument,       &cmd,   CMD_GOBOOTLOAD},
+        {"lockbootload",no_argument,      &cmd,   CMD_LOCKBOOTLOAD},
         {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
         {NULL,         0,                 0,      0}
     };
@@ -521,7 +528,7 @@ int main(int argc, char** argv)
 #else
     if( nogamma ) {      //FIXME: confusing
         msg("disabling auto degamma\n");
-        blink1_disableDegamma();  
+        blink1_disableDegamma();
     }
 #endif
 
@@ -900,13 +907,26 @@ int main(int argc, char** argv)
       msg("Changing blink(1) mk3 to bootloader...\n");
       msg("Use dfu-util to upload new firmare\n");
       msg("Or replug device to go back to normal\n");
-      rc = blink1_goBootloader(dev);
+      rc = blink1_bootloaderGo(dev);
       if( rc == 0 ) {
         msg("blink(1) in bootloader mode\n");
       } else {
         msg("error triggering bootloader\n");
       }
-    }
+    } 
+    else if( cmd == CMD_LOCKBOOTLOAD ) {
+      msg("Locking blink(1) mk3 bootloader so it cannot be executed via blink1-tool.\n");
+      msg("You must physically take apart blink(1) mk3 to re-enable bootloader..\n");
+      msg("if you do not want to do this, press Ctrl-C in next 3 seconds...\n");
+      blink1_sleep(3000);
+
+      rc = blink1_bootloaderLock(dev);
+      if( rc == 0 ) {
+        msg("blink(1) mk3 bootloader has been locked \n");
+      } else {
+        msg("error locking bootloader\n");
+      }
+    } 
     else if( cmd == CMD_TESTTEST ) {
       msg("test test reportid:%d\n",reportid);
       rc = blink1_testtest(dev, reportid);
