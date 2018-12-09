@@ -49,12 +49,13 @@
 #   - make
 #
 # FreeBSD
+#   - Compile with "gmake" instead of "make"
 #   - libusb is part of the OS so no pkg-config needed.
 #   - No -ldl on FreeBSD necessary.
 #   - For FreeBSD versions < 10, iconv is a package that needs to be installed;
 #     in this case it lives in /usr/local/lib/
 #   - On FreeBSD 8.3, this command builds blink1-tool:
-#   - "cd blink1/commandline && USBLIB_TYPE=HIDDATA gmake"
+#     "cd blink1/commandline && USBLIB_TYPE=HIDDATA gmake"
 #
 # Linux Ubuntu 32-bit cross-compile on 64-bit
 #   To build 32-bit on 64-bit Ubuntu, try a chrooted build:
@@ -159,7 +160,7 @@ CFLAGS += -mmacosx-version-min=10.8
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
-CFLAGS += -arch i386 -arch x86_64
+#CFLAGS += -arch i386 -arch x86_64
 # don't need pthread with clang
 #CFLAGS += -pthread
 CFLAGS += -O2 -D_THREAD_SAFE -MT MD -MP
@@ -278,9 +279,15 @@ CFLAGS += -I./hidapi/hidapi
 OBJS = ./hidapi/libusb/hid.o
 CFLAGS += -I/usr/local/include -fPIC
 LIBS   += -lusb -lrt -lpthread
+
 ifndef FBSD10
 LIBS   += -L/usr/local/lib -liconv
+define prep_cmd
+  @echo "patching hidapi"
+  patch -N < patches/freebsd-hidapi-libusb-hid.c.patch || echo "patch already applied"
+endef
 endif
+
 endif
 
 ifeq "$(USBLIB_TYPE)" "HIDDATA"
@@ -471,7 +478,7 @@ PKGOS = $(BLINK1_VERSION)
 .PHONY: all install help blink1control-tool
 
 #all: msg blink1-tool blink1-server-simple
-all: msg blink1-tool lib
+all: msg prep blink1-tool lib
 
 # symbolic targets:
 help:
@@ -501,6 +508,9 @@ msg:
 	@echo "Building blink1-tool for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION) USBLIB_TYPE=$(USBLIB_TYPE)"
 	@echo "Type 'make help' for other build products"
 
+# defin "prep_cmd" for any pre-compilation preparation that needs to be done (e.g. see FreeBSD)
+prep:
+	$(prep_cmd)
 
 $(OBJS): %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -522,7 +532,7 @@ $(LIBTARGET): $(OBJS)
 lib: $(LIBTARGET)
 
 blink1control-tool: 
-	make -C blink1control-tool
+	$(MAKE) -C blink1control-tool
 
 package: lib blink1-tool
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
@@ -564,7 +574,7 @@ clean:
 	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
-	make -C blink1control-tool clean
+	$(MAKE) -C blink1control-tool clean
 
 distclean: clean
 	#rm -f blink1-tool$(EXE)
@@ -573,7 +583,7 @@ distclean: clean
 	rm -f libblink1.so
 	rm -f blink1-tool
 	rm -f blink1-tool.exe
-	make -C blink1control-tool distclean
+	$(MAKE) -C blink1control-tool distclean
 
 # show shared library use
 # in general we want minimal to no dependecies for blink1-tool
