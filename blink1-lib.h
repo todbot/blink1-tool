@@ -352,7 +352,9 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
  * Tell blink(1) to reset into bootloader.
  * mk3 devices only
  */
-int blink1_goBootloader( blink1_device* dev );
+int blink1_bootloaderGo( blink1_device* dev );
+
+int blink1_bootloaderLock( blink1_device* dev );
 
 /**
  * Internal testing

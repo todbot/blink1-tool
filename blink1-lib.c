@@ -557,16 +557,34 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 }
 
 // only for mk3
-int blink1_goBootloader( blink1_device* dev )
+int blink1_bootloaderGo( blink1_device* dev )
 {
   uint8_t buf[blink1_report_size] = { blink1_report_id, 'G', 'o','B','o','o','t',0 };
   int rc = blink1_read(dev, buf, blink1_report_size);
   if( rc == -1 ) {
-    printf("blink1_goBootlaoder: oops error\n");
+    printf("blink1_bootlaoderLock: oops error\n");
   }
   else { 
     printf("blink1 response: %s\n", buf+1);
     if( strncmp("GOBOOT", (char*)buf+1, 6) != 0 ) {
+      printf("blink1_bootlaoderLock: bootloader is locked\n");
+      rc = 01; // fail
+    }
+  }  
+  return rc;  // >0 on good completion
+}
+
+// only for mk3
+int blink1_bootloaderLock( blink1_device* dev )
+{
+  uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'L', 'o','c','k','B','o','o','t','l','o','a','d' };
+  int rc = blink1_read(dev, buf, blink1_report2_size);
+  if( rc == -1 ) {
+    printf("blink1_bootlaoderLock: oops error\n");
+  }
+  else { 
+    printf("blink1 response: %s\n", buf+1);
+    if( strncmp("LOCKED", (char*)buf+1, 6) != 0 ) {
       rc = -1;
     }
   }  
