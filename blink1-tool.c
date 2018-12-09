@@ -31,7 +31,7 @@
 extern int blink1_lib_verbose;
 
 // set to 1 to enable mk3 features (or really the display of those features)
-#define ENABLE_MK3  1
+#define ENABLE_MK3  0
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -100,7 +100,7 @@ static void usage(char *myName)
 "  --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool\n"
 "  --writepattern <patternstr> Write Blink1Control pattern string to blink(1)\n"
 "  --readpattern               Download full blink(1) patt as Blink1Control str\n"
-"  --servertickle <1/0>[,1/0]  Turn on/off servertickle (w/on/off, uses -t msec)\n"
+"  --servertickle <1/0>[,1/0,start,end] Turn on/off servertickle (w/on/off, uses -t msec)\n"
 "  --chase, --chase=<num,start,stop> Multi-LED chase effect. <num>=0 runs forever\n"
 "  --random, --random=<num>    Flash a number of random colors, num=1 if omitted \n"
 "  --glimmer, --glimmer=<num>  Glimmer a color with --rgb (num times)\n"
@@ -121,7 +121,7 @@ static void usage(char *myName)
 "  --ledn 1,3,5,7              Specify a list of LEDs to light\n"
 "  -v, --verbose               verbose debugging msgs\n"
 "\n"
-"Examples \n"
+"Examples: \n"
 "  blink1-tool -m 100 --rgb=255,0,255    # Fade to #FF00FF in 0.1 seconds \n"
 "  blink1-tool -t 2000 --random=100      # Every 2 seconds new random color\n"
 "  blink1-tool --led 2 --random=100      # Random colors on both LEDs \n"
@@ -130,13 +130,20 @@ static void usage(char *myName)
 "  blink1-tool --rgb FF9900 --led 2      # Make blink1 orange on lower LED\n"
 "  blink1-tool --chase=5,3,18            # Chase pattern 5 times, on leds 3-18\n"
 "\n"
-"Pattern Examples \n"
-"    # Play purple-green flash 10 times (pattern runs in blink1-tool so blocks)\n" 
+"Pattern Examples: \n"
+"  # Play purple-green flash 10 times (pattern runs in blink1-tool so blocks)\n" 
 "  blink1-tool --playpattern \'10,#ff00ff,0.1,0,#00ff00,0.1,0\'\n"
-"    # Change the 2nd color pattern line to #112233 with a 0.5 sec fade\n"
+"  # Change the 2nd color pattern line to #112233 with a 0.5 sec fade\n"
 "  blink1-tool -m 500 --rgb 112233 --setpattline 1 \n"
-"    # Erase all lines of the color pattern and save to flash \n"
+"  # Erase all lines of the color pattern and save to flash \n"
 "  blink1-tool --clearpattern ; blink1-tool --savepattern \n"
+"\n"
+"Servertickle Examples: \n"
+"  # Enable servertickle to play pattern after 2 seconds \n"
+"  # (Keep issuing this command within 2 seconds to prevent it firing)\n"
+"  blink1-tool -t 2000 --servertickle 1 \n"
+"  # Enable servertickle after 2 seconds, play sub-pattern 2-3 \n"
+"  blink1-tool -t 2000 --servetickle, 1,1,2,3 \n"
 "\n"
 "Setting Startup Params Examples (mk2 v206+ & mk3 only):\n"
 "  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
@@ -151,7 +158,7 @@ static void usage(char *myName)
 "\n"
 #endif
 "\n"
-"Notes \n"
+"Notes: \n"
 " - To blink a color with specific timing, specify 'blink' command last:\n"
 "   blink1-tool -t 200 -m 100 --rgb ff00ff --blink 5 \n"
 " - If using several blink(1)s, use '-d all' or '-d 0,2' to select 1st,3rd: \n"
@@ -787,14 +794,16 @@ int main(int argc, char** argv)
         blink1_fadeToRGBN(dev, millis, 0,0,0, 1);
         blink1_fadeToRGBN(dev, millis, 0,0,0, 2);
     }
-    else if( cmd == CMD_SERVERDOWN ) { 
-        //int on  = arg;
+    else if( cmd == CMD_SERVERDOWN ) {
         int on = cmdbuf[0];
         int st = cmdbuf[1];
-        int startpos = cmdbuf[2];
-        int endpos   = cmdbuf[3];
-        msg("setting servertickle %s (@ %ld millis)\n",((on)?"ON":"OFF"),delayMillis);
-        blink1_serverdown( dev, on, delayMillis, st, startpos,endpos );
+        int start_pos = cmdbuf[2];
+        int end_pos   = cmdbuf[3];
+        if( start_pos < 0) { start_pos = 0; }
+        if( end_pos <= 0 ) { end_pos = 15; } 
+        msg("setting servertickle %s (@ %ld millis), playing lines %d-%d\n",
+            ((on)?"ON":"OFF"), delayMillis, start_pos, end_pos);
+        blink1_serverdown( dev, on, delayMillis, st, start_pos, end_pos );
     }
     else if( cmd == CMD_PLAYPATTERN ) {
         blink1_close(dev);
