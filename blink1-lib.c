@@ -591,6 +591,22 @@ int blink1_bootloaderLock( blink1_device* dev )
   return rc;
 }
 
+// only for mk3 
+// idbuf must be at least blink1_report2_size-2 big
+//
+int blink1_getId( blink1_device *dev, uint8_t** idbuf )
+{
+    uint8_t buf[blink1_report2_size] = { 2, 'U', 0,0,0, 0,0,0 };
+    int rc = blink1_read(dev, buf, blink1_report2_size);
+    if( rc != -1 ) {
+      memcpy( idbuf, buf+2, blink1_report2_size-2); // skip over report id & cmd
+    }
+    else {
+      printf("getId: read error: rc=%d\n", rc);
+    }
+    return rc;
+}
+
 //
 int blink1_testtest( blink1_device *dev, uint8_t reportid )
 {

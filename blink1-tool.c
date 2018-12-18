@@ -107,9 +107,12 @@ static void usage(char *myName)
 " Nerd functions: \n"
 "  --fwversion                 Display blink(1) firmware version \n"
 "  --version                   Display blink1-tool version info \n"
-#if 0
+"  --setstartup                Set startup parameters (v206+,mk3) \n"            
+"  --getstartup                Get startup parameters (v206+,mk3) \n"
+#if ENABLE_MK3 == 1
 "  --gobootload                Enable bootloader (mk3 only)\n"
 "  --lockbootload              Lock bootloader (mk3 only)\n"
+"  --getid                     Get unique id (mk3 only)\n"
 #endif
 "and [options] are: \n"
 "  -d dNums --id all|deviceIds Use these blink(1) ids (from --list) \n"
@@ -210,6 +213,7 @@ enum {
     CMD_GETSTARTUP,
     CMD_GOBOOTLOAD,
     CMD_LOCKBOOTLOAD,
+    CMD_GET_ID,
     CMD_SETRGB,
     CMD_TESTTEST
 };
@@ -331,6 +335,7 @@ int main(int argc, char** argv)
         {"notestr",    required_argument, 0,      'n'},
         {"gobootload", no_argument,       &cmd,   CMD_GOBOOTLOAD},
         {"lockbootload",no_argument,      &cmd,   CMD_LOCKBOOTLOAD},
+        {"getid",       no_argument,      &cmd,   CMD_GET_ID},
         {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
         {NULL,         0,                 0,      0}
     };
@@ -935,7 +940,18 @@ int main(int argc, char** argv)
       } else {
         msg("error locking bootloader\n");
       }
-    } 
+    }
+    else if( cmd == CMD_GET_ID ) {
+      msg("Getting mk3 unique id:\n");
+      uint8_t idbuf[blink1_report2_size];
+      rc = blink1_getId(dev, (uint8_t**) &idbuf);
+      if( rc == 0 ) {
+        for(int i=0; i< blink1_report2_size; i++ ) {
+          printf("%2.2x,",idbuf[i]);
+        }
+        printf("\n");
+      }
+    }
     else if( cmd == CMD_TESTTEST ) {
       msg("test test reportid:%d\n",reportid);
       rc = blink1_testtest(dev, reportid);

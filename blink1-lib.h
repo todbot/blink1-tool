@@ -359,6 +359,8 @@ int blink1_bootloaderLock( blink1_device* dev );
 /**
  * Internal testing
  */
+int blink1_getId( blink1_device *dev, uint8_t** idbuf );
+
 int blink1_testtest(blink1_device *dev, uint8_t reportid);
 
 
