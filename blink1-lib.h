@@ -45,7 +45,7 @@ typedef enum  {
     BLINK1_UNKNOWN = 0,
     BLINK1_MK1,   // the original one from the kickstarter
     BLINK1_MK2,   // the updated one with 2 LEDs
-    BLINK1_MK3    // 2018 one (unreleased as of yet)
+    BLINK1_MK3    // 2018 one based on EFM32HG 
 } blink1Type_t;
 
 struct blink1_device_;
@@ -461,12 +461,11 @@ const char*  blink1_getSerialForDev(blink1_device* dev);
 int          blink1_getCachedCount(void);
 
 /**
- * Returns if device at cache index i is a mk2
+ * Returns version of device at cache index i is a mk2
  *
  * @return mk2=1, mk1=0
  */
 int          blink1_isMk2ById(int i);
-
 
 /**
  * Returns if given blink1_device is a mk2 or not
@@ -475,6 +474,24 @@ int          blink1_isMk2ById(int i);
  */
 int          blink1_isMk2(blink1_device* dev);
 
+/**
+ * Returns device "mk" type at cache index i
+ * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1) 
+ */
+blink1Type_t blink1_deviceTypeById( int i );
+
+/**
+ *
+ * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1) 
+ */
+blink1Type_t blink1_deviceType( blink1_device* dev );
+
+/**
+ * Return a string representation of the blink(1) device type 
+ * (e.g. "mk2" or "mk3")
+ * @return const string
+ */
+const char* blink1_deviceTypeToStr(blink1Type_t t);
 
 /**
  *

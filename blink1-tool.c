@@ -120,7 +120,7 @@ static void usage(char *myName)
 "  -m ms,   --millis=millis    Set millisecs for color fading (default 300)\n"
 "  -q, --quiet                 Mutes all stdout output (supercedes --verbose)\n"
 "  -t ms,   --delay=millis     Set millisecs between events (default 500)\n"
-"  -l <led>, --led=<led>       Which LED to use, 0=all/1=top/2=bottom (mk2)\n"
+"  -l <led>, --led=<led>       Which LED to use, 0=all/1=top/2=bottom (mk2+)\n"
 "  --ledn 1,3,5,7              Specify a list of LEDs to light\n"
 "  -v, --verbose               verbose debugging msgs\n"
 "\n"
@@ -553,8 +553,9 @@ int main(int argc, char** argv)
             dev = blink1_openBySerial( blink1_getCachedSerial(i) );
             rc = blink1_getVersion(dev);
             blink1_close(dev);
-            printf("id:%d - serialnum:%s %s fw version:%d\n", i, blink1_getCachedSerial(i), 
-                   (blink1_isMk2ById(i)) ? "(mk2)":"", rc);
+            const char* t = blink1_deviceTypeToStr(blink1_deviceTypeById(i));
+            printf("id:%d - serialnum:%s (%s) fw version:%d\n",
+                   i, blink1_getCachedSerial(i), t, rc);
         }
 #ifdef USE_HIDDATA
         printf("(Listing not supported in HIDDATA builds)\n"); 

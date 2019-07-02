@@ -58,6 +58,11 @@ int blink1_lib_verbose = 0;
 
 void blink1_sortCache(void);
 
+const char * const deviceTypeStrings[] =
+    {
+     "unknown",
+     "mk1", "mk2", "mk3" 
+    };
 
 //----------------------------------------------------------------------------
 // implementation-varying code 
@@ -147,14 +152,13 @@ int blink1_clearCacheDev( blink1_device* dev )
     return i;
 }
 
-#if 0
 blink1Type_t blink1_deviceTypeById( int i )
 {
     //if( i>=0  && blink1_infos[i].type == BLINK1_MK2 ) return 1;
-    if( i>= 0 ) {
-      return blink1_infos[i].type;
-    }
-    return 0;
+    //if( i>= 0 ) {
+    return blink1_infos[i].type;
+    //}
+    //return 0;
 }
 
 // returns BLINK1_MK2, BLINK1_MK3, or BLINK1
@@ -162,7 +166,12 @@ blink1Type_t blink1_deviceType( blink1_device* dev )
 {
   return blink1_deviceTypeById( blink1_getCacheIndexByDev(dev) );
 }
-#endif
+
+const char* blink1_deviceTypeToStr(blink1Type_t t)
+{
+    return deviceTypeStrings[t];
+}
+
 
 int blink1_isMk2ById( int i )
 {
