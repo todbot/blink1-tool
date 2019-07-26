@@ -31,7 +31,7 @@
 extern int blink1_lib_verbose;
 
 // set to 1 to enable mk3 features (or really the display of those features)
-#define ENABLE_MK3  0
+#define ENABLE_MK3  1
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -253,7 +253,9 @@ int main(int argc, char** argv)
     int16_t arg = 0;  // generic int arg for cmds that take an arg
     char*  argbuf[150]; // generic str arg for cmds that take an arg
     uint8_t chasebuf[3]; // could use other buf
-
+    int vid = 0;
+    int pid = 0;
+    
     uint8_t cmdbuf[blink1_buf_size]; 
     rgb_t rgbbuf = {0,0,0};
     
@@ -276,7 +278,7 @@ int main(int argc, char** argv)
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhm:t:d:gl:";
+    char* opt_str = "qvhm:t:d:gl:V:P:";
     static struct option loptions[] = {
         {"verbose",    optional_argument, 0,      'v'},
         {"quiet",      optional_argument, 0,      'q'},
@@ -286,6 +288,8 @@ int main(int argc, char** argv)
         {"led",        required_argument, 0,      'l'},
         {"ledn",       required_argument, 0,      'l'},
         {"nogamma",    no_argument,       0,      'g'},
+        {"vid",        required_argument, 0,      'V'},
+        {"pid",        required_argument, 0,      'P'},
         {"help",       no_argument,       0,      'h'},
         {"list",       no_argument,       &cmd,   CMD_LIST },
         {"eeread",     required_argument, &cmd,   CMD_EEREAD },
@@ -436,6 +440,12 @@ int main(int argc, char** argv)
                 fprintf(stderr,"going REALLY verbose\n");
             }
             break;
+        case 'V': // vid
+            vid = strtol(optarg,NULL,0);
+            break;
+        case 'P': // pid
+            pid = strtol(optarg,NULL,0);
+            break;
         case 'i': // report id, for testing
           reportid = strtol(optarg,NULL,10);
           break;
@@ -475,7 +485,14 @@ int main(int argc, char** argv)
     }
 
     // get a list of all devices and their paths
-    int count = blink1_enumerate();
+    int count = 0;
+    if( vid && pid ) {
+        msg("enumerating by vid:pid %x:%x\n", vid,pid);
+        count = blink1_enumerateByVidPid(vid,pid);
+    }
+    else {
+        count = blink1_enumerate();
+    }
 
     if( cmd == CMD_VERSION ) { 
         char verbuf[40] = "";
