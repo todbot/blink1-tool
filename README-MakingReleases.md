@@ -17,7 +17,7 @@ Assumptions
   - OpenWrt brcm47xx
 
 
-- Build primarily 32-bit, not 64-bit
+- Build primarily 64-bit, not 32-bit
 - Unix command-line build tools available for each platform
 - Shared mounted checkout of github.com/todbot/ blink1 repo,
    or at least same revision checkout
@@ -27,19 +27,21 @@ General Process
 
 1. `cd  blink1-tool`
 2. git tag release w/ `git tag -a v2.0.2 -m 'some update msg' && git push --tags`
-2. Build code with `make clean && make`
-3. Package up zipfile with `make package`
-4. Copy zip package to and test on separate test systems
-5. Publish zip package to github release
-6. Adjust links on http://blink1.thingm.com/downloads
+3. Build code with `make clean && make`
+3a. Don't forget about `make blink1control-tool` & `make blink1-tiny-server`
+4. Package up zipfiles with `make package-all`
+5. Copy zip packages to and test on separate test systems
+6. Publish zip packages to github release
 
 
 Example
 -------
 ```
 % cd blink1-tool
-% make clean && make
-% make package
+% make clean
+% make
+% make blink1control-tool && make blink1-tiny-server
+% make package-all
 ```
 
 Platform Specifics (for Tod mostly)
