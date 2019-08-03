@@ -568,15 +568,15 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 // only for mk3
 int blink1_bootloaderGo( blink1_device* dev )
 {
-  uint8_t buf[blink1_report_size] = { blink1_report_id, 'G', 'o','B','o','o','t',0 };
-  int rc = blink1_read(dev, buf, blink1_report_size);
+  uint8_t buf[blink1_report_size] = { blink1_report2_id, 'G', 'o','B','o','o','t',0 };
+  int rc = blink1_read(dev, buf, blink1_report2_size);
   if( rc == -1 ) {
-    printf("blink1_bootlaoderLock: oops error\n");
+    printf("blink1_bootloaderLock: oops error\n");
   }
   else { 
     printf("blink1 response: %s\n", buf+1);
     if( strncmp("GOBOOT", (char*)buf+1, 6) != 0 ) {
-      printf("blink1_bootlaoderLock: bootloader is locked\n");
+      printf("blink1_bootloaderLock: bootloader is locked\n");
       rc = 01; // fail
     }
   }  
