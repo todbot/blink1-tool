@@ -568,13 +568,13 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
 // only for mk3
 int blink1_bootloaderGo( blink1_device* dev )
 {
-  uint8_t buf[blink1_report_size] = { blink1_report2_id, 'G', 'o','B','o','o','t',0 };
-  int rc = blink1_read(dev, buf, blink1_report2_size);
+  uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'G', 'o','B','o','o','t',0 };
+  int rc = blink1_read(dev, buf, sizeof(buf));
   if( rc == -1 ) {
     printf("blink1_bootloaderLock: oops error\n");
   }
   else { 
-    printf("blink1 response: %s\n", buf+1);
+    printf("blink1 response: '%s'\n", buf);
     if( strncmp("GOBOOT", (char*)buf+1, 6) != 0 ) {
       printf("blink1_bootloaderLock: bootloader is locked\n");
       rc = 01; // fail
@@ -586,8 +586,8 @@ int blink1_bootloaderGo( blink1_device* dev )
 // only for mk3
 int blink1_bootloaderLock( blink1_device* dev )
 {
-  uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'L', 'o','c','k','B','o','o','t','l','o','a','d' };
-  int rc = blink1_read(dev, buf, blink1_report2_size);
+  uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'L', 'o','c','k','B','o','o','t','l','o','a','d' };
+  int rc = blink1_read(dev, buf, sizeof(buf));
   if( rc == -1 ) {
     printf("blink1_bootlaoderLock: oops error\n");
   }
@@ -605,8 +605,8 @@ int blink1_bootloaderLock( blink1_device* dev )
 //
 int blink1_getId( blink1_device *dev, uint8_t** idbuf )
 {
-    uint8_t buf[blink1_report2_size] = { 2, 'U', 0,0,0, 0,0,0 };
-    int rc = blink1_read(dev, buf, blink1_report2_size);
+    uint8_t buf[blink1_report2_size] = { blink1_report2_id, 'U', 0,0,0, 0,0,0 };
+    int rc = blink1_read(dev, buf, sizeof(buf));
     if( rc != -1 ) {
       memcpy( idbuf, buf+2, blink1_report2_size-2); // skip over report id & cmd
     }
@@ -619,7 +619,7 @@ int blink1_getId( blink1_device *dev, uint8_t** idbuf )
 //
 int blink1_testtest( blink1_device *dev, uint8_t reportid )
 {
-    uint8_t count = (reportid==1) ? blink1_report_size : blink1_report2_size; 
+    uint8_t count = (reportid==1) ? blink1_buf_size : blink1_buf2_size; 
     uint8_t buf[blink1_report2_size] = { reportid, '!', 0,0,0, 0,0,0 };
 
     int rc = blink1_write(dev, buf, count );
