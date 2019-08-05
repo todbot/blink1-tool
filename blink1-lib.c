@@ -650,6 +650,19 @@ void blink1_disableDegamma()
     blink1_enable_degamma = 0;
 }
 
+/**
+ * Using a brightness value, update an r,g,b triplet 
+ * Modifies r,g,b in place
+ */
+void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b)
+{
+    if( brightness ) {
+        *r = (*r * brightness) >> 8;
+        *g = (*g * brightness) >> 8;
+        *b = (*b * brightness) >> 8;
+    }
+}
+
 #if 0
 // a simple logarithmic -> linear mapping as a sort of gamma correction
 // maps from 0-255 to 0-255

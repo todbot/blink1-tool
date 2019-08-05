@@ -373,17 +373,23 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid, uint8_t** notebuf);
 
 char *blink1_error_msg(int errCode);
 
-/*
+/**
  * Enable blink1-lib gamma curve.
  */
 void blink1_enableDegamma();
 
-/*
+/**
  * Disable blink1-lib gamma curve.
  * @note should probably always have it disabled
  */
 void blink1_disableDegamma();
 int blink1_degamma(int n);
+
+/**
+ * Using a brightness value, update an r,g,b triplet 
+ * Modifies r,g,b in place
+ */
+void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b);
 
 /**
  * Simple wrapper for cross-platform millisecond delay.

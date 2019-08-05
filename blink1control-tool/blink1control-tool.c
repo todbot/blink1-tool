@@ -41,6 +41,8 @@ char progname[] = "blink1control-tool";
 #define blink1_buf_size (blink1_report_size+1)
 // end from blink1-lib.h
 
+int brightness = 0;
+
 int millis = 300;
 int delayMillis = 500;
 int numDevicesToUse = 0;
@@ -248,6 +250,19 @@ void blink1_sleep(uint16_t millis)
 #endif
 }
 
+/**
+ * Using a brightness value, update an r,g,b triplet 
+ * Modifies r,g,b in place
+ */
+void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b)
+{
+    if( brightness ) {
+        *r = (*r * brightness) >> 8;
+        *g = (*g * brightness) >> 8;
+        *b = (*b * brightness) >> 8;
+    }
+}
+
 // parse a comma-delimited string containing numbers (dec,hex) into a byte arr
 static int  hexread(uint8_t *buffer, char *string, int buflen)
 {
@@ -337,6 +352,7 @@ static void usage(char *myName)
 "  -U <url> --baseurl <url>    Use url instead of 'http://localhost:8934/'\n"
 "  -d dNums --id all|deviceIds Use these blink(1) ids (from --list) \n"
 "  -g -nogamma                 Disable autogamma correction\n"
+"  -b b --brightness b         Set brightness (0=use real vals, 1-255 scaled)\n"
 "  -m ms,   --millis=millis    Set millisecs for color fading (default 300)\n"
 "  -q, --quiet                 Mutes all stdout output (supercedes --verbose)\n"
 "  -t ms,   --delay=millis     Set millisecs between events (default 500)\n"
@@ -402,7 +418,7 @@ int main(int argc, char** argv)
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "aqvhm:t:d:U:gl:";
+    char* opt_str = "aqvhm:t:d:U:gl:b:";
     static struct option loptions[] = {
         {"baseurl",    required_argument, 0,      'U'},
         {"all",        no_argument,       0,      'a'},
@@ -414,6 +430,7 @@ int main(int argc, char** argv)
         {"led",        required_argument, 0,      'l'},
         {"ledn",       required_argument, 0,      'l'},
         //{"nogamma",    no_argument,       0,      'g'},
+        {"brightness", required_argument, 0,      'b'},
         {"help",       no_argument,       0,      'h'},
         {"list",       no_argument,       &cmd,   CMD_LIST },
         {"rgb",        required_argument, &cmd,   CMD_RGB },
@@ -509,6 +526,9 @@ int main(int argc, char** argv)
         case 'g':
             //nogamma = 1;
             break;
+        case 'b':
+            brightness = strtol(optarg,NULL,10);
+            break;
         case 'a':
             //openall = 1;
             break;
@@ -588,9 +608,10 @@ int main(int argc, char** argv)
         uint8_t g = rgbbuf[1];
         uint8_t b = rgbbuf[2];
 
+        blink1_adjustBrightness( brightness, &r, &g, &b);
         msg("set dev:%s to rgb:0x%2.2x,0x%2.2x,0x%2.2x over %d msec\n",
             idstr,r,g,b,millis);
-       blink1control_fadeToRGBN( millis, r,g,b, idstr, ledn );
+        blink1control_fadeToRGBN( millis, r,g,b, idstr, ledn );
     }
     else if( cmd == CMD_BLINK ) {
         uint8_t n = cmdbuf[0];
@@ -600,6 +621,7 @@ int main(int argc, char** argv)
         if( r == 0 && b == 0 && g == 0 ) {
             r = g = b = 255;
         }
+        blink1_adjustBrightness( brightness, &r, &g, &b);
         msg("blink %d times rgb:%x,%x,%x: \n", n,r,g,b);
         for( int i=0; i<n; i++ ) {
             blink1control_fadeToRGBN( millis, r,g,b, idstr, ledn );
@@ -618,6 +640,7 @@ int main(int argc, char** argv)
             uint8_t b = rand()%255 ;
             //uint8_t id = rand() % blink1_getCachedCount();
 
+            blink1_adjustBrightness( brightness, &r, &g, &b);
             msg("%d: %d/%d : %2.2x,%2.2x,%2.2x \n",
                 i, 0,  0, r,g,b);
               //i, id, blink1_getCachedCount(), r,g,b);
@@ -636,6 +659,7 @@ int main(int argc, char** argv)
             r = g = b = 127;
             if( n == 0 ) n = 3;
         }
+        blink1_adjustBrightness( brightness, &r, &g, &b);
         msg("glimmering %d times rgb:#%2.2x%2.2x%2.2x: \n", n,r,g,b);
         for( int i=0; i<n; i++ ) {
             blink1control_fadeToRGBN( millis,r,g,b,       idstr, 1);

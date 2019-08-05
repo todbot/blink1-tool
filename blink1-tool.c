@@ -117,6 +117,7 @@ static void usage(char *myName)
 "and [options] are: \n"
 "  -d dNums --id all|deviceIds Use these blink(1) ids (from --list) \n"
 "  -g -nogamma                 Disable autogamma correction\n"
+"  -b b --brightness b         Set brightness (0=use real vals, 1-255 scaled)\n"
 "  -m ms,   --millis=millis    Set millisecs for color fading (default 300)\n"
 "  -q, --quiet                 Mutes all stdout output (supercedes --verbose)\n"
 "  -t ms,   --delay=millis     Set millisecs between events (default 500)\n"
@@ -218,6 +219,8 @@ enum {
     CMD_TESTTEST
 };
 
+
+
 //
 // Fade to RGB for multiple blink1 devices.
 // Uses globals numDevicesToUse, deviceIds, quiet
@@ -249,6 +252,7 @@ int blink1_fadeToRGBForDevices( uint16_t mils, uint8_t rr,uint8_t gg, uint8_t bb
 int main(int argc, char** argv)
 {
     int nogamma = 0;
+    int brightness = 0;
     
     int16_t arg = 0;  // generic int arg for cmds that take an arg
     char*  argbuf[150]; // generic str arg for cmds that take an arg
@@ -278,7 +282,7 @@ int main(int argc, char** argv)
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhm:t:d:gl:V:P:";
+    char* opt_str = "qvhm:t:d:gl:V:P:b:";
     static struct option loptions[] = {
         {"verbose",    optional_argument, 0,      'v'},
         {"quiet",      optional_argument, 0,      'q'},
@@ -288,6 +292,7 @@ int main(int argc, char** argv)
         {"led",        required_argument, 0,      'l'},
         {"ledn",       required_argument, 0,      'l'},
         {"nogamma",    no_argument,       0,      'g'},
+        {"brightness", required_argument, 0,      'b'},
         {"vid",        required_argument, 0,      'V'},
         {"pid",        required_argument, 0,      'P'},
         {"help",       no_argument,       0,      'h'},
@@ -410,6 +415,9 @@ int main(int argc, char** argv)
             break;
         case 'g':
             nogamma = 1;
+            break;
+        case 'b':
+            brightness = strtol(optarg,NULL,10);
             break;
         //case 'a':
         //   openall = 1;
@@ -616,6 +624,8 @@ int main(int argc, char** argv)
         uint8_t g = rgbbuf.g;
         uint8_t b = rgbbuf.b;
 
+        blink1_adjustBrightness( brightness, &r, &g, &b);
+        
         for( int i=0; i< ledns_cnt; i++ ) {
             blink1_fadeToRGBForDevices( millis, r,g,b, ledns[i] );
         }
@@ -673,6 +683,7 @@ int main(int argc, char** argv)
         uint8_t g = rgbbuf.g;
         uint8_t b = rgbbuf.b;
         uint8_t p = cmdbuf[0];
+        blink1_adjustBrightness( brightness, &r, &g, &b);
         msg("saving rgb: 0x%2.2x,0x%2.2x,0x%2.2x @ %d, ms:%d\n",r,g,b,p,millis);
         if( ledn>=0 ) { // NOTE: only works for fw 204+ devices
             blink1_setLEDN(dev, ledn);  // FIXME: doesn't check return code
@@ -704,6 +715,8 @@ int main(int argc, char** argv)
             uint8_t b = rand()%255 ;
             uint8_t id = rand() % blink1_getCachedCount();
 
+            blink1_adjustBrightness( brightness, &r, &g, &b);
+            
             msg("%d: %d/%d : %2.2x,%2.2x,%2.2x \n", 
                 i, id, blink1_getCachedCount(), r,g,b);
 
@@ -768,6 +781,7 @@ int main(int argc, char** argv)
                     uint8_t r = led_grad[grad_index][0];
                     uint8_t g = led_grad[grad_index][1];
                     uint8_t b = led_grad[grad_index][2];
+                    blink1_adjustBrightness( brightness, &r, &g, &b);
                     if ((j <= i) || (!first)) {
                         rc = blink1_fadeToRGBN(dev, 10 + (millis/chase_length), r,g,b,led_start+j);
                     }
@@ -786,6 +800,7 @@ int main(int argc, char** argv)
             r = g = b = 255;
         }
         blink1_close(dev);
+        blink1_adjustBrightness( brightness, &r, &g, &b);
         msg("blink %d times rgb:%x,%x,%x: \n", n,r,g,b);
         if( n == 0 ) n = -1; // repeat forever
         while( n==-1 || n-- ) { 
