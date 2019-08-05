@@ -873,7 +873,7 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern )
     int i=0;
     s = strtok(NULL, ","); // prep next parse
     while( s != NULL ) {
-      printf("s:'%s'\n",s);
+        //printf("s:'%s'\n",s);
         parsecolor( &pattern[i].color, s );
         
         s = strtok(NULL, ",");
