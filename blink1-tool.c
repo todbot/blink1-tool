@@ -1,19 +1,11 @@
 /* 
  * blink1-tool.c -- command-line tool for controlling blink(1) usb rgb leds
  *
- * 2012, Tod E. Kurt, http://todbot.com/blog/ , http://thingm.com/
+ * 2012-2019, Tod E. Kurt, http://todbot.com/blog/ , http://thingm.com/
  *
  *
  * Fade to RGB value #FFCC33 in 50 msec:
- * ./blink1-tool --hidwrite 0x63,0xff,0xcc,0x33,0x00,0x32
  * ./blink1-tool -m 50 -rgb 0xff,0xcc,0x33
- *
- * Read EEPROM position 1:
- * ./blink1-tool --hidwrite 0x65,0x01 && ./blink1-tool --hidread
- * ./blink1-tool --eeread 1
- *
- * Write color pattern entry {#EEDD44, 50} to position 2
- * ./blink1-tool --hidwrite 0x50,0xee,0xdd,0x44,0x00,0x32,0x2
  *
  *
  */
@@ -169,8 +161,6 @@ static void usage(char *myName)
 "   blink1-tool -d all -t 50 -m 50 -rgb 00ff00 --blink 10 \n"
 "\n"
             ,myName);
-//"  --hidread                  Read a blink(1) USB HID GetFeature report \n"
-//"  --hidwrite <listofbytes>   Write a blink(1) USB HID SetFeature report \n"
 }
 
 // local states for the "cmd" option variable
