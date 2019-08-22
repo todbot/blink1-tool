@@ -17,22 +17,88 @@
  *
  */
 
+#include <getopt.h>    // for getopt_long()
+
 #include "mongoose.h"
 
 #include "blink1-lib.h"
 
-const char* blink1_server_version = "0.99";
+// normally this is obtained from git tags and filled out by the Makefile
+#ifndef BLINK1_VERSION
+#define BLINK1_VERSION "v0.0"
+#endif
+
+const char* blink1_server_name = "blink1-tiny-server";
+const char* blink1_server_version = BLINK1_VERSION;
 
 static const char *s_http_port = "8000";
 static struct mg_serve_http_opts s_http_server_opts;
 
+typedef struct Url_Info
+{
+    char url[100];
+    char desc[100];
+} url_info;
+
+// FIXME: how to make Emacs format these better?
+url_info supported_urls[]
+= {
+   {"/blink1/",      "simple status page"},
+   {"/blink1/on",    "turn blink(1) full bright white"},
+   {"/blink1/red",   "turn blink(1) solid red"},
+   {"/blink1/green", "turn blink(1) solid green"},
+   {"/blink1/blue",  "turn blink(1) solid blue"},
+   {"/blink1/fadeToRGB", "turn blink(1) specified RGB color"},
+   {"/blink/blink",  "blink the blink(1) the specified RGB color"},
+   {"/blink/random",  "turn the blink(1) a random color"}
+};
+
+
+void usage()
+{
+    
+    fprintf(stderr,
+"Usage: \n"
+"  %s [options]\n"
+"where [options] can be:\n"
+"  --port port, -p port    port to listen on (default 8000)\n"
+"  --help, -h              this help page\n"
+"\n",
+            blink1_server_name);
+
+    fprintf(stderr,
+"Supported URIs:\n");
+    for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+        fprintf(stderr,"  %s -- %s\n", supported_urls[i].url, supported_urls[i].desc);
+    }
+    fprintf(stderr,"\n");
+    fprintf(stderr,
+"Supported query arguments: (not all urls support all args)\n"
+"  'rgb'    -- hex RGB color code. e.g. 'rgb=%%23FF9900'\n"
+"  'time'   -- time in seconds. e.g. 'time=0.5' \n"
+"  'millis' -- time in milliseconds. e.g. 'millis=500' \n"
+"  'bright' -- brightness, 1-255, 0=full e.g. half-bright 'bright=127'\n"
+"  'ledn'   -- which LED to set. 0=all/1=top/2=bot, e.g. 'ledn=0'\n"
+"  'milils' -- milliseconds to fade, or blink, e.g. 'millis=500'\n"
+"  'count'  -- number of times to blink, for /blink1/blink, e.g. 'count=3'\n"
+"\n"
+"Examples: \n"
+"  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
+"  /blink1/fadeToRGB?rgb=%%23FF00FF&millis=500 -- fade to purple over 500ms\n"
+            
+"\n"
+            
+            );
+}
 
 // used in ev_handler below
+// uses variables bright,r,g,b,ledn, result
 #define do_blink1_color() \
     blink1_device* dev = blink1_open(); \
-    if( blink1_fadeToRGB( dev, millis, r,g,b ) == -1 ) { \
-        fprintf(stderr, "off: blink1 device error\n"); \
-        sprintf(result, "%s; couldn't find blink1", result); \
+    blink1_adjustBrightness( bright, &r, &g, &b); \
+    if( blink1_fadeToRGBN( dev, millis, r,g,b, ledn ) == -1 ) {   \
+        fprintf(stderr, "fadeToRGBN: error blink1 device error\n"); \
+        sprintf(result, "%s: error, couldn't find blink1", result); \
     } \
     else { \
         sprintf(result, "blink1 set color #%2.2x%2.2x%2.2x", r,g,b);  \
@@ -48,8 +114,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         return;
     }
 
-    static uint8_t r,g,b;
-    char result[1000];  result[0] = 0;
+    uint8_t r,g,b;
+    uint8_t ledn=0, bright=0;
+    char result[1000];
+    result[0] = 0;
     char uristr[1000];
     char tmpstr[1000];
     int rc;
@@ -69,16 +137,25 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         millis = 1000 * strtof(tmpstr,NULL);
     }
     if( mg_get_http_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
-        //parse_rgbstr( rgb, tmpstr);
         parsecolor( &rgb, tmpstr);
         r = rgb.r; g = rgb.g; b = rgb.b;
     }
     if( mg_get_http_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
     }
+    if( mg_get_http_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
+        ledn = strtod(tmpstr,NULL);
+    }
+    if( mg_get_http_var(querystr, "bright", tmpstr, sizeof(tmpstr)) > 0 ) {
+        bright = strtod(tmpstr,NULL);
+    }
 
     if( mg_vcmp( uri, "/") == 0 ) {
-        sprintf(result, "welcome to blink1-tiny-server api server. All URIs start with '/blink1', e.g. '/blink1/red', '/blink1/off', '/blink1/fadeToRGB?rgb=%%23FF00FF'");
+        sprintf(result, "Welcome to %s api server."
+                "All URIs start with '/blink1'. Supported URIs:\n", blink1_server_name);
+        for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+            sprintf(result,"%s %s - %s\n", result, supported_urls[i].url, supported_urls[i].desc);
+        } // FIXME: result is fixed length
     }
     else if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
@@ -117,10 +194,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(result, "blink1 blink");
         if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         blink1_device* dev = blink1_open();
+        blink1_adjustBrightness( bright, &r, &g, &b);
         for( int i=0; i<count; i++ ) {
-            blink1_fadeToRGB( dev, millis/2, r,g,b );
+            blink1_fadeToRGBN( dev, millis/2, r,g,b, ledn );
             blink1_sleep( millis/2 ); // fixme
-            blink1_fadeToRGB( dev, millis/2, 0,0,0 );
+            blink1_fadeToRGBN( dev, millis/2, 0,0,0, ledn );
             blink1_sleep( millis/2 ); // fixme
         }
         blink1_close(dev);
@@ -133,7 +211,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             r = rand() % 255;
             g = rand() % 255;
             b = rand() % 255 ;
-            blink1_fadeToRGB( dev, millis/2, r,g,b );
+            blink1_adjustBrightness( bright, &r, &g, &b);
+            blink1_fadeToRGBN( dev, millis/2, r,g,b, ledn );
             blink1_sleep( millis/2 ); // fixme
         }
         blink1_close(dev);
@@ -152,12 +231,20 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
                              "\"result\":  \"%s\",\n"
                              "\"millis\": \"%d\",\n"
                              "\"rgb\": \"%s\",\n"
+                             "\"bright\": \"%d\",\n"
+                             "\"ledn\": \"%d\",\n"
+                             "\"count\": \"%d\",\n"
+                             "\"millis\": \"%d\",\n"
                              "\"version\": \"%s\"\n"
                              "}\n",
                              uristr,
                              result,
                              millis,
                              tmpstr,
+                             bright,
+                             ledn,
+                             count,
+                             millis,
                              blink1_server_version
                              );
         mg_send_http_chunk(nc, "", 0); /* Send empty chunk, the end of response */
@@ -175,14 +262,40 @@ int main(int argc, char *argv[]) {
 
     mg_mgr_init(&mgr, NULL);
 
-  /* Process command line options to customize HTTP server */
-  for (i = 1; i < argc; i++) {
-      if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) {
-          s_http_port = argv[++i];
-      }
-  }
+    // parse options
+    int option_index = 0, opt;
+    char* opt_str = "qvhp:";
+    static struct option loptions[] = {
+      //{"verbose",    optional_argument, 0,      'v'},
+      //{"quiet",      optional_argument, 0,      'q'},
+        {"port",       required_argument, 0,      'p'},
+        {"help",       no_argument, 0,            'h'},
+        {"version",    no_argument, 0,            'V'},
+    };
+    
+    while(1) {
+        opt = getopt_long(argc, argv, opt_str, loptions, &option_index);
+        if (opt==-1) break; // parsed all the args
+        switch (opt) {
+        case 'V': 
+            printf("%s version %s\n", blink1_server_name,blink1_server_version);
+            exit(1);
+            break;
+        case 'v':
+            break;
+        case 'p':
+            //port = strtol(optarg,NULL,10);
+            s_http_port = optarg; //argv[++i];
+            break;
+        case 'h':
+            usage();
+            exit(1);
+            break;
+        }
+    } //while(1) arg parsing
 
-  /* Set HTTP server options */
+   
+    // Set HTTP server options 
     memset(&bind_opts, 0, sizeof(bind_opts));
     bind_opts.error_string = &err_str;
 
@@ -197,7 +310,8 @@ int main(int argc, char *argv[]) {
 
     s_http_server_opts.enable_directory_listing = "no";
 
-    printf("blink1-server: running on port %s\n", s_http_port);
+    printf("%s version %s: running on port %s\n",
+           blink1_server_name, blink1_server_version, s_http_port);
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
