@@ -9,7 +9,7 @@
 #n=16  # mk2: 32 (RAM) or 16 (flash) 
 n=12  # mk1: 12
 
-for ((i=0; i<n; i++ )) ; do
+for i in `seq 1 $n` ; do
   ./blink1-tool --getpattline $i
 done
 
