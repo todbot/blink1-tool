@@ -10,7 +10,6 @@ To build, see the [Makefile](./Makefile). But in general you can do:
 ```
 git clone https://github.com/todbot/blink1-tool
 cd blink1-tool
-make get-submodule
 make
 ```
 
