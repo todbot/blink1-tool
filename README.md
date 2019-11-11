@@ -5,7 +5,20 @@ It originally lived as a directory https://github.com/todbot/blink1 but now has 
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
 
-To build, see the Makefile.
+To build, see the [Makefile](./Makefile). But in general you can do:
+
+```
+git clone https://github.com/todbot/blink1-tool
+cd blink1-tool
+make get-submodule
+make
+```
+
+If your OS is not detected automatically, you can force it with something like:
+```
+OS=linux make
+```
+
 
 The current tools are:
 
@@ -41,14 +54,14 @@ libusb implementations, so doing `make EXEFLAGS=` will generally build a non-sta
 
 ### Build variants
 There are two primary USB libraries that `blink1-tool` can be built for:
-- USBLIB_TYPE=HIDAPI -- Uses the feature-rich cross-platform `hidapi` library (default)
-- USBLIB_TYPE=HIDDATA -- Uses a simple, cross-platform `hiddata` library (included)
+- `USBLIB_TYPE=HIDAPI` -- Uses the feature-rich cross-platform `hidapi` library (default)
+- `USBLIB_TYPE=HIDDATA` -- Uses a simple, cross-platform `hiddata` library (included)
 
 For Linux, there are to HIDAPI_TYPEs you can choose from:
-- HIDAPI_TYPE=HIDRAW -- Uses standard `hidraw` kernel API for HID devices  (default)
-- HIDAPI_TYPE=LIBUSB -- Uses lower-level `libusb` commands (good for older Linuxes)
+- `HIDAPI_TYPE=HIDRAW` -- Uses standard `hidraw` kernel API for HID devices  (default)
+- `HIDAPI_TYPE=LIBUSB` -- Uses lower-level `libusb` commands (good for older Linuxes)
 
-To compile for a particular USBLIB_TYPE or HIDAPI_TYPE, specify them when buildling:
+To compile for a particular `USBLIB_TYPE` or `HIDAPI_TYPE`, specify them when buildling:
 
 ```
 HIDAPI_TYPE=LIBUSB make

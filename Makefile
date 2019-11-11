@@ -472,6 +472,10 @@ endif
 #####################  Common  ###############################################
 
 
+define prep_common_cmd
+  @git submodule update --init
+endef
+
 #CFLAGS += -O -Wall -std=gnu99 -I ../hardware/firmware
 CFLAGS += -std=gnu99
 CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
@@ -493,6 +497,7 @@ debug: all
 help:
 	@echo "This Makefile works on multiple archs. Use one of the following:"
 	@echo "make            ... autodetect platform and build appropriately"
+	@echo "make prep       ... prepare for compilation (submodules, patches"
 	@echo "make OS=windows ... build Windows  blink1-lib and blink1-tool"
 	@echo "make OS=linux   ... build Linux    blink1-lib and blink1-tool"
 	@echo "make OS=freebsd ... build FreeBSD    blink1-lib and blink1-tool"
@@ -519,6 +524,7 @@ msg:
 
 # defin "prep_cmd" for any pre-compilation preparation that needs to be done (e.g. see FreeBSD)
 prep:
+	$(prep_common_cmd)
 	$(prep_cmd)
 
 $(OBJS): %.o: %.c
