@@ -1,7 +1,9 @@
 # Command-line Tools and C library for blink(1) USB RGB LED
 
-This code lives at the repository: https://github.com/todbot/blink1-tool.
-This code originally lived as the `commandline` directory in https://github.com/todbot/blink1. 
+This is a collection of C/C++ tools for controlling the (blink1 USB RGB LED](https://blink1.thingm.com/).
+
+This code lives at https://github.com/todbot/blink1-tool.
+It started as the `commandline` directory in https://github.com/todbot/blink1. 
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
 
