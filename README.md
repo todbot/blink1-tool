@@ -5,19 +5,8 @@ It originally lived as a directory https://github.com/todbot/blink1 but now has 
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
 
-To build, see the [Makefile](./Makefile). But in general you can do:
-
-```
-git clone https://github.com/todbot/blink1-tool
-cd blink1-tool
-make
-```
-
-If your OS is not detected automatically, you can force it with something like:
-```
-OS=linux make
-```
-
+To build, see the [Makefile](./Makefile) and down below
+for build variations and OS-specific requirements.
 
 The current tools are:
 
@@ -51,7 +40,23 @@ eliminating the need for shared library dependencies on the target.
 However, static builds can be problematic for some systems with different 
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
+### Building from source
+
+In general you can do:
+
+```
+git clone https://github.com/todbot/blink1-tool
+cd blink1-tool
+make
+```
+
+If your OS is not detected automatically, you can force it with something like:
+```
+OS=linux make
+```
+
 ### Build variants
+
 There are two primary USB libraries that `blink1-tool` can be built for:
 - `USBLIB_TYPE=HIDAPI` -- Uses the feature-rich cross-platform `hidapi` library (default)
 - `USBLIB_TYPE=HIDDATA` -- Uses a simple, cross-platform `hiddata` library (included)
@@ -66,10 +71,10 @@ To compile for a particular `USBLIB_TYPE` or `HIDAPI_TYPE`, specify them when bu
 HIDAPI_TYPE=LIBUSB make
 ```
 
-## OS-specific build requirements
+## OS-specific prerequisites for compiling
 
-If you have the ability to compile on your system, you may already have
-everything you need to compile `blink1-tool`. 
+If you have the ability to compile programs on your system,
+you may already have everything you need to compile `blink1-tool`. 
 
 ### Linux
 - `sudo apt-get install build-essential pkg-config libudev-dev`
