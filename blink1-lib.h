@@ -121,12 +121,20 @@ blink1_device* blink1_openBySerial(const char* serial);
  */
 blink1_device* blink1_openById( uint32_t id );
 
+/** 
+ * Close opened blink1 device
+ * Safe to call blink1_close on already closed device.
+ * This is macro so dev can get set to NULL
+ * FIXME: is there a better way
+ */
+#define blink1_close(dev) { blink1_close_internal(dev); dev=NULL; }
+
 /**
- * Close opened blink1 device.  
+ * Close opened blink1 device.  (internal)
  * Safe to call blink1_close on already closed device.
  * @param dev blink1_device
  */
-void blink1_close( blink1_device* dev );
+void blink1_close_internal( blink1_device* dev );
 
 /**
  * Low-level write to blink1 device.

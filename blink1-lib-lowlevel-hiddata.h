@@ -162,14 +162,12 @@ blink1_device* blink1_open(void)
 }
 
 //
-// FIXME: search through blink1s list to zot it too?
-void blink1_close( blink1_device* dev )
+void blink1_close_internal( blink1_device* dev )
 {
     if( dev != NULL ) {
         blink1_clearCacheDev(dev); // FIXME: hmmm 
         usbhidCloseDevice(dev);
     }
-    dev = NULL;
     //hid_exit();// FIXME: this cleans up libusb in a way that hid_close doesn't
 }
 

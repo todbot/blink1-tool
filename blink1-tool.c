@@ -9,6 +9,8 @@
  *
  *
  */
+// temp fix for read/write pattern json output sprint(str) issue
+#pragma GCC diagnostic ignored "-Wformat-overflow"
 
 #include <stdio.h>
 #include <stdarg.h>    // vararg stuff
@@ -40,7 +42,7 @@ int millis = -1;
 int32_t delayMillis = -1;
 int numDevicesToUse = 1;
 
-blink1_device* dev;
+blink1_device* dev = NULL;
 uint32_t  deviceIds[blink1_max_devices];
 
 int verbose;
@@ -573,7 +575,7 @@ int main(int argc, char** argv)
                    i, blink1_getCachedSerial(i), t, rc);
         }
 #ifdef USE_HIDDATA
-        printf("(Listing not supported in HIDDATA builds)\n"); 
+        printf("(Listing not supported in HIDDATA builds)\n");
 #endif
     }
     else if( cmd == CMD_EEREAD ) {  // FIXME
@@ -986,6 +988,7 @@ int main(int argc, char** argv)
     }
 
 
+    blink1_close(dev);
     return 0;
 }
 
