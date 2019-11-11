@@ -8,7 +8,7 @@ RUN apt-get update
 RUN apt-get install -y \
         build-essential \
         pkg-config \
-        libusb-1.0-0-dev
+        libudev-dev
 
 
 RUN mkdir /home/blinkdev
