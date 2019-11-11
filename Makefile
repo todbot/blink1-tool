@@ -28,8 +28,8 @@
 #   - add to PATH compiler and Windows linker:
 #         export PATH=${PATH}:/c/msys64/mingw64/bin
 #         export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
-#   - git clone https://github.com/todbot/blink1
-#   - cd blink1/commandline
+#   - git clone https://github.com/todbot/blink1-tool
+#   - cd blink1-tool
 #   - make
 #
 # Windows XP/7

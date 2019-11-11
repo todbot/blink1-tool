@@ -1,7 +1,7 @@
 # Command-line Tools and C library for blink(1) USB RGB LED
 
-This code lives at the repository: https://github.com/todbot/blink1-tool
-It originally lived as a directory https://github.com/todbot/blink1 but now has its own repository.
+This code lives at the repository: https://github.com/todbot/blink1-tool.
+This code originally lived as the `commandline` directory in https://github.com/todbot/blink1. 
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
 
@@ -10,12 +10,12 @@ for build variations and OS-specific requirements.
 
 The current tools are:
 
-- `blink1-lib` -- C library for controlling blink(1)
 - `blink1-tool` -- command-line tool for controlling blink(1)
 - `blink1control-tool` -- blink1-tool for use with Blink1Control (uses HTTP REST API)
 - `blink1-tiny-server` -- Simple HTTP API server to control blink1, uses blink1-lib
+- `blink1-lib` -- C library for controlling blink(1)
 - `blink1-mini-tool` -- commandline tool using libusb-0.1 and minimal deps
-- `blink1raw` -- example commandline tool using Linux hidraw
+- `blink1raw` -- small example commandline tool using Linux hidraw
 
 Type `make help` for a full list.
 
