@@ -36,8 +36,11 @@
 #   - Install MinGW and MSYS (http://www.tdragon.net/recentgcc/ )
 #   - make
 #
-# Linux (Ubuntu)
-#   - apt-get install build-essential pkg-config libusb-1.0-0-dev
+# Linux (Ubuntu) - uses hidraw by default
+#   - apt-get install build-essential pkg-config libudev-dev
+#   - make
+#  if installing the 'libusb' hidapi variant, then:
+#   - apt-get install build-essential pkg-config libudev-dev libusb-1.0-0-dev
 #   - make
 #
 # Linux (Fedora 18+)
@@ -102,9 +105,12 @@ endif
 #  make USBLIB_TYPE=HIDAPI_HIDRAW
 #
 
-USBLIB_TYPE ?= HIDAPI
-#USBLIB_TYPE = HIDAPI_HIDRAW
 #USBLIB_TYPE = HIDDATA
+USBLIB_TYPE ?= HIDAPI
+
+# Pick a type of hidapi (for Linux only)
+HIDAPI_TYPE ?= HIDRAW
+#HIDAPI_TYPE ?= LIBUSB
 
 # uncomment for debugging HID stuff
 # or make with:   CFLAGS=-DDEBUG_HID make
@@ -233,19 +239,20 @@ LIBTARGET = libblink1.so
 # was blink1-lib.so
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
-CFLAGS += -DUSE_HIDAPI
-CFLAGS += -I./hidapi/hidapi
-OBJS = ./hidapi/libusb/hid.o
-CFLAGS += `pkg-config libusb-1.0 --cflags` -fPIC
-LIBS   += `pkg-config libusb-1.0 --libs` -lrt -lpthread -ldl
-endif
-
-ifeq "$(USBLIB_TYPE)" "HIDAPI_HIDRAW"
+  ifeq "$(HIDAPI_TYPE)" "HIDRAW"
 CFLAGS += -DUSE_HIDAPI
 CFLAGS += -I./hidapi/hidapi
 OBJS = ./hidapi/linux/hid.o
 CFLAGS += `pkg-config libusb-1.0 --cflags` -fPIC
 LIBS   += `pkg-config libusb-1.0 --libs` `pkg-config libudev --libs` -lrt
+  endif
+  ifeq "$(HIDAPI_TYPE)" "LIBUSB"
+CFLAGS += -DUSE_HIDAPI
+CFLAGS += -I./hidapi/hidapi
+OBJS = ./hidapi/libusb/hid.o
+CFLAGS += `pkg-config libusb-1.0 --cflags` -fPIC
+LIBS   += `pkg-config libusb-1.0 --libs` -lrt -lpthread -ldl
+  endif
 endif
 
 ifeq "$(USBLIB_TYPE)" "HIDDATA"

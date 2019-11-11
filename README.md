@@ -36,8 +36,23 @@ Supported platforms for `blink1-tool` and `blink1-lib`:
 
 In general, the `blink1-tool` builds as a static binary where possible,
 eliminating the need for shared library dependencies on the target.
-However, static builds can be problematic for some systems with "different" 
+However, static builds can be problematic for some systems with different 
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
+
+### Build variants
+There are two primary USB libraries that `blink1-tool` can be built for:
+- USBLIB_TYPE=HIDAPI -- Uses the feature-rich cross-platform `hidapi` library (default)
+- USBLIB_TYPE=HIDDATA -- Uses a simple, cross-platform `hiddata` library (included)
+
+For Linux, there are to HIDAPI_TYPEs you can choose from:
+- HIDAPI_TYPE=HIDRAW -- Uses standard `hidraw` kernel API for HID devices  (default)
+- HIDAPI_TYPE=LIBUSB -- Uses lower-level `libusb` commands (good for older Linuxes)
+
+To compile for a particular USBLIB_TYPE or HIDAPI_TYPE, specify them when buildling:
+
+```
+HIDAPI_TYPE=LIBUSB make
+```
 
 ## Using blink1-lib in your C/C++ project
 [tbd, but basically look at the makefile for blink1-tool]
