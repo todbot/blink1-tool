@@ -66,6 +66,33 @@ To compile for a particular `USBLIB_TYPE` or `HIDAPI_TYPE`, specify them when bu
 HIDAPI_TYPE=LIBUSB make
 ```
 
+## OS-specific build requirements
+
+If you have the ability to compile on your system, you may already have
+everything you need to compile `blink1-tool`. 
+
+### Linux
+- `sudo apt-get install build-essential pkg-config libudev-dev`
+- And if you want libusb variant, add: `sudo apt-get install libusb-1.0-0-dev`
+
+### MacOS
+- Xcode
+- In Terminal, "xcode-select --install" to install command-line tools
+
+### Windows
+- Install Visual Studio 2015
+- Install MSYS2 : https://github.com/msys2/msys2/wiki/MSYS2-installation
+- pacman -S base-devel make git zip unzip
+- pacman -S mingw-w64-x86_64-toolchain
+   - add to PATH compiler and Windows linker:
+         export PATH=${PATH}:/c/msys64/mingw64/bin
+         export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
+   - git clone https://github.com/todbot/blink1-tool
+
+
+For other OSes, see the Makefile for details
+
+
 ## Using blink1-lib in your C/C++ project
 [tbd, but basically look at the makefile for blink1-tool]
 
