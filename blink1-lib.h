@@ -1,5 +1,5 @@
 /**
- * blink(1) C library -- aka "blink1-lib" 
+ * blink(1) C library -- aka "blink1-lib"
  *
  * Part of the blink(1) open source hardware project
  * See https://github.com/todbot/blink1 for details
@@ -22,9 +22,9 @@ extern "C" {
 #define blink1_max_devices 32
 
 #define cache_max blink1_max_devices
-//#define cache_max 16  
-#define serialstrmax (8 + 1) 
-#define pathstrmax 128
+//#define cache_max 16
+#define serialstrmax (8 + 1)
+#define pathstrmax 1024
 
 #define blink1mk2_serialstart 0x20000000
 #define blink1mk3_serialstart 0x30000000
@@ -41,11 +41,11 @@ extern "C" {
 
 #define blink1_note_size 50
 
-typedef enum  { 
+typedef enum  {
     BLINK1_UNKNOWN = 0,
     BLINK1_MK1,   // the original one from the kickstarter
     BLINK1_MK2,   // the updated one with 2 LEDs
-    BLINK1_MK3    // 2018 one based on EFM32HG 
+    BLINK1_MK3    // 2018 one based on EFM32HG
 } blink1Type_t;
 
 struct blink1_device_;
@@ -65,7 +65,7 @@ typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
 //
 
 // you can define "extern int blink1_lib_verbose"
-// and set it to "1" to enable low-level debugging 
+// and set it to "1" to enable low-level debugging
 
 typedef struct {
     uint8_t r; uint8_t g; uint8_t b;
@@ -73,7 +73,7 @@ typedef struct {
 
 typedef struct {
     rgb_t color;
-    uint16_t millis; 
+    uint16_t millis;
     uint8_t ledn;     // number of led, or 0 for all
 } patternline_t;
 
@@ -103,7 +103,7 @@ blink1_device* blink1_open(void);
  * note: this is platform-specific, and port-specific.
  * @param path string of platform-specific path to blink1
  * @return blink1_device or NULL if no blink1 found
- */ 
+ */
 blink1_device* blink1_openByPath(const char* path);
 
 /**
@@ -121,7 +121,7 @@ blink1_device* blink1_openBySerial(const char* serial);
  */
 blink1_device* blink1_openById( uint32_t id );
 
-/** 
+/**
  * Close opened blink1 device
  * Safe to call blink1_close on already closed device.
  * This is macro so dev can get set to NULL
@@ -159,7 +159,7 @@ int blink1_getVersion(blink1_device *dev);
 /**
  * Fade blink1 to given RGB color over specified time.
  * @param dev blink1 device to command
- * @param fadeMillis time to fade in milliseconds 
+ * @param fadeMillis time to fade in milliseconds
  * @param r red part of RGB color
  * @param g green part of RGB color
  * @param b blue part of RGB color
@@ -172,7 +172,7 @@ int blink1_fadeToRGB(blink1_device *dev, uint16_t fadeMillis,
  * Fade specific LED on blink1mk2 to given RGB color over specified time.
  * @note For mk2 devices.
  * @param dev blink1 device to command
- * @param fadeMillis time to fade in milliseconds 
+ * @param fadeMillis time to fade in milliseconds
  * @param r red part of RGB color
  * @param g green part of RGB color
  * @param b blue part of RGB color
@@ -202,8 +202,8 @@ int blink1_setRGB(blink1_device *dev, uint8_t r, uint8_t g, uint8_t b );
  * @param n which LED to get (0=1st, 1=1st LED, 2=2nd LED)
  * @return -1 on error, 0 on success
  */
-int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis, 
-                   uint8_t* r, uint8_t* g, uint8_t* b, 
+int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
+                   uint8_t* r, uint8_t* g, uint8_t* b,
                    uint8_t ledn);
 /**
  * Attempt to read current RGB value for mk1 devices.
@@ -218,12 +218,12 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
 int blink1_readRGB_mk1(blink1_device *dev, uint16_t* fadeMillis,
                        uint8_t* r, uint8_t* g, uint8_t* b);
 
-/** 
+/**
  * Read eeprom on mk1 devices
  * @note For mk1 devices only
  */
 int blink1_eeread(blink1_device *dev, uint16_t addr, uint8_t* val);
-/** 
+/**
  * Write eeprom on mk1 devices
  * @note For mk1 devices only
  */
@@ -232,18 +232,18 @@ int blink1_eewrite(blink1_device *dev, uint16_t addr, uint8_t val);
 /**
  * Read serial number from mk1 device. Does not work.
  * @note Use USB descriptor serial number instead.
- * @note for mk1 devices only.  
+ * @note for mk1 devices only.
  * @note does not work.
  */
 int blink1_serialnumread(blink1_device *dev, uint8_t** serialnumstr);
 /**
  * Write serial number to mk1 device. Does not work.
- * @note for mk1 devices only.  
+ * @note for mk1 devices only.
  * @note does not work.
  */
 int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr);
 
-/** 
+/**
  * Tickle blink1 serverdown functionality.
  * @note 'st' param for mk2 firmware only
  * @param on  enable or disable: enable=1, disable=0
@@ -252,7 +252,7 @@ int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr);
  * @param startpos pattern start position (fw 205+)
  * @param endpos pattern end pos (fw 205+)
  */
-int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, 
+int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis,
                       uint8_t st, uint8_t startpos, uint8_t endpos);
 
 /**
@@ -287,7 +287,7 @@ int blink1_playloop(blink1_device *dev, uint8_t play, uint8_t startpos, uint8_t 
  * @param playpos pointer to play position
  * @return -1 on error, 0 on success
  */
-int blink1_readPlayState(blink1_device *dev, uint8_t* playing, 
+int blink1_readPlayState(blink1_device *dev, uint8_t* playing,
                          uint8_t* playstart, uint8_t* playend,
                          uint8_t* playcount, uint8_t* playpos);
 
@@ -302,8 +302,8 @@ int blink1_readPlayState(blink1_device *dev, uint8_t* playing,
  * @param pos pattern line number 0-max_patt (FIXME: put note about this)
  * @return -1 on error, 0 on success
  */
-int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis, 
-                            uint8_t r, uint8_t g, uint8_t b, 
+int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis,
+                            uint8_t r, uint8_t g, uint8_t b,
                             uint8_t pos);
 /**
  * Read a color pattern line to blink1.
@@ -314,8 +314,8 @@ int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis,
  * @param b pointer to store blue color component
  * @return -1 on error, 0 on success
  */
-int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis, 
-                           uint8_t* r, uint8_t* g, uint8_t* b, 
+int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis,
+                           uint8_t* r, uint8_t* g, uint8_t* b,
                            uint8_t pos);
 /**
  * Read a color pattern line to blink1.
@@ -324,7 +324,7 @@ int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis,
  * @param fadeMillis pointer to milliseconds to fade to RGB color
  * @return -1 on error, 0 on success
  */
-int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis, 
+int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis,
                             uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* ledn,
                             uint8_t pos);
 /**
@@ -394,7 +394,7 @@ void blink1_disableDegamma();
 int blink1_degamma(int n);
 
 /**
- * Using a brightness value, update an r,g,b triplet 
+ * Using a brightness value, update an r,g,b triplet
  * Modifies r,g,b in place
  */
 void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b);
@@ -455,7 +455,7 @@ int          blink1_getCacheIndexBySerial( const char* serial );
 int          blink1_getCacheIndexByDev( blink1_device* dev );
 /**
  * Clear the blink1 device cache for a given device.
- * @param dev blink1 device 
+ * @param dev blink1 device
  * @return cache index that was cleared, or -1 if not found
  */
 int          blink1_clearCacheDev( blink1_device* dev );
@@ -490,18 +490,18 @@ int          blink1_isMk2(blink1_device* dev);
 
 /**
  * Returns device "mk" type at cache index i
- * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1) 
+ * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
  */
 blink1Type_t blink1_deviceTypeById( int i );
 
 /**
  *
- * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1) 
+ * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
  */
 blink1Type_t blink1_deviceType( blink1_device* dev );
 
 /**
- * Return a string representation of the blink(1) device type 
+ * Return a string representation of the blink(1) device type
  * (e.g. "mk2" or "mk3")
  * @return const string
  */
