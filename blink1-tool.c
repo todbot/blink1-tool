@@ -9,8 +9,10 @@
  *
  *
  */
-// temp fix for read/write pattern json output sprint(str) issue
+// FIXME: temp fix for read/write pattern json output sprint(str) issue
+#if !defined(__has_warning) || __has_warning("-Wformat-overflow")
 #pragma GCC diagnostic ignored "-Wformat-overflow"
+#endif
 
 #include <stdio.h>
 #include <stdarg.h>    // vararg stuff
