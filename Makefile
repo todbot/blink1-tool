@@ -477,6 +477,7 @@ define prep_common_cmd
 endef
 
 #CFLAGS += -O -Wall -std=gnu99 -I ../hardware/firmware
+CFLAGS += -Wall
 CFLAGS += -std=gnu99
 CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
 
@@ -546,7 +547,7 @@ $(LIBTARGET): $(OBJS)
 
 lib: $(LIBTARGET)
 
-blink1control-tool: 
+blink1control-tool:
 	$(MAKE) -C blink1control-tool
 
 package: lib blink1-tool
