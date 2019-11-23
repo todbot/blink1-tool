@@ -1,5 +1,5 @@
 /**
- * blink(1) C library -- aka "blink1-lib" 
+ * blink(1) C library -- aka "blink1-lib"
  *
  * Part of the blink(1) open source hardware project
  * See https://github.com/todbot/blink1 for details
@@ -26,7 +26,7 @@
 
 int msg_quiet = 0;
 
-// blink1 copy of some hid_device_info and other bits. 
+// blink1 copy of some hid_device_info and other bits.
 // this seems kinda dumb, though. is there a better way?
 typedef struct blink1_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
@@ -61,11 +61,11 @@ void blink1_sortCache(void);
 const char * const deviceTypeStrings[] =
     {
      "unknown",
-     "mk1", "mk2", "mk3" 
+     "mk1", "mk2", "mk3"
     };
 
 //----------------------------------------------------------------------------
-// implementation-varying code 
+// implementation-varying code
 
 #if USE_HIDDATA
 #include "blink1-lib-lowlevel-hiddata.h"
@@ -83,7 +83,7 @@ const char * const deviceTypeStrings[] =
 
 //
 // blink1 hardware api
-// 
+//
 
 //
 int blink1_getCachedCount(void)
@@ -104,9 +104,9 @@ const char* blink1_getCachedSerial(int i)
     return blink1_infos[i].serial;
 }
 
-int blink1_getCacheIndexByPath( const char* path ) 
+int blink1_getCacheIndexByPath( const char* path )
 {
-    for( int i=0; i< cache_max; i++ ) { 
+    for( int i=0; i< cache_max; i++ ) {
         if( strcmp( blink1_infos[i].path, (const char*) path ) == 0 ) return i;
     }
     return -1;
@@ -122,17 +122,17 @@ int blink1_getCacheIndexById( uint32_t i )
     return i;
 }
 
-int blink1_getCacheIndexBySerial( const char* serial ) 
+int blink1_getCacheIndexBySerial( const char* serial )
 {
-    for( int i=0; i< cache_max; i++ ) { 
+    for( int i=0; i< cache_max; i++ ) {
         if( strcmp( blink1_infos[i].serial, serial ) == 0 ) return i;
     }
     return -1;
 }
 
-int blink1_getCacheIndexByDev( blink1_device* dev ) 
+int blink1_getCacheIndexByDev( blink1_device* dev )
 {
-    for( int i=0; i< cache_max; i++ ) { 
+    for( int i=0; i< cache_max; i++ ) {
         if( blink1_infos[i].dev == dev ) return i;
     }
     return -1;
@@ -145,7 +145,7 @@ const char* blink1_getSerialForDev(blink1_device* dev)
     return NULL;
 }
 
-int blink1_clearCacheDev( blink1_device* dev ) 
+int blink1_clearCacheDev( blink1_device* dev )
 {
     int i = blink1_getCacheIndexByDev( dev );
     if( i>=0 ) blink1_infos[i].dev = NULL; // FIXME: hmmmm
@@ -193,8 +193,8 @@ int blink1_getVersion(blink1_device *dev)
 
     int rc = blink1_read(dev, buf, len);
     if( rc != -1 ) // also no error
-        rc = ((buf[3]-'0') * 100) + (buf[4]-'0'); 
-    // rc is now version number or error  
+        rc = ((buf[3]-'0') * 100) + (buf[4]-'0');
+    // rc is now version number or error
     // FIXME: we don't know vals of errcodes
     return rc;
 }
@@ -209,7 +209,7 @@ int blink1_eeread(blink1_device *dev, uint16_t addr, uint8_t* val)
     blink1_sleep( 50 ); // FIXME:
     if( rc != -1 ) // no error
         rc = blink1_read(dev, buf, len );
-    if( rc != -1 ) 
+    if( rc != -1 )
         *val = buf[3];
     return rc;
 }
@@ -220,7 +220,7 @@ int blink1_eewrite(blink1_device *dev, uint16_t addr, uint8_t val)
     char buf[blink1_buf_size] = {blink1_report_id, 'E', addr, val };
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
-        
+
     return rc;
 }
 
@@ -235,7 +235,7 @@ int blink1_serialnumread(blink1_device *dev, uint8_t** serialnum)
 }
 
 //
-static uint8_t parseHex(char c) 
+static uint8_t parseHex(char c)
 {
     c = toupper(c);
     if (c >= '0' && c <= '9')  return (c - '0');
@@ -244,7 +244,7 @@ static uint8_t parseHex(char c)
 }
 
 // serialnum comes in as an ascii set of 8 characters representing
-// 4-bytes 
+// 4-bytes
 int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr)
 {
     uint8_t serialnum[4];
@@ -255,13 +255,13 @@ int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr)
 
     int rc = 0;
     for( int i=0; i<blink1_serialnum_len; i++ ) { // serialnum is 4 chars long
-        blink1_sleep(50); //FIXME: 
+        blink1_sleep(50); //FIXME:
         uint8_t v = serialnum[i];
         int rc = blink1_eewrite( dev, blink1_eeaddr_serialnum+i, v);
         if( rc == -1 ) { // try again
             LOG("blink1_serialwrite: oops, trying again on char %d\n",i);
             rc = blink1_eewrite(dev,blink1_eeaddr_serialnum+i, v);
-            if( rc == -1 ) { 
+            if( rc == -1 ) {
                 LOG("blink1_serialwrite: error on try again\n");
                 break;
             }
@@ -289,7 +289,7 @@ int blink1_fadeToRGBN(blink1_device *dev,  uint16_t fadeMillis,
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
 
-    return rc; 
+    return rc;
 }
 
 
@@ -312,7 +312,7 @@ int blink1_fadeToRGB(blink1_device *dev,  uint16_t fadeMillis,
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
 
-    return rc; 
+    return rc;
 }
 
 //
@@ -328,18 +328,18 @@ int blink1_setRGB(blink1_device *dev, uint8_t r, uint8_t g, uint8_t b )
     buf[5] = 0;
     buf[6] = 0;
     buf[7] = 0;
-    
+
     int rc = blink1_write(dev, buf, sizeof(buf) );
 
-    return rc; 
+    return rc;
 }
 
 // mk2 devices only
-int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis, 
-                   uint8_t* r, uint8_t* g, uint8_t* b, 
+int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
+                   uint8_t* r, uint8_t* g, uint8_t* b,
                    uint8_t ledn)
 {
-    if( ! blink1_isMk2(dev) ) { 
+    if( ! blink1_isMk2(dev) ) {
         return blink1_readRGB_mk1( dev, fadeMillis, r,g,b);
     }
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'r', 0,0,0, 0,0,ledn };
@@ -355,17 +355,17 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
 }
 
 
-// 
+//
 // args:
 // - on == 1 or 0, enable or disable
-// - millis == milliseconds to wait until triggering 
+// - millis == milliseconds to wait until triggering
 // - st == 1 or 0, stay lit or set off()  (mk2 firmware only)
 // FIXME: bug in firmware? yes in v204 devices, max time is 62 secs
 // - millis = 100000 => dms = 10000, dms_hi =  39, dms_lo =  16 :: real time = 34 secs
 // - millis =  50000 => dms =  5000, dms_hi =  19, dms_lo = 136 :: real time = 50 secs
 // - millis = 652800 => dms = 65280, dms_hi = 255, dms_lo =   0 :: real time = 62 secs
 // - millis =  62000 => dms =  6200, dms_hi =  24, dms_lo =  56 :: real time = 62 secs
-// 
+//
 int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, uint8_t st,
                       uint8_t startpos, uint8_t endpos)
 {
@@ -397,7 +397,7 @@ int blink1_playloop(blink1_device *dev, uint8_t play, uint8_t startpos,uint8_t e
 {
     uint8_t buf[blink1_buf_size];
     buf[0] = blink1_report_id;
-    buf[1] = 'p'; 
+    buf[1] = 'p';
     buf[2] = play;
     buf[3] = startpos;
     buf[4] = endpos;
@@ -408,9 +408,9 @@ int blink1_playloop(blink1_device *dev, uint8_t play, uint8_t startpos,uint8_t e
     int rc = blink1_write(dev, buf, sizeof(buf) );
     return rc;
 }
-    
+
 // mk2 devices only
-int blink1_readPlayState(blink1_device *dev, uint8_t* playing, 
+int blink1_readPlayState(blink1_device *dev, uint8_t* playing,
                          uint8_t* playstart, uint8_t* playend,
                          uint8_t* playcount, uint8_t* playpos)
 {
@@ -429,8 +429,8 @@ int blink1_readPlayState(blink1_device *dev, uint8_t* playing,
 
 
 //
-int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis, 
-                            uint8_t r, uint8_t g, uint8_t b, 
+int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis,
+                            uint8_t r, uint8_t g, uint8_t b,
                             uint8_t pos)
 {
     int dms = fadeMillis/10;  // millis_divided_by_10
@@ -438,22 +438,22 @@ int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis,
     g = (blink1_enable_degamma) ? blink1_degamma(g) : g ;
     b = (blink1_enable_degamma) ? blink1_degamma(b) : b ;
 
-    uint8_t buf[blink1_buf_size] = 
+    uint8_t buf[blink1_buf_size] =
         {blink1_report_id, 'P', r,g,b, (dms>>8), (dms % 0xff), pos };
     int rc = blink1_write(dev, buf, sizeof(buf) );
     return rc;
 }
 
 //
-int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis, 
-                           uint8_t* r, uint8_t* g, uint8_t* b, 
+int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis,
+                           uint8_t* r, uint8_t* g, uint8_t* b,
                            uint8_t pos)
 {
     uint8_t ledn;
     return blink1_readPatternLineN( dev, fadeMillis, r,g,b, &ledn, pos);
 }
 
-int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis, 
+int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis,
                             uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* ledn,
                             uint8_t pos)
 {
@@ -485,9 +485,9 @@ int blink1_savePattern( blink1_device *dev )
     buf[7] = 0x00;
     int rc = blink1_write(dev, buf, sizeof(buf) );
     rc = 0; // assume success
-    // note rc will always return -1 
-    // because of issue with flash programming timing out USB 
-    return rc; 
+    // note rc will always return -1
+    // because of issue with flash programming timing out USB
+    return rc;
 }
 
 // only for devcies with fw val 204+
@@ -525,7 +525,7 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
 {
     uint8_t buf[blink1_buf_size];
     buf[0] =  blink1_report_id;
-    buf[1] = 'B';  
+    buf[1] = 'B';
     buf[2] = bootmode;   // (0=normal, 1=play, 2=off)
     buf[3] = playstart;
     buf[4] = playend;
@@ -533,7 +533,7 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
     buf[6] = 0;          // unused1
     buf[7] = 0;          // unused2
     int rc = blink1_write(dev, buf, sizeof(buf) );
-    return rc;   
+    return rc;
 }
 
 // only for mk3
@@ -558,7 +558,7 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
     int rc = blink1_read(dev, buf, sizeof(buf) );
     //int rc = blink1_write(dev, buf, sizeof(buf)-1 ); // why does this need to be one shorter?
     //rc = blink1_read_nosend(dev, buf, sizeof(buf) );
-    
+
     uint8_t* notedata = buf+3;
     memcpy( *notebuf, notedata, blink1_note_size); // skip over report id, cmd FIXME: harccoded 100
 
@@ -573,13 +573,13 @@ int blink1_bootloaderGo( blink1_device* dev )
   if( rc == -1 ) {
     printf("blink1_bootloaderLock: oops error\n");
   }
-  else { 
+  else {
     printf("blink1 response: '%s'\n", buf);
     if( strncmp("GOBOOT", (char*)buf+1, 6) != 0 ) {
       printf("blink1_bootloaderLock: bootloader is locked\n");
       rc = 01; // fail
     }
-  }  
+  }
   return rc;  // >0 on good completion
 }
 
@@ -591,16 +591,16 @@ int blink1_bootloaderLock( blink1_device* dev )
   if( rc == -1 ) {
     printf("blink1_bootlaoderLock: oops error\n");
   }
-  else { 
+  else {
     printf("blink1 response: %s\n", buf+1);
     if( strncmp("LOCKED", (char*)buf+1, 6) != 0 ) {
       rc = -1;
     }
-  }  
+  }
   return rc;
 }
 
-// only for mk3 
+// only for mk3
 // idbuf must be at least blink1_report2_size-2 big
 //
 int blink1_getId( blink1_device *dev, uint8_t** idbuf )
@@ -619,19 +619,19 @@ int blink1_getId( blink1_device *dev, uint8_t** idbuf )
 //
 int blink1_testtest( blink1_device *dev, uint8_t reportid )
 {
-    uint8_t count = (reportid==1) ? blink1_buf_size : blink1_buf2_size; 
+    uint8_t count = (reportid==1) ? blink1_buf_size : blink1_buf2_size;
     uint8_t buf[blink1_report2_size] = { reportid, '!', 0,0,0, 0,0,0 };
 
     int rc = blink1_write(dev, buf, count );
     blink1_sleep( 50 ); //FIXME:
     if( rc != -1 ) { // no error
         rc = blink1_read(dev, buf, count);
-        for( int i=0; i<count; i++ ) { 
+        for( int i=0; i<count; i++ ) {
             printf("%2.2x,",(uint8_t)buf[i]);
         }
         printf("\n");
     }
-    else { 
+    else {
         printf("testtest error: rc=%d\n", rc);
     }
     return rc;
@@ -651,7 +651,7 @@ void blink1_disableDegamma()
 }
 
 /**
- * Using a brightness value, update an r,g,b triplet 
+ * Using a brightness value, update an r,g,b triplet
  * Modifies r,g,b in place
  */
 void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b)
@@ -666,7 +666,7 @@ void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_
 #if 0
 // a simple logarithmic -> linear mapping as a sort of gamma correction
 // maps from 0-255 to 0-255
-static int blink1_degamma_log2lin( int n )  
+static int blink1_degamma_log2lin( int n )
 {
   //return  (int)(1.0* (n * 0.707 ));  // 1/sqrt(2)
     return (((1<<(n/32))-1) + ((1<<(n/32))*((n%32)+1)+15)/32);
@@ -676,7 +676,7 @@ static int blink1_degamma_log2lin( int n )
 // from http://rgb-123.com/ws2812-color-output/
 //   GammaE=255*(res/255).^(1/.45)
 //
-uint8_t GammaE[] = { 
+uint8_t GammaE[] = {
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2,
 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
@@ -694,36 +694,36 @@ uint8_t GammaE[] = {
 191,193,194,196,198,200,202,204,206,208,210,212,214,216,218,220,
 222,224,227,229,231,233,235,237,239,241,244,246,248,250,252,255};
 //
-static int blink1_degamma_better( int n ) 
+static int blink1_degamma_better( int n )
 {
     return GammaE[n];
 }
 
 //
-int blink1_degamma( int n ) 
-{ 
+int blink1_degamma( int n )
+{
     //return blink1_degamma_log2lin(n);
     return blink1_degamma_better(n);
 }
 
-// qsort char* string comparison function 
-int cmp_blink1_info_serial(const void *a, const void *b) 
-{ 
+// qsort char* string comparison function
+int cmp_blink1_info_serial(const void *a, const void *b)
+{
     blink1_info* bia = (blink1_info*) a;
     blink1_info* bib = (blink1_info*) b;
 
-    return strncmp( bia->serial, 
-                    bib->serial, 
+    return strncmp( bia->serial,
+                    bib->serial,
                     serialstrmax);
-} 
+}
 
 void blink1_sortCache(void)
 {
-    size_t elemsize = sizeof( blink1_info ); //  
-    
-    qsort( blink1_infos, 
-           blink1_cached_count, 
-           elemsize, 
+    size_t elemsize = sizeof( blink1_info ); //
+
+    qsort( blink1_infos,
+           blink1_cached_count,
+           elemsize,
            cmp_blink1_info_serial);
 }
 
@@ -748,7 +748,7 @@ void blink1_sleep(uint32_t millis)
 {
 #ifdef WIN32
             Sleep(millis);
-#else 
+#else
             usleep( millis * 1000);
 #endif
 }
@@ -763,7 +763,7 @@ void hexdump(FILE* fp, uint8_t *buffer, int len)
 {
     int     i;
     //FILE    *fp = stdout;
-    
+
     for(i = 0; i < len; i++){
         if(i != 0){
             if(i % 16 == 0){
@@ -803,20 +803,20 @@ void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
     unsigned char region, fpart, p, q, t;
     uint8_t r,g,b;
 
-    if(s == 0) {          // color is grayscale 
+    if(s == 0) {          // color is grayscale
         r = g = b = v;
         return;
     }
-    
-    region = h / 43;      // make hue 0-5 
-    fpart = (h - (region * 43)) * 6; // find remainder part, make it from 0-255 
-    
-    // calculate temp vars, doing integer multiplication 
+
+    region = h / 43;      // make hue 0-5
+    fpart = (h - (region * 43)) * 6; // find remainder part, make it from 0-255
+
+    // calculate temp vars, doing integer multiplication
     p = (v * (255 - s)) >> 8;
     q = (v * (255 - ((s * fpart) >> 8))) >> 8;
     t = (v * (255 - ((s * (255 - fpart)) >> 8))) >> 8;
-        
-    // assign temp vars based on color cone region 
+
+    // assign temp vars based on color cone region
     switch(region) {
         case 0:   r = v; g = t; b = p; break;
         case 1:   r = q; g = v; b = p; break;
@@ -824,7 +824,7 @@ void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
         case 3:   r = p; g = q; b = v; break;
         case 4:   r = t; g = p; b = v; break;
         default:  r = v; g = p; b = q; break;
-    }    
+    }
     rgb->r=r;
     rgb->g=g;
     rgb->b=b;
@@ -834,7 +834,7 @@ void remove_whitespace(char *str)
 {
     char *p;
     size_t len = strlen(str);
- 
+
     for(p = str; *p; p ++, len --) {
         while(isspace(*p)) memmove(p, p+1, len--);
     }
@@ -845,10 +845,10 @@ void remove_whitespace(char *str)
 void parsecolor(rgb_t* color, char* colorstr)
 {
     // parse hex color code like "#FF00FF" or "FF00FF"
-    if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) { 
+    if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) {
         colorstr = (colorstr[0] == '#') ? colorstr+1 : colorstr;
-        uint32_t colorint = strtol(colorstr, NULL, 16); 
-        color->r = (colorint >> 16) & 0xff; 
+        uint32_t colorint = strtol(colorstr, NULL, 16);
+        color->r = (colorint >> 16) & 0xff;
         color->g = (colorint >>  8) & 0xff;
         color->b = (colorint >>  0) & 0xff;
     } else { // else it's a list like "0xff,0x00,0xff" or "255,0,255"
@@ -856,7 +856,7 @@ void parsecolor(rgb_t* color, char* colorstr)
     }
 }
 
-// 
+//
 // Parse pattern into an array of patternlines
 // - number repeats
 // - pattern array (contains {color,millis,ledn}
@@ -869,23 +869,23 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern )
     if(  s != NULL ) {
       *repeats = strtol(s,NULL,0);
     }
-    
+
     int i=0;
     s = strtok(NULL, ","); // prep next parse
     while( s != NULL ) {
         //printf("s:'%s'\n",s);
         parsecolor( &pattern[i].color, s );
-        
+
         s = strtok(NULL, ",");
         if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
         pattern[i].millis = atof(s) * 1000;
-        
+
         s = strtok(NULL, ",");
         if( s == NULL ) { msg("bad pattern: no led\n"); break; }
         pattern[i].ledn = strtol(s,NULL,0);
-        
+
         i++;
-        
+
         s = strtok(NULL, ",");
         if( s == NULL ) break;
     }
@@ -907,12 +907,9 @@ void msg(char* fmt, ...)
 }
 
 /**
- * set the level of quiet for msg  FIXME: 
+ * set the level of quiet for msg  FIXME:
  */
 void msg_setquiet(int q)
 {
     msg_quiet = q;
 }
-
-
-
