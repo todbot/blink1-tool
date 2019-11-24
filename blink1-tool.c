@@ -904,7 +904,7 @@ int main(int argc, char** argv)
         }
         strcat(str,"}");
         msg("%s\n",str);
-        msg("len:%d\n",strlen(str));
+        // msg("len:%d\n",strlen(str));
     }
     else if( cmd == CMD_SETSTARTUP ) {
       msg("set startup params:");
