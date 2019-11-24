@@ -9,10 +9,6 @@
  *
  *
  */
-// FIXME: temp fix for read/write pattern json output sprint(str) issue
-#if !defined(__has_warning) || __has_warning("-Wformat-overflow")
-#pragma GCC diagnostic ignored "-Wformat-overflow"
-#endif
 
 #include <stdio.h>
 #include <stdarg.h>    // vararg stuff
@@ -892,15 +888,23 @@ int main(int argc, char** argv)
         msg("read pattern:\n");
         uint8_t r,g,b,n;
         uint16_t msecs;
-        char str[1024] = "{0"; // repeats forever
-        for( int i=0; i<32; i++ ) {
+        int maxstrlen = 2048;
+        int pattlen = 32;
+        char str[maxstrlen];
+        str[0] = '\0';
+        strcat(str, "{0");
+        char strline[maxstrlen/pattlen];
+        //strcat(str, "{0"); // repeats forever
+        for( int i=0; i<pattlen; i++ ) {
             rc = blink1_readPatternLineN(dev, &msecs, &r,&g,&b, &n, i );
             //if( !(msecs==0 && r==0 && g==0 && b==0) ) {
-            sprintf(str, "%s,#%2.2x%2.2x%2.2x,%0.2f,%d", str, r,g,b, (msecs/1000.0),n);
+            snprintf(strline, (maxstrlen/pattlen), ",#%2.2x%2.2x%2.2x,%0.2f,%d", r,g,b, (msecs/1000.0),n);
+            strcat(str,strline);
             //}
         }
-        sprintf(str,"%s}",str);
+        strcat(str,"}");
         msg("%s\n",str);
+        msg("len:%d\n",strlen(str));
     }
     else if( cmd == CMD_SETSTARTUP ) {
       msg("set startup params:");
