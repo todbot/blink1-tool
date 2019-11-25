@@ -243,8 +243,11 @@ ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
 CFLAGS += -I./hidapi/hidapi
 OBJS = ./hidapi/linux/hid.o
-CFLAGS += `pkg-config libusb-1.0 --cflags` -fPIC
-LIBS   += `pkg-config libusb-1.0 --libs` `pkg-config libudev --libs` -lrt
+#CFLAGS += `pkg-config libusb-1.0 --cflags`
+CLFAGS += -fPIC
+#LIBS   += `pkg-config libusb-1.0 --libs`
+LIBS   += `pkg-config libudev --libs`
+#LIBS   += -lrt
   endif
   ifeq "$(HIDAPI_TYPE)" "LIBUSB"
 CFLAGS += -DUSE_HIDAPI
