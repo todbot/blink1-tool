@@ -791,7 +791,7 @@ int main(int argc, char** argv)
         }
         blink1_close(dev);
         blink1_adjustBrightness( brightness, &r, &g, &b);
-        msg("blink %d times rgb:%x,%x,%x: \n", n,r,g,b);
+        msg("blink %d times rgb:%2.2x,%2.2x,%2.2x: \n", n,r,g,b);
         if( n == 0 ) n = -1; // repeat forever
         while( n==-1 || n-- ) {
             rc = blink1_fadeToRGBForDevices( millis,r,g,b,ledn);
