@@ -1,27 +1,27 @@
-
-task:
-  name: linux
-  container:
-    image: ubuntu:latest
-  test_script: echo "Hello World from Ubuntu!"
-  setup_os_script:
-    - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
-  setup_script:
-    - git fetch --tags origin
-    - make prep
-  build_script:
-    - make
-
-task:
-  name: macosx
-  osx_instance:
-    image: mojave-xcode
-  test_script: echo "Hello World from macOS!"
-  setup_script:
-    - git fetch --tags origin
-    - make prep
-  build_script:
-    - make
+#
+# task:
+#   name: linux
+#   container:
+#     image: ubuntu:latest
+#   test_script: echo "Hello World from Ubuntu!"
+#   setup_os_script:
+#     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
+#   setup_script:
+#     - git fetch --tags origin
+#     - make prep
+#   build_script:
+#     - make
+#
+# task:
+#   name: macosx
+#   osx_instance:
+#     image: mojave-xcode
+#   test_script: echo "Hello World from macOS!"
+#   setup_script:
+#     - git fetch --tags origin
+#     - make prep
+#   build_script:
+#     - make
 
 task:
   name: windows
