@@ -2,7 +2,7 @@
 task:
   name: linux
   container:
-    image: ubuntu
+    image: ubuntu:latest
   test_script: echo "Hello World from Ubuntu!"
   setup_script:
     - apt-get update && apt-get install -y \
