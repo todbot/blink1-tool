@@ -3,11 +3,12 @@ task:
   name: linux
   container:
     image: ubuntu
-  script: echo "Hello World from Ubuntu!"
+  test_script: echo "Hello World from Ubuntu!"
+  build_script: make blink1-tool
 
 task:
   name: macosx
   osx_instance:
     image: mojave-xcode
-  script: echo "Hello World from macOS!"
-  
+  test_script: echo "Hello World from macOS!"
+  build_script: make blink1-tool
