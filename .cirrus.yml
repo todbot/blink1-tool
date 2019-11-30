@@ -4,11 +4,23 @@ task:
   container:
     image: ubuntu
   test_script: echo "Hello World from Ubuntu!"
-  build_script: make blink1-tool
+  setup_script:
+    - apt-get update && apt-get install -y \
+        build-essential \
+        make \
+        gcc \
+        pkg-config \
+        libudev-dev
+    - make prep
+  build_script:
+    - make
 
 task:
   name: macosx
   osx_instance:
     image: mojave-xcode
   test_script: echo "Hello World from macOS!"
-  build_script: make blink1-tool
+  setup_script:
+    - make prep
+  build_script:
+    - make
