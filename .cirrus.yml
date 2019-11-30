@@ -30,8 +30,9 @@ task:
     os_version: 2019
   test_script: echo "Hello World from Windows"
   setup_script:
+    - C:\tools\msys64\usr\bin\bash -lc 'make CC=gcc prep'
 #    - env
-    - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
-    - make CC=gcc prep
-  build_script:
-    - make CC=gcc
+#    - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
+#    - make CC=gcc prep
+#  build_script:
+#    - make CC=gcc
