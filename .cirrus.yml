@@ -7,6 +7,8 @@ task:
   setup_script:
     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
     - make prep
+    - git tag
+    - git tag 2>&1 | tail -1 | cut -f1 -d' '
   build_script:
     - make
 
@@ -17,5 +19,6 @@ task:
   test_script: echo "Hello World from macOS!"
   setup_script:
     - make prep
+    - git tag 2>&1 | tail -1 | cut -f1 -d' '
   build_script:
     - make
