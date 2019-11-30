@@ -32,7 +32,7 @@ task:
  #   CIRRUS_SHELL: C:\msys64\usr\bin\bash
   test_script: echo "Hello World from Windows"
   setup_script:
-    - dir c:\msys64
+    # - dir c:\msys64
     - dir c:\tools
    #- C:\msys64\usr\bin\bash -lc 'cd "%cd%"; echo $PWD; make CC=gcc prep'
     # - env
