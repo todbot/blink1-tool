@@ -28,13 +28,13 @@ task:
   windows_container:
     image: cirrusci/windowsservercore:cmake
     os_version: 2019
-  env:
-    CIRRUS_SHELL: C:\msys64\usr\bin\bash
+ # env:
+ #   CIRRUS_SHELL: C:\msys64\usr\bin\bash
   test_script: echo "Hello World from Windows"
   setup_script:
-    - env
-    - make CC=gcc prep
-#    - C:\tools\msys64\usr\bin\bash -lc 'make CC=gcc prep'
+   - C:\msys64\usr\bin\bash -lc 'cd "%cd%"; echo $PWD; make CC=gcc prep'
+    # - env
+    # - make CC=gcc prep
 #    - env
 #    - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
 #    - make CC=gcc prep
