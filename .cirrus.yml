@@ -6,12 +6,8 @@ task:
   test_script: echo "Hello World from Ubuntu!"
   setup_os_script:
     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
-    - echo "hello"
-    - git fetch --tags origin
-    - git tag > foo.txt
-    - cat foo.txt
-    - git tag 2>&1 | tail -1 | cut -f1 -d' '
   setup_script:
+    - git fetch --tags origin
     - make prep
   build_script:
     - make
@@ -22,7 +18,20 @@ task:
     image: mojave-xcode
   test_script: echo "Hello World from macOS!"
   setup_script:
+    - git fetch --tags origin
     - make prep
-    - git tag 2>&1 | tail -1 | cut -f1 -d' '
   build_script:
     - make
+
+task:
+  name: windows
+  windows_container:
+    image: cirrusci/windowsservercore:2019
+    os_version: 2019
+  test_script: echo "Hello World from Windows"
+  setup_task:
+    - env
+    - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
+    - make CC=gcc prep
+  build_script:
+    - make CC=gcc
