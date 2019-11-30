@@ -4,12 +4,14 @@ task:
   container:
     image: ubuntu:latest
   test_script: echo "Hello World from Ubuntu!"
-  setup_script:
+  setup_os_script:
     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
-    - git fetch origin master 
-    - make prep
-    - git tag
+    - echo "hello"
+    - git tag > foo.txt
+    - cat foo.txt
     - git tag 2>&1 | tail -1 | cut -f1 -d' '
+  setup_script:
+    - make prep
   build_script:
     - make
 
