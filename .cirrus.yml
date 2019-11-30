@@ -1,0 +1,13 @@
+
+task:
+  name: linux
+  container:
+    image: ubuntu
+  script: echo "Hello World from Ubuntu!"
+
+task:
+  name: macosx
+  osx_instance:
+    image: mojave-xcode
+  script: echo "Hello World from macOS!"
+  
