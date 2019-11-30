@@ -29,7 +29,7 @@ task:
     image: cirrusci/windowsservercore:2019
     os_version: 2019
   test_script: echo "Hello World from Windows"
-  setup_task:
+  setup_script:
     - env
     - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
     - make CC=gcc prep
