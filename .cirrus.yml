@@ -32,13 +32,6 @@ task:
  #   CIRRUS_SHELL: C:\msys64\usr\bin\bash
   test_script: echo "Hello World from Windows"
   setup_script:
-    # - dir c:\msys64
-    - dir c:\tools
-   #- C:\msys64\usr\bin\bash -lc 'cd "%cd%"; echo $PWD; make CC=gcc prep'
-    # - env
-    # - make CC=gcc prep
-#    - env
-#    - $env:Path = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;" + $env:Path
-#    - make CC=gcc prep
-#  build_script:
-#    - make CC=gcc
+    - set PATH=C:\tools\msys64\usr\bin\;c:\tools\msys64\mingw64\bin;%PATH%;
+  build_script:
+    - mingw32-make
