@@ -36,6 +36,7 @@ task:
     os_version: 2019
   setup_script:
     - git fetch --tags origin
+    - pacman -S zip
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
