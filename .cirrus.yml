@@ -37,12 +37,14 @@ task:
   setup_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - git fetch --tags origin
-    - pacman -S --noconfirm zip
+    - pacman -S --noconfirm zip unzip
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-    - mingw32-make
-    - mingw32-make package-all
+    - doskey make=mingw32-make.exe $*
+    - set MAKE=mingw32-make
+    - make
+    - make package-all
   test_script:
     - blink1-tool.exe --version
   artifacts:
