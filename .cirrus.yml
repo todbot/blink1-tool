@@ -1,39 +1,41 @@
-#
-# task:
-#   name: linux
-#   container:
-#     image: ubuntu:latest
-#   hello_script: echo "Hello World from Ubuntu!"
-#   setup_os_script:
-#     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
-#   setup_script:
-#     - git fetch --tags origin
-#     - make prep
-#   build_script:
-#     - make
-#
-# task:
-#   name: macosx
-#   osx_instance:
-#     image: mojave-xcode
-#   hello_script: echo "Hello World from macOS!"
-#   setup_script:
-#     - git fetch --tags origin
-#     - make prep
-#   build_script:
-#     - make
+
+task:
+  name: linux
+  container:
+    image: ubuntu:latest
+  setup_os_script:
+    - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
+  setup_script:
+    - git fetch --tags origin
+  build_script:
+    - make
+    - make package-all
+  test_script:
+    - blink1-tool --version
+
+task:
+  name: macosx
+  osx_instance:
+    image: mojave-xcode
+  setup_script:
+    - git fetch --tags origin
+  build_script:
+    - make
+    - make package-all
+  test_script:
+    - blink1-tool --version
 
 task:
   name: windows
   windows_container:
     image: cirrusci/windowsservercore:cmake
     os_version: 2019
-  hello_script: echo "Hello World from Windows"
   setup_script:
     - git fetch --tags origin
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
     - mingw32-make
+    - mingw32-make package-all
   test_script:
     - blink1-tool --version
