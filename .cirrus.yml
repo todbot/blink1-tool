@@ -4,14 +4,16 @@ task:
   container:
     image: ubuntu:latest
   setup_os_script:
-    - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
+    - apt-get update && apt-get install -y build-essential zip git make gcc pkg-config libudev-dev
   setup_script:
     - git fetch --tags origin
   build_script:
     - make
     - make package-all
   test_script:
-    - blink1-tool --version
+    - ./blink1-tool --version
+  artifacts:
+    path: builds/*
 
 task:
   name: macosx
@@ -23,7 +25,9 @@ task:
     - make
     - make package-all
   test_script:
-    - blink1-tool --version
+    - ./blink1-tool --version
+  artifacts:
+    path: builds/*
 
 task:
   name: windows
@@ -38,4 +42,6 @@ task:
     - mingw32-make
     - mingw32-make package-all
   test_script:
-    - blink1-tool --version
+    - blink1-tool.exe --version
+  artifacts:
+    path: builds\*
