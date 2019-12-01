@@ -32,7 +32,8 @@ task:
   setup_script:
     - git fetch --tags origin
   build_script:
-    - set PATH=C:\tools\msys64\usr\bin\;c:\tools\msys64\mingw64\bin;%PATH%;
+    - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
+    - "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
     - mingw32-make
   test_script:
     - blink1-tool --version
