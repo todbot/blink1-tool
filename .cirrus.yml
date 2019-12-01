@@ -3,7 +3,7 @@
 #   name: linux
 #   container:
 #     image: ubuntu:latest
-#   test_script: echo "Hello World from Ubuntu!"
+#   hello_script: echo "Hello World from Ubuntu!"
 #   setup_os_script:
 #     - apt-get update && apt-get install -y build-essential git make gcc pkg-config libudev-dev
 #   setup_script:
@@ -16,7 +16,7 @@
 #   name: macosx
 #   osx_instance:
 #     image: mojave-xcode
-#   test_script: echo "Hello World from macOS!"
+#   hello_script: echo "Hello World from macOS!"
 #   setup_script:
 #     - git fetch --tags origin
 #     - make prep
@@ -28,10 +28,11 @@ task:
   windows_container:
     image: cirrusci/windowsservercore:cmake
     os_version: 2019
- # env:
- #   CIRRUS_SHELL: C:\msys64\usr\bin\bash
-  test_script: echo "Hello World from Windows"
+  hello_script: echo "Hello World from Windows"
   setup_script:
-    - set PATH=C:\tools\msys64\usr\bin\;c:\tools\msys64\mingw64\bin;%PATH%;
+    - git fetch --tags origin
   build_script:
+    - set PATH=C:\tools\msys64\usr\bin\;c:\tools\msys64\mingw64\bin;%PATH%;
     - mingw32-make
+  test_script:
+    - blink1-tool --version
