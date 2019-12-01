@@ -1,3 +1,6 @@
+#
+# Build blink1-tool for linux, macosx, windows
+#
 
 task:
   name: linux
@@ -41,7 +44,7 @@ task:
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-#    - doskey make=mingw32-make.exe $*
+#    - doskey make=mingw32-make.exe $*  # why doesn't this work
     - set MAKE=mingw32-make
     - mingw32-make
     - mingw32-make package-all

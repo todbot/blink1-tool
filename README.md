@@ -1,9 +1,13 @@
 # Command-line Tools and C library for blink(1) USB RGB LED
 
+[![Build Status linux](https://api.cirrus-ci.com/github/todbot/blink1-tool.svg?task=linux)](https://cirrus-ci.com/github/todbot/blink1-tool)
+[![Build Status macosx](https://api.cirrus-ci.com/github/todbot/blink1-tool.svg?task=macosx)](https://cirrus-ci.com/github/todbot/blink1-tool)
+[![Build Status windows](https://api.cirrus-ci.com/github/todbot/blink1-tool.svg?task=windows)](https://cirrus-ci.com/github/todbot/blink1-tool)
+
 This is a collection of C/C++ tools for controlling the [blink1 USB RGB LED](https://blink1.thingm.com/).
 
 This code lives at https://github.com/todbot/blink1-tool.
-It started as the `commandline` directory in https://github.com/todbot/blink1. 
+It started as the `commandline` directory in https://github.com/todbot/blink1.
 
 For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
 
@@ -39,7 +43,7 @@ Supported platforms for `blink1-tool` and `blink1-lib`:
 
 In general, the `blink1-tool` builds as a static binary where possible,
 eliminating the need for shared library dependencies on the target.
-However, static builds can be problematic for some systems with different 
+However, static builds can be problematic for some systems with different
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
 ### Building from source
@@ -76,25 +80,43 @@ HIDAPI_TYPE=LIBUSB make
 ## OS-specific prerequisites for compiling
 
 If you have the ability to compile programs on your system,
-you may already have everything you need to compile `blink1-tool`. 
+you may already have everything you need to compile `blink1-tool`.
 
 ### Linux
+- In a terminal, install pre-reqs and build:
 - `sudo apt-get install build-essential pkg-config libudev-dev`
-- And if you want libusb variant, add: `sudo apt-get install libusb-1.0-0-dev`
+- `sudo apt-get install libusb-1.0-0-dev`  (optional, only for libusb variant)
+- `cd blink1-tool`
+- `make`
+- `HIDAPI_TYPE=libusb make` (if you instead you want libusb version)
 
 ### MacOS
 - Xcode
-- In Terminal, "xcode-select --install" to install command-line tools
+- In Terminal, setup Xcode and build:
+- `xcode-select --install`
+- `cd blink1-tool`
+- `make`
 
 ### Windows
+- Install [Chocolatey package manager](https://chocolatey.org/)
+- In an admin CMD shell, install VisualStudio, MinGW, & MSYS2:
+- `choco install visualstudio2017community visualstudio2017-workload-vctools mingw msys2 cmake`
+- In a normal CMD shell, set paths and build:
+- `set PATH=C:\tools\msys64\usr\bin;%PATH%`
+- `pacman -S zip unzip`
+- `call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"`
+- `set MAKE=mingw32-make`
+- `cd blink1-tool`
+- `mingw32-make`
+
+### Windows (old way)
 - Install Visual Studio 2015
 - Install MSYS2 : https://github.com/msys2/msys2/wiki/MSYS2-installation
-- pacman -S base-devel make git zip unzip
-- pacman -S mingw-w64-x86_64-toolchain
-   - add to PATH compiler and Windows linker:
-         export PATH=${PATH}:/c/msys64/mingw64/bin
-         export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
-   - git clone https://github.com/todbot/blink1-tool
+- In MSYS2 bash shell:
+- `pacman -S base-devel make git zip unzip mingw-w64-x86_64-toolchain`
+- `export PATH=${PATH}:/c/msys64/mingw64/bin`
+- `export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"`
+- `make`
 
 
 For other OSes, see the Makefile for details
@@ -120,5 +142,3 @@ Note the `--privileged` tag, docker needs this to access the hosts USB controlle
 Docker resources
 - [Install Guide](https://docs.docker.com/installation/)
 - [Run Command](https://docs.docker.com/reference/run/)
-
-
