@@ -41,10 +41,10 @@ task:
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-    - doskey make=mingw32-make.exe $*
+#    - doskey make=mingw32-make.exe $*
     - set MAKE=mingw32-make
-    - make
-    - make package-all
+    - mingw32-make
+    - mingw32-make package-all
   test_script:
     - blink1-tool.exe --version
   artifacts:
