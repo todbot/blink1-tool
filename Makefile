@@ -319,7 +319,7 @@ endif
 LIBFLAGS = -shared -o $(LIBTARGET) $(LIBS)
 EXE=
 
-INSTALL = install -D
+INSTALL = install
 PREFIX ?= /usr/local
 EXELOCATION ?= $(PREFIX)/bin
 LIBLOCATION ?= $(PREFIX)/lib
