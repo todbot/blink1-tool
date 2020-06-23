@@ -570,7 +570,7 @@ install-lib:
 	$(INSTALL) $(LIBTARGET) $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
 
 install-dev: install-lib makepkgconfig
-	$(INSTALL) Blink1.pc $(DESTDIR)$(LIBLOCATION)/pkgconfig/Blink1.pc
+	$(INSTALL) Blink1.pc $(DESTDIR)$(LIBLOCATION)/pkgconfig/$(PKG_CONFIG_FILE_NAME)
 	$(INSTALL) blink1-lib.h $(DESTDIR)$(INCLOCATION)/blink1-lib.h
 
 install: all install-lib
@@ -581,7 +581,7 @@ uninstall-lib:
 
 uninstall-dev:
 	rm -f $(DESTDIR)$(INCLOCATION)/blink2-lib.h
-	rm -f $(DESTDIR)$(LIBLOCATION)/pkgconfig/Blink1.pc
+	rm -f $(DESTDIR)$(LIBLOCATION)/pkgconfig/$(PKG_CONFIG_FILE_NAME)
 
 uninstall: uninstall-lib uninstall-dev
 	rm -f $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
@@ -589,7 +589,7 @@ uninstall: uninstall-lib uninstall-dev
 clean:
 	rm -f $(OBJS)
 	rm -f $(LIBTARGET)
-	rm -f Blink1.pc
+	rm -f $(PKG_CONFIG_FILE_NAME)
 	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
