@@ -155,7 +155,7 @@ endif
 
 BLINK1_VERSION?="$(GIT_TAG)-$(OS)-$(MACH_TYPE)"
 
-
+PKG_CONFIG_FILE_NAME = Blink1.pc
 
 #################  Mac OS X  ##################################################
 ifeq "$(OS)" "macosx"
@@ -569,7 +569,8 @@ package-all: package package-tiny-server package-blink1control-tool
 install-lib:
 	$(INSTALL) $(LIBTARGET) $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
 
-install-dev: install-lib
+install-dev: install-lib makepkgconfig
+	$(INSTALL) Blink1.pc $(DESTDIR)$(LIBLOCATION)/pkgconfig/$(PKG_CONFIG_FILE_NAME)
 	$(INSTALL) blink1-lib.h $(DESTDIR)$(INCLOCATION)/blink1-lib.h
 
 install: all install-lib
@@ -578,15 +579,17 @@ install: all install-lib
 uninstall-lib:
 	rm -f $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
 
-uninstall-dev: uninstall-lib
+uninstall-dev:
 	rm -f $(DESTDIR)$(INCLOCATION)/blink2-lib.h
+	rm -f $(DESTDIR)$(LIBLOCATION)/pkgconfig/$(PKG_CONFIG_FILE_NAME)
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-dev
 	rm -f $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
 
 clean:
 	rm -f $(OBJS)
 	rm -f $(LIBTARGET)
+	rm -f $(PKG_CONFIG_FILE_NAME)
 	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
@@ -620,3 +623,15 @@ dumpbin:
 
 printvars:
 	@echo "OS=$(OS), CFLAGS=$(CFLAGS), LDFLAGS=$(LDFLAGS), LIBS=$(LIBS), LIBFLAGS=$(LIBFLAGS)"
+
+makepkgconfig:
+	@echo "prefix=$(PREFIX)" > $(PKG_CONFIG_FILE_NAME)
+	@echo "includedir=$(INCLOCATION)" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "libdir=$(LIBLOCATION)" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "Name: Blink1" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "Description: The Blink1 library" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "Version: $(shell echo $(GIT_TAG) | cut -c 2- )" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "Cflags: -I$(DESTDIR)$(INCLOCATION)" >> $(PKG_CONFIG_FILE_NAME)
+	@echo "Libs: -L$(DESTDIR)$(LIBLOCATION) -lBlink1" >> $(PKG_CONFIG_FILE_NAME)
+
