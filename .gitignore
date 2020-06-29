@@ -36,3 +36,5 @@ blink1-tiny-server
 builds
 
 .vscode
+.idea
+cmake-build-debug
