@@ -50,22 +50,22 @@ typedef struct _url_info
 // FIXME: how to make Emacs format these better?
 url_info supported_urls[]
 = {
-   {"/blink1/",      "simple status page"},
-   {"/blink1/id",    "get blink1 serial number"},
-   {"/blink1/on",    "turn blink(1) full bright white"},
-   {"/blink1/red",   "turn blink(1) solid red"},
-   {"/blink1/green", "turn blink(1) solid green"},
-   {"/blink1/blue",  "turn blink(1) solid blue"},
-   {"/blink1/fadeToRGB", "turn blink(1) specified RGB color"},
-   {"/blink/blink",  "blink the blink(1) the specified RGB color"},
-   {"/blink/pattern",  "play color pattern specified by 'pattern' arg"},
-   {"/blink/random",  "turn the blink(1) a random color"}
+    {"/blink1/",              "simple status page"},
+    {"/blink1/id",            "get blink1 serial number"},
+    {"/blink1/on",            "turn blink(1) full bright white"},
+    {"/blink1/red",           "turn blink(1) solid red"},
+    {"/blink1/green",         "turn blink(1) solid green"},
+    {"/blink1/blue",          "turn blink(1) solid blue"},
+    {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color"},
+    {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
+    {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
+    {"/blink1/random",        "turn the blink(1) a random color"}
 };
 
 
 void usage()
 {
-    
+
     fprintf(stderr,
 "Usage: \n"
 "  %s [options]\n"
@@ -83,18 +83,18 @@ void usage()
     fprintf(stderr,"\n");
     fprintf(stderr,
 "Supported query arguments: (not all urls support all args)\n"
-"  'rgb'    -- hex RGB color code. e.g. 'rgb=%%23FF9900'\n"
+"  'rgb'    -- hex RGB color code. e.g. 'rgb=FF9900' or 'rgb=%%23FF9900\n"
 "  'time'   -- time in seconds. e.g. 'time=0.5' \n"
 "  'bright' -- brightness, 1-255, 0=full e.g. half-bright 'bright=127'\n"
 "  'ledn'   -- which LED to set. 0=all/1=top/2=bot, e.g. 'ledn=0'\n"
 "  'millis' -- milliseconds to fade, or blink, e.g. 'millis=500'\n"
 "  'count'  -- number of times to blink, for /blink1/blink, e.g. 'count=3'\n"
-"  'pattern'-- color pattern string (e.g. '3,#00ffff,0.2,0,#000000,0.2,0')\n"
+"  'pattern'-- color pattern string (e.g. '3,00ffff,0.2,0,000000,0.2,0')\n"
 "\n"
 "Examples: \n"
 "  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
-"  /blink1/fadeToRGB?rgb=%%23FF00FF&millis=500 -- fade to purple over 500ms\n"
-"  /blink1/blink1/pattern?pattern=3,%%2300ffff,0.2,0,%%23000000,0.2,0 -- blink teal 3 times\n"
+"  /blink1/fadeToRGB?rgb=FF00FF&millis=500 -- fade to purple over 500ms\n"
+"  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink teal 3 times\n"
             
 "\n"
             
