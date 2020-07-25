@@ -94,7 +94,7 @@ void usage()
 "Examples: \n"
 "  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
 "  /blink1/fadeToRGB?rgb=FF00FF&millis=500 -- fade to purple over 500ms\n"
-"  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink teal 3 times\n"
+"  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink cyan 3 times\n"
             
 "\n"
             
