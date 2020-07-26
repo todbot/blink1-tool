@@ -350,6 +350,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
         sprintf(result, "blink1 random");
+        if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         srand( time(NULL) * getpid() );
         blink1_device* dev = blink1_open();
