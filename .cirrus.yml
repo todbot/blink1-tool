@@ -4,6 +4,8 @@
 
 task:
   name: linux
+  environment:
+    DEBIAN_FRONTEND:noninteractive
   container:
     image: ubuntu:latest
   setup_os_script:
