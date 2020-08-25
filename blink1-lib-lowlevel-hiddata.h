@@ -192,7 +192,7 @@ int blink1_read( blink1_device* dev, void* buf, int len)
     if( dev==NULL ) {
         return -1; // BLINK1_ERR_NOTOPEN;
     }
-    uint8_t reportid = buf[0];
+    uint8_t reportid = ((uint8_t*)buf)[0];
     int rc = blink1_write( dev, buf, len); // FIXME: check rc
     if((rc = usbhidGetReport(dev, reportid, (char*)buf, &len)) != 0) {
         LOG("error reading data: %s\n", blink1_error_msg(rc));
