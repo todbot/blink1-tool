@@ -507,6 +507,7 @@ help:
 	@echo "make OS=macosx  ... build Mac OS X blink1-lib and blink1-tool"
 	@echo "make OS=wrt     ... build OpenWrt blink1-lib and blink1-tool"
 	@echo "make OS=wrtcross... build for OpenWrt using cross-compiler"
+	@echo "make HIDAPI_TYPE=LIBUSB OS=linux ... build using libusb not hidraw"
 	@echo "make USBLIB_TYPE=HIDDATA OS=linux ... build using low-deps method"
 	@echo "make lib        ... build blink1-lib shared library"
 	@echo "make blink1-tool... build blink1-tool program"

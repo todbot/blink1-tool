@@ -1,0 +1,4 @@
+# Copy this udev with "sudo cp 51-blink1.rules /etc/udev/rules.d/"
+# When done, do "sudo udevadm control --reload && sudo udevadm trigger"
+# Edit it to suit your type of Linux. It's currently set up for modern Ubuntu
+ATTRS{idVendor}=="27b8", ATTRS{idProduct}=="01ed", MODE:="666", GROUP="plugdev"

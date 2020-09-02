@@ -46,6 +46,20 @@ eliminating the need for shared library dependencies on the target.
 However, static builds can be problematic for some systems with different
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
+## OS-specific Tips
+
+### Linux (including Raspberry Pi)
+
+Unless you will always be running `blink1-tool` as the `root` user, you should
+install udev rules to let any user access the blink(1) device.  To install these
+rules on Debian-like system (Ubuntu, Raspian), you can do something like:
+```
+sudo cp 51-blink1.rules /etc/udev/rules.d/51-blink1.rules
+sudo udevadm control --reload
+sudo udevadm trigger
+```
+
+
 ### Building from source
 
 In general you can do:
