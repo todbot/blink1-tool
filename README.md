@@ -4,7 +4,8 @@
 [![Build Status macosx](https://api.cirrus-ci.com/github/todbot/blink1-tool.svg?task=macosx)](https://cirrus-ci.com/github/todbot/blink1-tool)
 [![Build Status windows](https://api.cirrus-ci.com/github/todbot/blink1-tool.svg?task=windows)](https://cirrus-ci.com/github/todbot/blink1-tool)
 
-This is a collection of C/C++ tools for controlling the [blink1 USB RGB LED](https://blink1.thingm.com/).
+This is an official collection of C/C++ tools for controlling
+the [blink1 USB RGB LED](https://blink1.thingm.com/).
 
 This code lives at https://github.com/todbot/blink1-tool.
 It started as the `commandline` directory in https://github.com/todbot/blink1.
@@ -53,6 +54,7 @@ libusb implementations, so doing `make EXEFLAGS=` will generally build a non-sta
 Unless you will always be running `blink1-tool` as the `root` user, you should
 install udev rules to let any user access the blink(1) device.  To install these
 rules on Debian-like system (Ubuntu, Raspian), you can do something like:
+
 ```
 sudo cp 51-blink1.rules /etc/udev/rules.d/51-blink1.rules
 sudo udevadm control --reload
@@ -74,6 +76,8 @@ If your OS is not detected automatically, you can force it with something like:
 ```
 OS=linux make
 ```
+
+To see the supported platforms, please consule the Makefile.
 
 ### Build variants
 
