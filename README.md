@@ -108,6 +108,13 @@ you may already have everything you need to compile `blink1-tool`.
 - `make`
 - `HIDAPI_TYPE=libusb make` (if you instead you want libusb version)
 
+### FreeBSD
+- Install pre-reqs and build:
+- `sudo pkg install gmake gcc git libiconv`
+- `cd blink1-tool`
+- `gmake`
+- `sudo ./blink1-tool --red --flash 3`
+
 ### MacOS
 - Xcode
 - In Terminal, setup Xcode and build:
