@@ -160,6 +160,7 @@ PKG_CONFIG_FILE_NAME = blink1.pc
 #################  Mac OS X  ##################################################
 ifeq "$(OS)" "macosx"
 LIBTARGET = libBlink1.dylib
+CFLAGS += -Wall
 CFLAGS += -mmacosx-version-min=10.8
 #CFLAGS += -mmacosx-version-min=10.6
 #CFLAGS += -fsanitize=address
@@ -236,7 +237,10 @@ endif
 #################  Linux  ####################################################
 ifeq "$(OS)" "linux"
 LIBTARGET = libblink1.so
-# was blink1-lib.so
+
+CFLAGS+=-Wall
+# suppress warnings in Dictionary and mongoose
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
   ifeq "$(HIDAPI_TYPE)" "HIDRAW"
@@ -279,6 +283,10 @@ endif
 ifeq "$(OS)" "freebsd"
 LIBTARGET = libblink1.so
 # was blink1-lib.so
+
+CFLAGS+=-Wall
+# suppress warnings in Dictionary and mongoose
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
@@ -324,6 +332,10 @@ ifeq "$(OS)" "openbsd"
 LIBTARGET = libblink1.so
 # was blink1-lib.so
 
+CFLAGS+=-Wall
+# suppress warnings in Dictionary and mongoose
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
 CFLAGS += -I./hidapi/hidapi
@@ -355,6 +367,10 @@ ifeq "$(OS)" "netbsd"
 LIBTARGET = libblink1.so
 # was blink1-lib.so
 
+CFLAGS+=-Wall
+# suppress warnings in Dictionary and mongoose
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
 CFLAGS += -I./hidapi/hidapi
@@ -384,6 +400,10 @@ endif
 #################  WRT Linux  ################################################
 ifeq "$(OS)" "wrtlinux"
 LIBTARGET = libblink1.so
+
+CFLAGS+=-Wall
+# suppress warnings in Dictionary and mongoose
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
 
 # HIDAPI build doesn't work, use HIDDATA instead
 ifeq "$(USBLIB_TYPE)" "HIDAPI"

@@ -71,6 +71,7 @@ void usage()
 "  %s [options]\n"
 "where [options] can be:\n"
 "  --port port, -p port    port to listen on (default 8000)\n"
+"  --version                version of this program\n"
 "  --help, -h              this help page\n"
 "\n",
             blink1_server_name);
@@ -102,11 +103,11 @@ void usage()
 }
 
 void blink1_do_color(rgb_t rgb, uint32_t millis,
-                    uint8_t ledn, uint8_t bright, char* result)
+                    uint8_t ledn, uint8_t bright, char* status)
 {
     blink1_device* dev = blink1_open();
     if( !dev ) {
-        sprintf(result, "%s: error: no blink1 found", result);
+        sprintf(status+strlen(status), ": error: no blink1 found");
         return;
     }
     blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b); 
@@ -114,10 +115,10 @@ void blink1_do_color(rgb_t rgb, uint32_t millis,
     int rc = blink1_fadeToRGBN( dev, millis, rgb.r,rgb.g,rgb.b, ledn );
     if( rc == -1 ) {
         fprintf(stderr, "error, couldn't fadeToRGB on blink1\n");
-        sprintf(result, "%s: error, couldn't fadeToRGB on blink1", result);
+        sprintf(status+strlen(status), ": error, couldn't fadeToRGB on blink1");
     } 
     else {
-        sprintf(result, "blink1 set color #%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b);
+        sprintf(status, "blink1 set color #%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b);
     }
     blink1_close(dev);
 }
@@ -156,12 +157,12 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
 
     uint8_t ledn=0, bright=0;
-    char result[1000];  result[0] = 0;
+    char status[1000];  status[0] = 0;
     char uristr[1000];
     char tmpstr[1000];
     char pattstr[1000];
     char pnamestr[1000];
-    int rc;
+    //int rc;
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
     uint8_t count = 0;
@@ -205,28 +206,29 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     
     // parse URI requests
     if( mg_vcmp( uri, "/") == 0 ) {
-        sprintf(result, "Welcome to %s api server."
-                "All URIs start with '/blink1'. Supported URIs:\n", blink1_server_name);
+        sprintf(status, "Welcome to %s api server. "
+                "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
         for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-            sprintf(result,"%s %s - %s\n", result, supported_urls[i].url, supported_urls[i].desc);
+            sprintf(status+strlen(status), " %s - %s\n", 
+                    supported_urls[i].url, supported_urls[i].desc);
         } // FIXME: result is fixed length
     }
     else if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
-        sprintf(result, "blink1 status");
+        sprintf(status, "blink1 status");
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
              mg_vcmp( uri, "/blink1/enumerate") == 0  ) {
-        sprintf(result, "blink1 id");
+        sprintf(status, "blink1 id");
         int c = blink1_enumerate();
 
         sprintf(tmpstr,"[");
         for( int i=0; i< c; i++ ) {
-            sprintf(tmpstr, "%s\"%s\"", tmpstr,blink1_getCachedSerial(i));
-            if( i!=c-1 ) { sprintf(tmpstr, "%s,",tmpstr); } // ugh
+            sprintf(tmpstr+strlen(tmpstr), "\"%s\"", blink1_getCachedSerial(i));
+            if( i!=c-1 ) { sprintf(tmpstr+strlen(tmpstr), ","); } // ugh
         }
-        sprintf(tmpstr,"%s]",tmpstr);
+        sprintf(tmpstr+strlen(tmpstr), "%s]",tmpstr);
         DictionaryInsert(resultsdict, "blink1_serialnums", tmpstr);
         
         const char* blink1_serialnum = blink1_getCachedSerial(0);
@@ -236,36 +238,36 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         }
     }
     else if( mg_vcmp( uri, "/blink1/off") == 0 ) {
-        sprintf(result, "blink1 off");
+        sprintf(status, "blink1 off");
         rgb.r = 0; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/on") == 0 ) {
-        sprintf(result, "blink1 on");
+        sprintf(status, "blink1 on");
         rgb.r = 255; rgb.g = 255; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/red") == 0 ) {
-        sprintf(result, "blink1 red");
+        sprintf(status, "blink1 red");
         rgb.r = 255; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/green") == 0 ) {
-        sprintf(result, "blink1 green");
+        sprintf(status, "blink1 green");
         rgb.r = 0; rgb.g = 255; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/blue") == 0 ) {
-        sprintf(result, "blink1 blue");
+        sprintf(status, "blink1 blue");
         rgb.r = 0; rgb.g = 0; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/fadeToRGB") == 0 ) {
-        sprintf(result, "blink1 fadeToRGB");
-        blink1_do_color(rgb, millis, ledn, bright, result);
+        sprintf(status, "blink1 fadeToRGB");
+        blink1_do_color(rgb, millis, ledn, bright, status);
     }
     else if( mg_vcmp(uri, "/blink1/blink") == 0 ) {
-        sprintf(result, "blink1 blink");
+        sprintf(status, "blink1 blink");
         if( rgb.r==0 && rgb.g==0 && rgb.b==0 ) { rgb.r=255;rgb.g=255;rgb.b=255; }
         if( count==0 ) { count = 3; }
         if( millis==0 ) { millis = 300; }
@@ -284,9 +286,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_setLEDN(dev, pat.ledn);
             msg("  writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
                   i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
-            rc = blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
+            blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
         }
-        rc = blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
+        blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
         blink1_close(dev);
     }
     /*
@@ -294,7 +296,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
              mg_vcmp(uri, "/blink1/pattern/") == 0 ) {
 
         tmpstr
-        DictionaryInsert(resultsdict, "patterns", tmpstr);
+        DictionaryInsert(statussdict, "patterns", tmpstr);
         
     }
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
@@ -304,7 +306,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     */
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
-        sprintf(result, "blink1 pattern play");
+        sprintf(status, "blink1 pattern play");
         /*
         if( pnamestr[0] != 0 && pattstr[0] != 0 ) { 
             DictionaryInsert(patterndict, pnamestr, pattstr);
@@ -327,13 +329,13 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_setLEDN(dev, pat.ledn);
             msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
                   i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
-            rc = blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
+            blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
         }
-        rc = blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
+        blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
         blink1_close(dev);
     }
     else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
-        sprintf(result, "blink1 blink");
+        sprintf(status, "blink1 blink");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
         blink1_device* dev = blink1_open();
@@ -348,7 +350,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         blink1_close(dev);
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
-        sprintf(result, "blink1 random");
+        sprintf(status, "blink1 random");
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         srand( time(NULL) * getpid() );
@@ -364,11 +366,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         blink1_close(dev);
     }
     else {
-        sprintf(result, "%s; unrecognized uri", result);
+        sprintf(status+strlen(status), ": unrecognized uri");
         //mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
     }
 
-    if( result[0] != '\0' ) {
+    if( status[0] != '\0' ) {
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
         mg_printf(nc, "%s", "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
         mg_printf_http_chunk(nc,
@@ -388,7 +390,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
                              ledn,
                              bright,
                              count,
-                             result
+                             status
                              );
 
         mg_printf_http_chunk(nc,
@@ -404,8 +406,8 @@ int main(int argc, char *argv[]) {
     struct mg_mgr mgr;
     struct mg_connection *nc;
     struct mg_bind_opts bind_opts;
-    int i;
-    char *cp;
+    //int i;
+    //char *cp;
     const char *err_str;
 
     mg_mgr_init(&mgr, NULL);
