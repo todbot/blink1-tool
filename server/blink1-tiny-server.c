@@ -18,6 +18,7 @@
  */
 
 #include <getopt.h>    // for getopt_long()
+#include <stdlib.h>    // strtol()
 
 #include "mongoose.h"
 
@@ -40,7 +41,9 @@ static struct mg_serve_http_opts s_http_server_opts;
 
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
-        
+
+uint32_t  deviceId = 0;
+
 typedef struct _url_info
 {
     char url[100];
@@ -71,7 +74,8 @@ void usage()
 "  %s [options]\n"
 "where [options] can be:\n"
 "  --port port, -p port    port to listen on (default 8000)\n"
-"  --version                version of this program\n"
+"  -d dNum --id deviceId   Use this blink(1) id (from blink1-tool --list) \n"
+"  --version               version of this program\n"
 "  --help, -h              this help page\n"
 "\n",
             blink1_server_name);
@@ -105,7 +109,9 @@ void usage()
 void blink1_do_color(rgb_t rgb, uint32_t millis,
                     uint8_t ledn, uint8_t bright, char* status)
 {
-    blink1_device* dev = blink1_open();
+    printf("deviceId:%x\n",deviceId);
+    blink1_enumerate();
+    blink1_device* dev = blink1_openById(deviceId);
     if( !dev ) {
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
@@ -280,7 +286,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         msg("pattstr:%s\n", tmpstr);
         int pattlen = parsePattern( tmpstr, &repeats, pattern);
         
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(deviceId);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
             blink1_setLEDN(dev, pat.ledn);
@@ -322,7 +329,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         int repeats = -1;
         int pattlen = parsePattern( pattstr, &repeats, pattern);
         if( !count ) { count = repeats; }
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(deviceId);
         msg("pattlen:%d, repeats:%d\n", pattlen,repeats);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
@@ -338,7 +346,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(status, "blink1 blink");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(deviceId);
         //blink1_adjustBrightness( bright, &r, &g, &b);
         //msg("rgb:%d,%d,%d\n",r,g,b);
         for( int i=0; i<count; i++ ) {
@@ -354,7 +363,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         srand( time(NULL) * getpid() );
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(deviceId);
         for( int i=0; i<count; i++ ) {
             uint8_t r = rand() % 255;
             uint8_t g = rand() % 255;
@@ -417,10 +427,12 @@ int main(int argc, char *argv[]) {
         
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:";
+    char* opt_str = "qvhp:d:";
+    int base;
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
+        {"id",         required_argument, 0,      'd'},
         {"port",       required_argument, 0,      'p'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
@@ -439,6 +451,10 @@ int main(int argc, char *argv[]) {
         case 'p':
             //port = strtol(optarg,NULL,10);
             s_http_port = optarg; //argv[++i];
+            break;
+        case 'd':  // device to use
+            base = (strlen(optarg)==8) ? 16:0;
+            deviceId = strtol(optarg,NULL,base);
             break;
         case 'h':
             usage();
@@ -463,8 +479,8 @@ int main(int argc, char *argv[]) {
 
     s_http_server_opts.enable_directory_listing = "no";
 
-    printf("%s version %s: running on port %s\n",
-           blink1_server_name, blink1_server_version, s_http_port);
+    printf("%s version %s: running on port %s controlling blink(1) id:%x\n",
+           blink1_server_name, blink1_server_version, s_http_port, deviceId);
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
