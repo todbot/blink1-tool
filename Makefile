@@ -115,7 +115,7 @@ HIDAPI_TYPE ?= HIDRAW
 # uncomment for debugging HID stuff
 # or make with:   CFLAGS=-DDEBUG_HID make
 #CFLAGS += -DDEBUG_HID
-
+#CLFAGS += -DDEBUG_PRINTF
 
 # try to do some autodetecting
 UNAME := $(shell uname -s)
