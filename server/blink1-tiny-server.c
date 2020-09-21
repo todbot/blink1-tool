@@ -234,7 +234,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             sprintf(tmpstr+strlen(tmpstr), "\"%s\"", blink1_getCachedSerial(i));
             if( i!=c-1 ) { sprintf(tmpstr+strlen(tmpstr), ","); } // ugh
         }
-        sprintf(tmpstr+strlen(tmpstr), "%s]",tmpstr);
+        sprintf(tmpstr+strlen(tmpstr), "]");
         DictionaryInsert(resultsdict, "blink1_serialnums", tmpstr);
         
         const char* blink1_serialnum = blink1_getCachedSerial(0);

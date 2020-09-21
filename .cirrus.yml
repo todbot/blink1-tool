@@ -9,6 +9,7 @@ task:
   container:
     image: ubuntu:latest
   setup_os_script:
+    - echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
     - apt-get update && apt-get install -y build-essential zip git make gcc pkg-config libudev-dev
   setup_script:
     - git fetch --tags origin
