@@ -102,10 +102,11 @@ void usage()
             );
 }
 
-void blink1_do_color(rgb_t rgb, uint32_t millis,
+void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
                     uint8_t ledn, uint8_t bright, char* status)
 {
-    blink1_device* dev = blink1_open();
+    blink1_enumerate();
+    blink1_device* dev = blink1_openById(id);
     if( !dev ) {
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
@@ -156,6 +157,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         return;
     }
 
+    uint32_t id=0;
     uint8_t ledn=0, bright=0;
     char status[1000];  status[0] = 0;
     char uristr[1000];
@@ -190,6 +192,12 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     if( mg_get_http_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
+    }
+    if( mg_get_http_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
+        char* pch;
+        pch = strtok(tmpstr, " ,");
+        int base = (strlen(pch)==8) ? 16:0;
+        id = strtol(pch,NULL,base);
     }
     if( mg_get_http_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
         ledn = strtod(tmpstr,NULL);
@@ -240,31 +248,31 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     else if( mg_vcmp( uri, "/blink1/off") == 0 ) {
         sprintf(status, "blink1 off");
         rgb.r = 0; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/on") == 0 ) {
         sprintf(status, "blink1 on");
         rgb.r = 255; rgb.g = 255; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/red") == 0 ) {
         sprintf(status, "blink1 red");
         rgb.r = 255; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/green") == 0 ) {
         sprintf(status, "blink1 green");
         rgb.r = 0; rgb.g = 255; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/blue") == 0 ) {
         sprintf(status, "blink1 blue");
         rgb.r = 0; rgb.g = 0; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/fadeToRGB") == 0 ) {
         sprintf(status, "blink1 fadeToRGB");
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp(uri, "/blink1/blink") == 0 ) {
         sprintf(status, "blink1 blink");
@@ -280,7 +288,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         msg("pattstr:%s\n", tmpstr);
         int pattlen = parsePattern( tmpstr, &repeats, pattern);
         
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(id);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
             blink1_setLEDN(dev, pat.ledn);
@@ -322,7 +331,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         int repeats = -1;
         int pattlen = parsePattern( pattstr, &repeats, pattern);
         if( !count ) { count = repeats; }
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(id);
         msg("pattlen:%d, repeats:%d\n", pattlen,repeats);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
@@ -338,7 +348,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(status, "blink1 blink");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(id);
         //blink1_adjustBrightness( bright, &r, &g, &b);
         //msg("rgb:%d,%d,%d\n",r,g,b);
         for( int i=0; i<count; i++ ) {
@@ -354,7 +365,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         srand( time(NULL) * getpid() );
-        blink1_device* dev = blink1_open();
+        blink1_enumerate();
+        blink1_device* dev = blink1_openById(id);
         for( int i=0; i<count; i++ ) {
             uint8_t r = rand() % 255;
             uint8_t g = rand() % 255;
