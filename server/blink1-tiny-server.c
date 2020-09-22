@@ -17,7 +17,7 @@
  *
  */
 
-#include <getopt.h>    // for getopt_long()
+#include <getopt.h>    // for getopt_long_only()
 
 #include "mongoose.h"
 
@@ -377,9 +377,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         }
         blink1_close(dev);
     }
+    else if( s_http_server_opts.document_root != NULL ) {
+        mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
+    }
     else {
         sprintf(status+strlen(status), ": unrecognized uri");
-        //mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
     }
 
     if( status[0] != '\0' ) {
@@ -433,6 +435,7 @@ int main(int argc, char *argv[]) {
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
+        {"document_root", required_argument, 0,   'd'},
         {"port",       required_argument, 0,      'p'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
@@ -440,7 +443,7 @@ int main(int argc, char *argv[]) {
     };
     
     while(1) {
-        opt = getopt_long(argc, argv, opt_str, loptions, &option_index);
+        opt = getopt_long_only(argc, argv, opt_str, loptions, &option_index);
         if (opt==-1) break; // parsed all the args
         switch (opt) {
         case 'V': 
@@ -452,6 +455,9 @@ int main(int argc, char *argv[]) {
         case 'p':
             //port = strtol(optarg,NULL,10);
             s_http_port = optarg; //argv[++i];
+            break;
+        case 'd':
+            s_http_server_opts.document_root = optarg;
             break;
         case 'h':
             usage();
