@@ -436,6 +436,7 @@ int main(int argc, char *argv[]) {
         {"port",       required_argument, 0,      'p'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
+        {NULL,         0,           0,             0 },
     };
     
     while(1) {
