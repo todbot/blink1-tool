@@ -17,8 +17,8 @@
  *
  */
 
-#include <getopt.h>    // for getopt_long()
-#include <stdlib.h>    // strtol()
+#include <getopt.h>    // for getopt_long_only()
+#include <sys/time.h>
 
 #include "mongoose.h"
 
@@ -35,6 +35,14 @@
 
 const char* blink1_server_name = "blink1-tiny-server";
 const char* blink1_server_version = BLINK1_VERSION;
+
+typedef struct cache_info_ {
+    blink1_device* dev;  // device, if opened, NULL otherwise
+    struct timeval atime;  // time last used
+} cache_info;
+
+static const struct timeval idle_atime = { 1 /*sec*/};
+static cache_info cache_infos[cache_max];
 
 static const char *s_http_port = "8000";
 static struct mg_serve_http_opts s_http_server_opts;
@@ -106,12 +114,80 @@ void usage()
             );
 }
 
-void blink1_do_color(rgb_t rgb, uint32_t millis,
+void cache_flush_all();
+
+blink1_device* cache_getDeviceById(uint32_t id)
+{
+    int i = blink1_getCacheIndexById(id);
+    blink1_device* dev=NULL;
+    if( i>=0 ) {
+        dev = cache_infos[i].dev;
+    }
+    // printf("cache_getDeviceById: %p from %d at %d\n", dev, id, i);
+    if( !dev ) {
+        dev = blink1_openById(id);
+        if( !dev ) {
+            cache_flush_all();
+            blink1_enumerate();
+            dev = blink1_openById(id);
+            if( !dev ) {
+                return NULL;
+            }
+        }
+        i = blink1_getCacheIndexByDev(dev);
+        // printf("cache_getDeviceById: %p to %d \n", dev, i);
+        if( i>=0 ) {
+            cache_infos[i].dev = dev;
+        }
+    }
+    // printf("cache_getDeviceById: return %p\n", dev);
+    return dev;
+}
+
+#define cache_return(dev) { cache_return_internal(dev); dev=NULL; }
+
+void cache_return_internal( blink1_device* dev )
+{
+    int i = blink1_getCacheIndexByDev(dev);
+    // printf("cache_return_internal: %p at %d\n", dev, i);
+    if( i>=0 ) {
+        gettimeofday(&cache_infos[i].atime, NULL);
+    }
+    else {
+        blink1_close(dev);
+    }
+}
+
+void cache_flush_all()
+{
+    int count = blink1_getCachedCount();
+    for( int i=0; i< count; i++ ) {
+        if( cache_infos[i].dev ) {
+            // printf("cache_flush_all: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
+            blink1_close(cache_infos[i].dev)
+            timerclear(&cache_infos[i].atime);
+        }
+    }
+}
+
+void cache_flush_unused()
+{
+    struct timeval deadline;
+    gettimeofday(&deadline, NULL);
+    timersub(&deadline, &idle_atime, &deadline);
+    int count = blink1_getCachedCount();
+    for( int i=0; i< count; i++ ) {
+        if( cache_infos[i].dev && timercmp(&cache_infos[i].atime, &deadline, <) ) {
+            // printf("cache_flush_unused: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
+            blink1_close(cache_infos[i].dev)
+            timerclear(&cache_infos[i].atime);
+        }
+    }
+}
+void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
                     uint8_t ledn, uint8_t bright, char* status)
 {
-    printf("deviceId:%x\n",deviceId);
-    blink1_enumerate();
-    blink1_device* dev = blink1_openById(deviceId);
+    blink1_device* dev = cache_getDeviceById(id);
     if( !dev ) {
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
@@ -126,7 +202,7 @@ void blink1_do_color(rgb_t rgb, uint32_t millis,
     else {
         sprintf(status, "blink1 set color #%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b);
     }
-    blink1_close(dev);
+    cache_return(dev);
 }
 
 //
@@ -162,6 +238,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         return;
     }
 
+    uint32_t id=0;
     uint8_t ledn=0, bright=0;
     char status[1000];  status[0] = 0;
     char uristr[1000];
@@ -197,6 +274,12 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     if( mg_get_http_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
     }
+    if( mg_get_http_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
+        char* pch;
+        pch = strtok(tmpstr, " ,");
+        int base = (strlen(pch)==8) ? 16:0;
+        id = strtol(pch,NULL,base);
+    }
     if( mg_get_http_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
         ledn = strtod(tmpstr,NULL);
     }
@@ -227,6 +310,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
              mg_vcmp( uri, "/blink1/id/") == 0 ||
              mg_vcmp( uri, "/blink1/enumerate") == 0  ) {
         sprintf(status, "blink1 id");
+        cache_flush_all();
         int c = blink1_enumerate();
 
         sprintf(tmpstr,"[");
@@ -246,31 +330,31 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     else if( mg_vcmp( uri, "/blink1/off") == 0 ) {
         sprintf(status, "blink1 off");
         rgb.r = 0; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/on") == 0 ) {
         sprintf(status, "blink1 on");
         rgb.r = 255; rgb.g = 255; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/red") == 0 ) {
         sprintf(status, "blink1 red");
         rgb.r = 255; rgb.g = 0; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/green") == 0 ) {
         sprintf(status, "blink1 green");
         rgb.r = 0; rgb.g = 255; rgb.b = 0;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/blue") == 0 ) {
         sprintf(status, "blink1 blue");
         rgb.r = 0; rgb.g = 0; rgb.b = 255;
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp( uri, "/blink1/fadeToRGB") == 0 ) {
         sprintf(status, "blink1 fadeToRGB");
-        blink1_do_color(rgb, millis, ledn, bright, status);
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
     else if( mg_vcmp(uri, "/blink1/blink") == 0 ) {
         sprintf(status, "blink1 blink");
@@ -286,8 +370,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         msg("pattstr:%s\n", tmpstr);
         int pattlen = parsePattern( tmpstr, &repeats, pattern);
         
-        blink1_enumerate();
-        blink1_device* dev = blink1_openById(deviceId);
+        blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
             blink1_setLEDN(dev, pat.ledn);
@@ -296,7 +379,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
         }
         blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
-        blink1_close(dev);
+        cache_return(dev);
     }
     /*
     else if( mg_vcmp(uri, "/blink1/pattern") == 0 ||
@@ -329,8 +412,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         int repeats = -1;
         int pattlen = parsePattern( pattstr, &repeats, pattern);
         if( !count ) { count = repeats; }
-        blink1_enumerate();
-        blink1_device* dev = blink1_openById(deviceId);
+        
+        blink1_device* dev = cache_getDeviceById(id);
+
         msg("pattlen:%d, repeats:%d\n", pattlen,repeats);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
@@ -340,14 +424,14 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
         }
         blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
-        blink1_close(dev);
+        cache_return(dev);
     }
     else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
         sprintf(status, "blink1 blink");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
-        blink1_enumerate();
-        blink1_device* dev = blink1_openById(deviceId);
+        
+        blink1_device* dev = cache_getDeviceById(id);
         //blink1_adjustBrightness( bright, &r, &g, &b);
         //msg("rgb:%d,%d,%d\n",r,g,b);
         for( int i=0; i<count; i++ ) {
@@ -356,15 +440,14 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_fadeToRGBN( dev, millis/2, 0,0,0, ledn );
             blink1_sleep( millis/2 ); // fixme
         }
-        blink1_close(dev);
+        cache_return(dev);
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
         sprintf(status, "blink1 random");
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         srand( time(NULL) * getpid() );
-        blink1_enumerate();
-        blink1_device* dev = blink1_openById(deviceId);
+        blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<count; i++ ) {
             uint8_t r = rand() % 255;
             uint8_t g = rand() % 255;
@@ -373,11 +456,13 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             blink1_fadeToRGBN( dev, millis/2, r,g,b, ledn );
             blink1_sleep( millis/2 ); // fixme
         }
-        blink1_close(dev);
+        cache_return(dev);
+    }
+    else if( s_http_server_opts.document_root != NULL ) {
+        mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
     }
     else {
         sprintf(status+strlen(status), ": unrecognized uri");
-        //mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
     }
 
     if( status[0] != '\0' ) {
@@ -428,18 +513,18 @@ int main(int argc, char *argv[]) {
     // parse options
     int option_index = 0, opt;
     char* opt_str = "qvhp:d:";
-    int base;
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
-        {"id",         required_argument, 0,      'd'},
+        {"document_root", required_argument, 0,   'd'},
         {"port",       required_argument, 0,      'p'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
+        {NULL,         0,           0,             0 },
     };
     
     while(1) {
-        opt = getopt_long(argc, argv, opt_str, loptions, &option_index);
+        opt = getopt_long_only(argc, argv, opt_str, loptions, &option_index);
         if (opt==-1) break; // parsed all the args
         switch (opt) {
         case 'V': 
@@ -452,9 +537,8 @@ int main(int argc, char *argv[]) {
             //port = strtol(optarg,NULL,10);
             s_http_port = optarg; //argv[++i];
             break;
-        case 'd':  // device to use
-            base = (strlen(optarg)==8) ? 16:0;
-            deviceId = strtol(optarg,NULL,base);
+        case 'd':
+            s_http_server_opts.document_root = optarg;
             break;
         case 'h':
             usage();
@@ -484,6 +568,7 @@ int main(int argc, char *argv[]) {
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
+        cache_flush_unused();
     }
     mg_mgr_free(&mgr);
 
