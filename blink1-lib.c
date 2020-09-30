@@ -125,7 +125,7 @@ int blink1_getCacheIndexById( uint32_t i )
 int blink1_getCacheIndexBySerial( const char* serial )
 {
     for( int i=0; i< cache_max; i++ ) {
-        if( strcmp( blink1_infos[i].serial, serial ) == 0 ) return i;
+        if( strcasecmp( blink1_infos[i].serial, serial ) == 0 ) return i;
     }
     return -1;
 }

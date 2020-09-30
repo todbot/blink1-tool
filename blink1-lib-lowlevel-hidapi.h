@@ -81,6 +81,10 @@ blink1_device* blink1_openBySerial(const char* serial)
     int pid = blink1_pid();
 
     LOG("blink1_openBySerial: %s at vid/pid %x/%x\n", serial, vid,pid);
+    int i = blink1_getCacheIndexBySerial( serial );
+    if( i >= 0 ) {
+        serial = blink1_infos[i].serial;
+    }
 
     wchar_t wserialstr[serialstrmax] = {L'\0'};
 #ifdef _WIN32   // omg windows you suck
@@ -93,7 +97,6 @@ blink1_device* blink1_openBySerial(const char* serial)
     blink1_device* handle = hid_open(vid,pid, wserialstr );
     if( handle ) LOG("blink1_openBySerial: got a blink1_device handle\n");
 
-    int i = blink1_getCacheIndexBySerial( serial );
     if( i >= 0 ) {
         LOG("blink1_openBySerial: good, serial id:%d was in cache\n",i);
         blink1_infos[i].dev = handle;

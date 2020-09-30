@@ -549,6 +549,8 @@ prep:
 	$(prep_common_cmd)
 	$(prep_cmd)
 
+blink1-lib.o: blink1-lib*.h
+
 $(OBJS): %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
