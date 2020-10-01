@@ -6,6 +6,9 @@ A simple HTTP to blink(1) gateway
 - Uses blink1-lib to talk to blink(1)
 - Uses Mongoose : https://github.com/cesanta/mongoose which is included
 
+Supports several of the URIs of the Blink1Control API server,
+but implemented as a tiny portable C webserver.
+
 To build:
 ```
 cd blink1-tool
@@ -22,6 +25,7 @@ Or to serve static HTML too:
 And then in a browser visit:
 - http://localhost:8000/blink1-demo-colorpicker
 - http://localhost:8000/blink1-demo-party
+
 Static HTML serving is disabled by defult, you must specific `-d docroot` to enable it.
 
 Usage:
