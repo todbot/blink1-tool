@@ -19,7 +19,7 @@ The current tools are:
 
 - `blink1-tool` -- command-line tool for controlling blink(1)
 - `blink1control-tool` -- blink1-tool for use with Blink1Control (uses HTTP REST API)
-- `blink1-tiny-server` -- Simple HTTP API server to control blink1, uses blink1-lib
+- `blink1-tiny-server` -- ([README](blink1-tiny-server/README.md)) Simple HTTP API server to control blink1, uses blink1-lib
 - `blink1-lib` -- C library for controlling blink(1)
 - `blink1-mini-tool` -- commandline tool using libusb-0.1 and minimal deps
 - `blink1raw` -- small example commandline tool using Linux hidraw
@@ -47,13 +47,12 @@ eliminating the need for shared library dependencies on the target.
 However, static builds can be problematic for some systems with different
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
-## OS-specific Tips
+## OS-specific Notes
 
 ### Linux (including Raspberry Pi)
 
-Unless you will always be running `blink1-tool` as the `root` user, you should
-install udev rules to let any user access the blink(1) device.  To install these
-rules on Debian-like system (Ubuntu, Raspian), you can do something like:
+To use blink(1) as a non-root user, udev rules must be installed.
+On Debian-like systems (Ubuntu, Raspian), these udev rules are installed with:
 
 ```
 sudo cp 51-blink1.rules /etc/udev/rules.d/51-blink1.rules
@@ -148,7 +147,8 @@ For other OSes, see the Makefile for details
 
 
 ## Using blink1-lib in your C/C++ project
-[tbd, but basically look at the makefile for blink1-tool]
+
+See Makefile for your platform
 
 
 ## Docker and blink(1)
