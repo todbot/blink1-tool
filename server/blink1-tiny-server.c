@@ -50,8 +50,6 @@ static struct mg_serve_http_opts s_http_server_opts;
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
 
-uint32_t  deviceId = 0;
-
 typedef struct _url_info
 {
     char url[100];
@@ -81,10 +79,10 @@ void usage()
 "Usage: \n"
 "  %s [options]\n"
 "where [options] can be:\n"
-"  --port port, -p port    port to listen on (default 8000)\n"
-"  -d dNum --id deviceId   Use this blink(1) id (from blink1-tool --list) \n"
-"  --version               version of this program\n"
-"  --help, -h              this help page\n"
+"  --port port, -p port           port to listen on (default 8000)\n"
+"  --document_root path, -d path  path to serve static HTML files\n"
+"  --version                      version of this program\n"
+"  --help, -h                     this help page\n"
 "\n",
             blink1_server_name);
 
@@ -563,8 +561,11 @@ int main(int argc, char *argv[]) {
 
     s_http_server_opts.enable_directory_listing = "no";
 
-    printf("%s version %s: running on port %s controlling blink(1) id:%x\n",
-           blink1_server_name, blink1_server_version, s_http_port, deviceId);
+    printf("%s version %s: running on port %s \n",
+           blink1_server_name, blink1_server_version, s_http_port);
+    if( s_http_server_opts.document_root ) {
+        printf("  serving static HTML %s\n", s_http_server_opts.document_root);
+    }
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
