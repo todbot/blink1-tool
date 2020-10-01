@@ -24,6 +24,8 @@
 
 #include "blink1-lib.h"
 
+#include "wincompat.h"
+
 //#include "dict.h"
 #include "Dictionary.h"
 #include "Dictionary.c"
@@ -503,6 +505,8 @@ int main(int argc, char *argv[]) {
     //char *cp;
     const char *err_str;
 
+    setbuf(stdout,NULL);  // turn off stdout buffering for Windows
+    
     mg_mgr_init(&mgr, NULL);
 
     patterndictc = DictionaryStandardStringCallbacks();
