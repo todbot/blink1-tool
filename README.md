@@ -19,7 +19,7 @@ The current tools are:
 
 - `blink1-tool` -- command-line tool for controlling blink(1)
 - `blink1control-tool` -- blink1-tool for use with Blink1Control (uses HTTP REST API)
-- `blink1-tiny-server` -- ([README](blink1-tiny-server/README.md)) Simple HTTP API server to control blink1, uses blink1-lib
+- `blink1-tiny-server` -- ([README](server/README.md)) Simple HTTP API server to control blink1, uses blink1-lib
 - `blink1-lib` -- C library for controlling blink(1)
 - `blink1-mini-tool` -- commandline tool using libusb-0.1 and minimal deps
 - `blink1raw` -- small example commandline tool using Linux hidraw
