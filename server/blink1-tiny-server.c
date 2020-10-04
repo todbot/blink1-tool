@@ -24,8 +24,6 @@
 
 #include "blink1-lib.h"
 
-#include "wincompat.h"
-
 //#include "dict.h"
 #include "Dictionary.h"
 #include "Dictionary.c"
@@ -40,10 +38,10 @@ const char* blink1_server_version = BLINK1_VERSION;
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
-    struct timeval atime;  // time last used
+    double atime;  // time last used
 } cache_info;
 
-static const struct timeval idle_atime = { 1 /*sec*/};
+static double idle_atime = 1.0 /* seconds */;
 static cache_info cache_infos[cache_max];
 
 static const char *s_http_port = "8000";
@@ -114,7 +112,7 @@ void usage()
             );
 }
 
-void cache_flush_all();
+void cache_flush(int idle_threshold);
 
 blink1_device* cache_getDeviceById(uint32_t id)
 {
@@ -127,7 +125,7 @@ blink1_device* cache_getDeviceById(uint32_t id)
     if( !dev ) {
         dev = blink1_openById(id);
         if( !dev ) {
-            cache_flush_all();
+            cache_flush(0);
             blink1_enumerate();
             dev = blink1_openById(id);
             if( !dev ) {
@@ -151,36 +149,22 @@ void cache_return_internal( blink1_device* dev )
     int i = blink1_getCacheIndexByDev(dev);
     // printf("cache_return_internal: %p at %d\n", dev, i);
     if( i>=0 ) {
-        gettimeofday(&cache_infos[i].atime, NULL);
+        cache_infos[i].atime = cs_time();
     }
     else {
         blink1_close(dev);
     }
 }
 
-void cache_flush_all()
+void cache_flush(int idle_threshold)
 {
+    double deadline = cs_time() - idle_threshold;
     int count = blink1_getCachedCount();
     for( int i=0; i< count; i++ ) {
-        if( cache_infos[i].dev ) {
-            // printf("cache_flush_all: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
+        if( cache_infos[i].dev && cache_infos[i].atime < deadline ) {
+            // printf("cache_flush: id=%d handle=%p atime=%.3f\n", i, cache_infos[i].dev, cache_infos[i].atime);
             blink1_close(cache_infos[i].dev)
-            timerclear(&cache_infos[i].atime);
-        }
-    }
-}
-
-void cache_flush_unused()
-{
-    struct timeval deadline;
-    gettimeofday(&deadline, NULL);
-    timersub(&deadline, &idle_atime, &deadline);
-    int count = blink1_getCachedCount();
-    for( int i=0; i< count; i++ ) {
-        if( cache_infos[i].dev && timercmp(&cache_infos[i].atime, &deadline, <) ) {
-            // printf("cache_flush_unused: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
-            blink1_close(cache_infos[i].dev)
-            timerclear(&cache_infos[i].atime);
+            cache_infos[i].atime = 0;
         }
     }
 }
@@ -310,7 +294,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
              mg_vcmp( uri, "/blink1/id/") == 0 ||
              mg_vcmp( uri, "/blink1/enumerate") == 0  ) {
         sprintf(status, "blink1 id");
-        cache_flush_all();
+        cache_flush(0);
         int c = blink1_enumerate();
 
         sprintf(tmpstr,"[");
@@ -573,7 +557,7 @@ int main(int argc, char *argv[]) {
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
-        cache_flush_unused();
+        cache_flush(idle_atime);
     }
     mg_mgr_free(&mgr);
 
