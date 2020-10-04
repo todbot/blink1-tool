@@ -4,9 +4,12 @@
 let canvas = document.getElementById('canvas_picker').getContext('2d');
 let rgbinput = document.getElementById('rgb');
 let hexinput = document.getElementById('hex');
+let leds = document.getElementById('leds');
+let status = document.getElementById('status');
 let canvas_picker = document.getElementById('canvas_picker');
 canvas_picker.addEventListener('click', handleClick);
 canvas_picker.addEventListener('mousemove', handleClick);
+document.addEventListener('DOMContentLoaded', handleDOMContentLoaded);
 
 // create an image object and set its source
 let img = new Image();
@@ -18,6 +21,39 @@ var pending = null;
 img.addEventListener('load', function() {
 	  canvas.drawImage(img,0,0);
 });
+
+async function handleDOMContentLoaded() {
+    try {
+        const response = await fetch('/blink1/id');
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        const results = await response.json()
+        const serialnums = results.blink1_serialnums;
+        for (const i in serialnums) {
+            const serialnum = serialnums[i];
+            const option = document.createElement('option');
+            option.value = 'id=' + serialnum;
+            option.text = 'serial: ' + serialnum;
+            leds.add(option);
+            if (serialnum && serialnum[0] > '1') {
+                for (let ledn = 1; ledn <= 2; ledn++) {
+                    const option = document.createElement('option');
+                    option.value = 'id=' + serialnum + '&ledn=' + ledn;
+                    option.text = 'serial: ' + serialnum + ', only led #' + ledn;
+                    leds.add(option);
+                }
+            }
+        }
+        if( serialnums && serialnums.length > 0 ) {
+            status.textContent = "connected";
+        } else {
+            status.textContent = "no devices";
+        }
+    } catch (error) {
+        console.error('handleDOMContentLoaded: failed:', error);
+    }
+}
 
 // http://www.javascripter.net/faq/rgbtohex.htm
 function rgbToHex(R,G,B) { return toHex(R)+toHex(G)+toHex(B); }
@@ -52,6 +88,7 @@ async function fadeToColor([r, g, b], fadeMillis, ledn ) {
     const f = (x) => 256 * (x / 256) ** 2;  // gamma of 0.5
 
     const searchParams = new URLSearchParams(location.search)
+    new URLSearchParams(leds.value).forEach((value, key) => searchParams.set(key, value));
     searchParams.set('rgb', rgbToHex(f(r), f(g), f(b)))
     if (!searchParams.has('time')) searchParams.set('time', fadeMillis / 1000)
     if (!searchParams.has('ledn')) searchParams.set('ledn', ledn)
@@ -75,7 +112,12 @@ async function fetchResource() {
         if ( !resource ) return;
 
         try {
-            await fetch(resource);
+            const response = await fetch(resource);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            const results = await response.json()
+            status.textContent = results.status;
         } catch (error) {
             console.error('fadeToColor: failed:', error);
         }
