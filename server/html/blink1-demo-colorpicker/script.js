@@ -9,6 +9,7 @@ let status = document.getElementById('status');
 let canvas_picker = document.getElementById('canvas_picker');
 canvas_picker.addEventListener('click', handleClick);
 canvas_picker.addEventListener('mousemove', handleClick);
+canvas_picker.addEventListener('touchmove', handleClick);
 document.addEventListener('DOMContentLoaded', handleDOMContentLoaded);
 
 // create an image object and set its source
@@ -66,8 +67,17 @@ function toHex(n) {
 
 async function handleClick(event) {
 	// get click coordinates in image space
-    const x = event.offsetX;
-    const y = event.offsetY;
+    const [x, y] = function() {
+        if (event.type == "touchmove") {
+            event.preventDefault();
+            const boundingClientRect = event.target.getBoundingClientRect()
+            return [
+                event.changedTouches[0].clientX - boundingClientRect.x,
+                event.changedTouches[0].clientY - boundingClientRect.y,
+            ];
+        }
+        return [event.offsetX, event.offsetY];
+    }();
 	// get image data and RGB values
 	const img_data = canvas.getImageData(x, y, 1, 1).data;
 	const r = img_data[0];
