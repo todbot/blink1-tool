@@ -46,6 +46,8 @@ static cache_info cache_infos[cache_max];
 
 static const char *s_http_port = "8000";
 static struct mg_serve_http_opts s_http_server_opts;
+static const char* const index_files[] = { "index.html", "index.htm" };
+static bool serve_index = false;
 
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
@@ -57,7 +59,7 @@ typedef struct _url_info
 } url_info;
 
 // FIXME: how to make Emacs format these better?
-url_info supported_urls[]
+static const url_info supported_urls[]
 = {
     {"/blink1/",              "simple status page"},
     {"/blink1/id",            "get blink1 serial number"},
@@ -278,7 +280,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     
     // parse URI requests
-    if( mg_vcmp( uri, "/") == 0 ) {
+    if( mg_vcmp( uri, "/") == 0 && !serve_index ) {
         sprintf(status, "Welcome to %s api server. "
                 "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
         for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
@@ -292,7 +294,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
-             mg_vcmp( uri, "/blink1/enumerate") == 0  ) {
+             mg_vcmp( uri, "/blink1/enumerate") == 0 ) {
         sprintf(status, "blink1 id");
         cache_flush(0);
         int c = blink1_enumerate();
@@ -525,6 +527,15 @@ int main(int argc, char *argv[]) {
             break;
         case 'd':
             s_http_server_opts.document_root = optarg;
+            char path[MAX_PATH_SIZE];
+            cs_stat_t st;
+            for( int i=0; i< sizeof(index_files)/sizeof(char* const); i++ ) {
+                snprintf(path, sizeof(path), "%s/%s", s_http_server_opts.document_root, index_files[i]);
+                if( mg_stat(path, &st) == 0 ) {
+                    serve_index = true;
+                    break;
+                }
+            }
             break;
         case 'h':
             usage();
@@ -552,7 +563,8 @@ int main(int argc, char *argv[]) {
     printf("%s version %s: running on port %s \n",
            blink1_server_name, blink1_server_version, s_http_port);
     if( s_http_server_opts.document_root ) {
-        printf("  serving static HTML %s\n", s_http_server_opts.document_root);
+        printf("  serving static HTML %s (with%s root index)\n",
+               s_http_server_opts.document_root, serve_index ? "" : "out");
     }
 
     for (;;) {
