@@ -432,7 +432,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(status, "blink1 random");
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
-        srand( time(NULL) * getpid() );
         blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<count; i++ ) {
             uint8_t r = rand() % 255;
@@ -492,7 +491,8 @@ int main(int argc, char *argv[]) {
     const char *err_str;
 
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
-    
+    srand( time(NULL) * getpid() );
+
     mg_mgr_init(&mgr, NULL);
 
     patterndictc = DictionaryStandardStringCallbacks();
