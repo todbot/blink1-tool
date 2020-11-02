@@ -1,5 +1,5 @@
 
-// Part of https://todbot.github.io/blink1-webhid/
+// Part of https://todbot.github.io/blink1-tool/
 
 document.getElementById('start-button').addEventListener('click', handleClick);
 document.getElementById('stop-button').addEventListener('click', handleClickStop);

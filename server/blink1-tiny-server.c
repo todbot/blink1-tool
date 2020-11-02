@@ -24,8 +24,6 @@
 
 #include "blink1-lib.h"
 
-#include "wincompat.h"
-
 //#include "dict.h"
 #include "Dictionary.h"
 #include "Dictionary.c"
@@ -40,14 +38,16 @@ const char* blink1_server_version = BLINK1_VERSION;
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
-    struct timeval atime;  // time last used
+    double atime;  // time last used
 } cache_info;
 
-static const struct timeval idle_atime = { 1 /*sec*/};
+static double idle_atime = 1.0 /* seconds */;
 static cache_info cache_infos[cache_max];
 
 static const char *s_http_port = "8000";
 static struct mg_serve_http_opts s_http_server_opts;
+static const char* const index_files[] = { "index.html", "index.htm" };
+static bool serve_index = false;
 
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
@@ -59,7 +59,7 @@ typedef struct _url_info
 } url_info;
 
 // FIXME: how to make Emacs format these better?
-url_info supported_urls[]
+static const url_info supported_urls[]
 = {
     {"/blink1/",              "simple status page"},
     {"/blink1/id",            "get blink1 serial number"},
@@ -114,7 +114,7 @@ void usage()
             );
 }
 
-void cache_flush_all();
+void cache_flush(int idle_threshold);
 
 blink1_device* cache_getDeviceById(uint32_t id)
 {
@@ -127,7 +127,7 @@ blink1_device* cache_getDeviceById(uint32_t id)
     if( !dev ) {
         dev = blink1_openById(id);
         if( !dev ) {
-            cache_flush_all();
+            cache_flush(0);
             blink1_enumerate();
             dev = blink1_openById(id);
             if( !dev ) {
@@ -151,36 +151,22 @@ void cache_return_internal( blink1_device* dev )
     int i = blink1_getCacheIndexByDev(dev);
     // printf("cache_return_internal: %p at %d\n", dev, i);
     if( i>=0 ) {
-        gettimeofday(&cache_infos[i].atime, NULL);
+        cache_infos[i].atime = cs_time();
     }
     else {
         blink1_close(dev);
     }
 }
 
-void cache_flush_all()
+void cache_flush(int idle_threshold)
 {
+    double deadline = cs_time() - idle_threshold;
     int count = blink1_getCachedCount();
     for( int i=0; i< count; i++ ) {
-        if( cache_infos[i].dev ) {
-            // printf("cache_flush_all: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
+        if( cache_infos[i].dev && cache_infos[i].atime < deadline ) {
+            // printf("cache_flush: id=%d handle=%p atime=%.3f\n", i, cache_infos[i].dev, cache_infos[i].atime);
             blink1_close(cache_infos[i].dev)
-            timerclear(&cache_infos[i].atime);
-        }
-    }
-}
-
-void cache_flush_unused()
-{
-    struct timeval deadline;
-    gettimeofday(&deadline, NULL);
-    timersub(&deadline, &idle_atime, &deadline);
-    int count = blink1_getCachedCount();
-    for( int i=0; i< count; i++ ) {
-        if( cache_infos[i].dev && timercmp(&cache_infos[i].atime, &deadline, <) ) {
-            // printf("cache_flush_unused: id=%d handle=%p atime=%ld.%06ld\n", i, cache_infos[i].dev, cache_infos[i].atime.tv_sec, cache_infos[i].atime.tv_usec);
-            blink1_close(cache_infos[i].dev)
-            timerclear(&cache_infos[i].atime);
+            cache_infos[i].atime = 0;
         }
     }
 }
@@ -294,7 +280,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     
     // parse URI requests
-    if( mg_vcmp( uri, "/") == 0 ) {
+    if( mg_vcmp( uri, "/") == 0 && !serve_index ) {
         sprintf(status, "Welcome to %s api server. "
                 "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
         for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
@@ -308,9 +294,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
-             mg_vcmp( uri, "/blink1/enumerate") == 0  ) {
+             mg_vcmp( uri, "/blink1/enumerate") == 0 ) {
         sprintf(status, "blink1 id");
-        cache_flush_all();
+        cache_flush(0);
         int c = blink1_enumerate();
 
         sprintf(tmpstr,"[");
@@ -446,7 +432,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(status, "blink1 random");
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
-        srand( time(NULL) * getpid() );
         blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<count; i++ ) {
             uint8_t r = rand() % 255;
@@ -506,7 +491,8 @@ int main(int argc, char *argv[]) {
     const char *err_str;
 
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
-    
+    srand( time(NULL) * getpid() );
+
     mg_mgr_init(&mgr, NULL);
 
     patterndictc = DictionaryStandardStringCallbacks();
@@ -541,6 +527,15 @@ int main(int argc, char *argv[]) {
             break;
         case 'd':
             s_http_server_opts.document_root = optarg;
+            char path[MAX_PATH_SIZE];
+            cs_stat_t st;
+            for( int i=0; i< sizeof(index_files)/sizeof(char* const); i++ ) {
+                snprintf(path, sizeof(path), "%s/%s", s_http_server_opts.document_root, index_files[i]);
+                if( mg_stat(path, &st) == 0 ) {
+                    serve_index = true;
+                    break;
+                }
+            }
             break;
         case 'h':
             usage();
@@ -568,12 +563,13 @@ int main(int argc, char *argv[]) {
     printf("%s version %s: running on port %s \n",
            blink1_server_name, blink1_server_version, s_http_port);
     if( s_http_server_opts.document_root ) {
-        printf("  serving static HTML %s\n", s_http_server_opts.document_root);
+        printf("  serving static HTML %s (with%s root index)\n",
+               s_http_server_opts.document_root, serve_index ? "" : "out");
     }
 
     for (;;) {
         mg_mgr_poll(&mgr, 1000);
-        cache_flush_unused();
+        cache_flush(idle_atime);
     }
     mg_mgr_free(&mgr);
 

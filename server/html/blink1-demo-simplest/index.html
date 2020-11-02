@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport" content="width=device-width,maximum-scale=1">
+    <title>blink(1) URL API demo simplest </title>
+  </head>
+  <body>
+    <h1>blink(1) URL API demo simplest</h1>
+
+    <p>This demo is for the
+      <a href="https://blink1.thingm.com">blink(1) USB notification light</a></p>
+    <p>For more details on URL API, see the
+      <a href="https://github.com/todbot/blink1/blob/master/docs/app-url-api.md">documentation </a> </p>
+    <p>For more tools, see <a href="https://github.com/todbot/blink1-tool">blink1-tool</a>
+    </p>
+
+    <p>Click the links below to turn blink(1) the specified color<p>
+
+    <ul>
+    <li><a target=api href="/blink1/on">On</a></li>
+    <li><a target=api href="/blink1/red">Red</a></li>
+    <li><a target=api href="/blink1/fadeToRGB?rgb=ffff00">Yellow</a></li>
+    <li><a target=api href="/blink1/green">Green</a></li>
+    <li><a target=api href="/blink1/fadeToRGB?rgb=00ffff">Cyan</a></li>
+    <li><a target=api href="/blink1/blue">Blue</a></li>
+    <li><a target=api href="/blink1/fadeToRGB?rgb=ff00ff">Purple</a></li>
+    <li><a target=api href="/blink1/random">Random</a></li>
+    <li><a target=api href="/blink1/off">Off</a></li>
+    </ul>
+    <iframe name=api width=390 height=210 src=/blink1/id></iframe>
+
+  </body>
+</html>

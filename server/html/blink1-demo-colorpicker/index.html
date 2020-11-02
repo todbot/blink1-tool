@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport" content="width=device-width,maximum-scale=1">
     <title>blink(1) URL API demo colorpicker</title>
 
     <script type="module" src="script.js"></script>
@@ -15,6 +17,9 @@
 
     <p>For more tools, see <a href="https://github.com/todbot/blink1-tool">blink1-tool</a>
     </p>
+
+      <select id=leds></select>
+      <div>Status: <span id="status"> not connected</span></div>
 
       <div><canvas width="300" height="255" id="canvas_picker"></canvas></div>
       <div>HEX: <input type="text" id="hex"></input></div>
