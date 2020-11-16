@@ -43,7 +43,7 @@ task:
   setup_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
     - git fetch --tags origin
-    - choco install msys2
+    - choco install msys2 -y
     - pacman -S --noconfirm zip unzip
   build_script:
     - set PATH=C:\tools\msys64\usr\bin;c:\tools\msys64\mingw64\bin;%PATH%
