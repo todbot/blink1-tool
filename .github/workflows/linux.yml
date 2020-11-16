@@ -1,0 +1,40 @@
+# This is a basic workflow to help you get started with Actions
+
+name: linux
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on:  ubuntu-latest
+    continue-on-error: true
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: setup prerequisites (linux)
+        continue-on-error: true
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: sudo apt install pkg-config libudev-dev
+          
+      - name: compile blink1-tool
+        shell: bash
+        run: make
+        
+      - name: compile blink1-tiny-server
+        shell: bash
+        run: make blink1-tiny-server
+        
+        
+        
