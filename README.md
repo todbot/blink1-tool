@@ -1,11 +1,11 @@
 # Command-line Tools and C library for blink(1) USB RGB LED
 
-[![Build Status linux](https://github.com/todbot/blink1-tool/workflows/linux/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow/linux)
-[![Build Status macos](https://github.com/todbot/blink1-tool/workflows/macos/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow/macos)
-[![Build Status windows](https://github.com/todbot/blink1-tool/workflows/windows/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow/windows)
+[![Build Status linux](https://github.com/todbot/blink1-tool/workflows/linux/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow%3Alinux)
+[![Build Status macos](https://github.com/todbot/blink1-tool/workflows/macos/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow%3Amacos)
+[![Build Status windows](https://github.com/todbot/blink1-tool/workflows/windows/badge.svg)](https://github.com/todbot/blink1-tool/actions?query=workflow%3Awindows)
 
 
-This is an official collection of C/C++ tools for controlling
+This is an official collection of C/C++ commandline tools for controlling
 the [blink1 USB RGB LED](https://blink1.thingm.com/).
 
 This code lives at https://github.com/todbot/blink1-tool.

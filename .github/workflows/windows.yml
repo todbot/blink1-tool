@@ -34,5 +34,8 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
         
-        
+      - name: compile blink1control-tool
+        shell: bash
+        run: make blink1control-tool
+       
         
