@@ -25,7 +25,7 @@ jobs:
       - name: setup prerequisites (linux)
         continue-on-error: true
         shell: bash
-        run: sudo apt install pkg-config libudev-dev
+        run: sudo apt install pkg-config libudev-dev libusb-1.0-0-dev
           
       - name: compile blink1-tool
         shell: bash
