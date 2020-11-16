@@ -18,15 +18,13 @@ Use:
 ```
 ./blink1-tiny-server -p 8000
 ```
-Or to serve static HTML too:
+Or to serve the blink(1) URL API examples:
 ```
 ./blink1-tiny-server -p 8000 -d ./server/html
 ```
-And then in a browser visit:
-- http://localhost:8000/blink1-demo-colorpicker
-- http://localhost:8000/blink1-demo-party
+And then in a browser visit: http://localhost:8000/
 
-Static HTML serving is disabled by defult, you must specific `-d docroot` to enable it.
+Static HTML serving is disabled by default, you must specific `-d docroot` to enable it.
 
 Usage:
 ```
