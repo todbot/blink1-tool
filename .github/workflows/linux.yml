@@ -24,7 +24,6 @@ jobs:
 
       - name: setup prerequisites (linux)
         continue-on-error: true
-        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: sudo apt install pkg-config libudev-dev
           
