@@ -167,4 +167,5 @@ Note the `--privileged` tag, docker needs this to access the hosts USB controlle
 
 Docker resources
 - [Install Guide](https://docs.docker.com/installation/)
-- [Run Command](https://docs.docker.com/reference/run/)
+- [Run Command](https://docs.docker.com/engine/reference/run/)
+- [Ubuntu Dockerfile](https://github.com/todbot/blink1-tool/blob/master/Dockerfile-ubuntu)
