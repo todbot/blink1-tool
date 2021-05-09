@@ -869,10 +869,8 @@ int main(int argc, char** argv)
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
 
-            if( pat.ledn>0 ) {
-                blink1_setLEDN(dev, pat.ledn);
-            }
             msg("writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.g,pat.color.b, pat.millis,pat.ledn );
+            blink1_setLEDN(dev, pat.ledn);
             rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
         }
 
