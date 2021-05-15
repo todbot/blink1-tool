@@ -29,8 +29,7 @@ jobs:
         shell: bash
         run: |
           sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-          sudo xcode-select -s "/Applications/Xcode_12.5.app"
-        
+          sudo xcode-select -s "/Applications/Xcode_12.3.app"
       - name: compile blink1-tool
         shell: bash
         run: make
