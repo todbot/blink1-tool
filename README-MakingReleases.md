@@ -29,6 +29,7 @@ General Process
 2. git tag release w/ `git tag -a v2.0.2 -m 'some update msg' && git push --tags`
 3. Build code with `make clean && make`
 3a. Don't forget about `make blink1control-tool` & `make blink1-tiny-server`
+3b. Verify no extra shared libs in MacOS build: `otool -L blink1-tool blink1control-tool/blink1control-tool`
 4. Package up zipfiles with `make package-all`
 5. Copy zip packages to and test on separate test systems
 6. Publish zip packages to github release
