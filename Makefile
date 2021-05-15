@@ -167,6 +167,7 @@ CFLAGS += -mmacosx-version-min=10.8
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
+CFLAGS += -arch x86_64 -arch arm64
 #CFLAGS += -arch i386 -arch x86_64
 # don't need pthread with clang
 #CFLAGS += -pthread
