@@ -139,7 +139,7 @@ static void usage(char *myName)
 "  # (Keep issuing this command within 2 seconds to prevent it firing)\n"
 "  blink1-tool -t 2000 --servertickle 1 \n"
 "  # Enable servertickle after 2 seconds, play sub-pattern 2-3 \n"
-"  blink1-tool -t 2000 --servetickle, 1,1,2,3 \n"
+"  blink1-tool -t 2000 --servertickle 1,1,2,3 \n"
 "\n"
 "Setting Startup Params Examples (mk2 v206+ & mk3 only):\n"
 "  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
