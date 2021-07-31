@@ -362,7 +362,9 @@ int main(int argc, char** argv)
         {"lockbootload",no_argument,      &cmd,   CMD_LOCKBOOTLOAD},
         {"getid",       no_argument,      &cmd,   CMD_GET_ID},
         {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
-	{"add_udev_rules", no_argument,      &cmd,   CMD_ADD_UDEV },
+#if __linux__
+        {"add_udev_rules", no_argument,      &cmd,   CMD_ADD_UDEV },
+#endif
         {NULL,         0,                 0,      0}
     };
     while(1) {
