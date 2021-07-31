@@ -62,7 +62,7 @@ CC=gcc
 ifeq "$(OS)" "macosx"
 
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
-CFLAGS += -arch x86_64 -arch arm64
+#CFLAGS += -arch x86_64 -arch arm64
 
 EXE=
 
@@ -128,7 +128,7 @@ curl-setup:
 	@echo "setting up curl..."
 	#wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
 	tar xvzf curl-7.37.1.tar.gz
-	cd curl-7.37.1 && CFLAGS='-arch x86_64 -arch arm64'  ./configure --prefix=`pwd`/../curl-$(OS) --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install
+	cd curl-7.37.1 && ./configure --prefix=`pwd`/../curl-$(OS) --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install
 
 json-parser-setup:
 	@echo "setting up json-parser"
