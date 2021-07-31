@@ -23,7 +23,9 @@ jobs:
 
       - name: setup prerequisites (linux)
         shell: bash
-        run: sudo apt install pkg-config libudev-dev libusb-1.0-0-dev
+        run: |
+          sudo apt update
+          sudo apt install build-essential pkg-config libudev-dev libusb-1.0-0-dev
           
       - name: compile blink1-tool
         shell: bash
