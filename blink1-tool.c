@@ -67,6 +67,9 @@ static void usage(char *myName)
 "Usage: \n"
 "  %s <cmd> [options]\n"
 "where <cmd> is one of:\n"
+#if __linux__
+"  --add_udev_rules            Add udev rules to allow non-root access\n"
+#endif
 "  --list                      List connected blink(1) devices \n"
 "  --rgb=<red>,<green>,<blue>  Fade to RGB value\n"
 "  --rgb=[#]RRGGBB             Fade to RGB value, as hex color code\n"
@@ -139,7 +142,7 @@ static void usage(char *myName)
 "  # (Keep issuing this command within 2 seconds to prevent it firing)\n"
 "  blink1-tool -t 2000 --servertickle 1 \n"
 "  # Enable servertickle after 2 seconds, play sub-pattern 2-3 \n"
-"  blink1-tool -t 2000 --servetickle, 1,1,2,3 \n"
+"  blink1-tool -t 2000 --servertickle 1,1,2,3 \n"
 "\n"
 "Setting Startup Params Examples (mk2 v206+ & mk3 only):\n"
 "  blink1-tool --setstartup 1,5,7,10  # enable, play 5-7 loop 10 times\n"
@@ -159,6 +162,9 @@ static void usage(char *myName)
 "   blink1-tool -t 200 -m 100 --rgb ff00ff --blink 5 \n"
 " - If using several blink(1)s, use '-d all' or '-d 0,2' to select 1st,3rd: \n"
 "   blink1-tool -d all -t 50 -m 50 -rgb 00ff00 --blink 10 \n"
+#if __linux__
+" - Linux: if blink(1) not detected, run blink1-tool --add_udev_rules\n"
+#endif
 "\n"
             ,myName);
 }
@@ -206,6 +212,9 @@ enum {
     CMD_LOCKBOOTLOAD,
     CMD_GET_ID,
     CMD_SETRGB,
+#if __linux__
+    CMD_ADD_UDEV,
+#endif
     CMD_TESTTEST
 };
 
@@ -236,7 +245,24 @@ int blink1_fadeToRGBForDevices( uint16_t mils, uint8_t rr,uint8_t gg, uint8_t bb
     return 0; // FIXME
 }
 
-
+#if __linux__
+void add_udev_rules() {
+#define UDEVSHELLSCRIPT "\
+#/bin/bash \n\
+fn=/etc/udev/rules.d/51-blink1.rules \n\
+if [ ! -e $fn ] ; then \n\
+  echo 'ATTRS{idVendor}==\"27b8\", ATTRS{idProduct}==\"01ed\", MODE:=\"666\", GROUP=\"plugdev\"' | sudo tee $fn \n\
+fi \n\
+sudo udevadm control --reload \n\
+sudo udevadm trigger \n\
+"
+  printf("Attempting to add udev rules.\n");
+  printf("'sudo' will be used. Please have your password ready\n");
+  printf("Script being run:\n%s\n", UDEVSHELLSCRIPT);
+  system(UDEVSHELLSCRIPT);
+  exit(0);
+}
+#endif
 
 //
 int main(int argc, char** argv)
@@ -336,6 +362,7 @@ int main(int argc, char** argv)
         {"lockbootload",no_argument,      &cmd,   CMD_LOCKBOOTLOAD},
         {"getid",       no_argument,      &cmd,   CMD_GET_ID},
         {"setrgb",     required_argument, &cmd,   CMD_SETRGB },
+	{"add_udev_rules", no_argument,      &cmd,   CMD_ADD_UDEV },
         {NULL,         0,                 0,      0}
     };
     while(1) {
@@ -492,6 +519,12 @@ int main(int argc, char** argv)
         count = blink1_enumerate();
     }
 
+#if __linux__
+    if( cmd == CMD_ADD_UDEV ) {
+      add_udev_rules();
+    }
+#endif
+
     if( cmd == CMD_VERSION ) {
         char verbuf[40] = "";
         if( count ) {
@@ -509,8 +542,11 @@ int main(int argc, char** argv)
     if( millis == -1 ) millis = millisDefault;
     if( ledns_cnt == 0 ) { ledns[0] = 0; ledns_cnt = 1;  }
 
-    if( count == 0  ) {
+    if( count == 0 ) {
         msg("no blink(1) devices found\n");
+#if __linux__
+	printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+#endif
         exit(1);
     }
 
@@ -531,6 +567,9 @@ int main(int argc, char** argv)
 
     if( dev == NULL ) {
         msg("cannot open blink(1), bad id or serial number\n");
+#if __linux__
+	printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+#endif
         exit(1);
     }
 
