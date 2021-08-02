@@ -61,8 +61,9 @@ CC=gcc
 #################  Mac OS X  ##################################################
 ifeq "$(OS)" "macosx"
 
+CURL_CFLAGS = -arch x86_64 -arch arm64
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
-#CFLAGS += -arch x86_64 -arch arm64
+CFLAGS += $(CURL_CFLAGS)
 
 EXE=
 
@@ -114,6 +115,8 @@ CFLAGS += -Wno-pointer-to-int-cast
 CFLAGS +=  -I json-parser
 JSFILES = json-parser/json.c
 
+CURL_DIR=curl-7.78.0
+
 #$(OBJS): %.o: %.c
 #	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -125,10 +128,10 @@ msg:
 	@echo "Building blink1control-tool for OS=$(OS) BLINK1_VERSION=$(BLINK1_VERSION)"
 
 curl-setup:
-	@echo "setting up curl..."
-	#wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
-	tar xvzf curl-7.37.1.tar.gz
-	cd curl-7.37.1 && ./configure --prefix=`pwd`/../curl-$(OS) --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install
+	@echo "setting up curl... $(CURL_VER)"
+#   wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
+	tar xzf $(CURL_DIR).tar.gz
+	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix=`pwd`/../curl-$(OS) --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install
 
 json-parser-setup:
 	@echo "setting up json-parser"
@@ -136,7 +139,7 @@ json-parser-setup:
 
 depcheck:
 	@echo "Checking if curl and json-parser are setup"
-	@if [ ! -d curl-7.37.1 ] ; then \
+	@if [ ! -d $(CURL_DIR) ] ; then \
 		$(MAKE) curl-setup; \
 	else \
 	  echo "  curl set up"; \
@@ -164,7 +167,8 @@ clean:
 
 distclean:
 	$(MAKE) clean
-	rm -rf curl-7.37.1
+	rm -rf $(CURL_DIR)
 	rm -rf json-parser
+	rm -rf curl-$(OS)
 
 FORCE:
