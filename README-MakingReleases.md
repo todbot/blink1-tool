@@ -50,27 +50,29 @@ Platform Specifics (for Tod mostly)
 
 ### Mac
 
-Environment: Build on 10.10 on MacBookPro Retina, test on 10.8.2 Mac Mini
+Environment: Build on 11.5 on MacBookPro Retina x64, test on 10.13.6 Mac Mini x64, 11.5 MacBookPro M1
 
-Command: `make clean && make && make package`
+Command: `make distclean && make && make package-all`
+
+
 
 ### Windows
 
 Build on Win7-64bit, test on Win7-32 bit, Win8-64bit (all in VMs)
 
-Command: `make clean && make && make package`
+Command: `make distclean && make && make package-all`
 
 ### Linux - Ubuntu
 
-Build on Ubuntu 14 VM, test on Ubuntu 12 VM
+Build on Ubuntu 20 VM, test on Ubuntu 18 VM
 
-Command: `make clean && make && make package`
+Command: `make distclean && make && make package-all`
 
 ### Linux - Raspberry Pi
 
-Environemt: Build on Raspberry Pi running Raspbian.
+Environemt: Build on Raspberry Pi 4 running Raspbian latest.
 
-Command: `git pull && make distclean && make && make package`
+Command: `make distclean && make && make package-all`
 
 Rename zip packages from "armv6l" to "raspi".
 
@@ -78,12 +80,12 @@ Rename zip packages from "armv6l" to "raspi".
 
 On Fedora 14 VM using OpenWrt-SDK-ar71xx-for-linux-x86_64-gcc-4.6-linaro_uClibc-0.9.33.2
 
-Command: `make clean && make OS=yun && make package`
+Command: `make distclean && make OS=yun && make package`
 
 ### OpenWrt - brcm71xx
 On Fedora 14 VM using OpenWrt-SDK-brcm47xx-for-linux-i486-gcc-4.6-linaro_uClibc-0.9.33.2
 
-Command: `make clean && make OS=wrt && make package`
+Command: `make distclean && make OS=wrt && make package`
 
 
 

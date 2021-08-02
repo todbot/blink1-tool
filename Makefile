@@ -197,6 +197,15 @@ EXELOCATION ?= $(PREFIX)/bin
 LIBLOCATION ?= $(PREFIX)/lib
 INCLOCATION ?= $(PREFIX)/include
 
+# This is kinda gross
+# Must set envvars CODESIGN_ID (and maybe CODESIGN_PW for Windows?)
+CODESIGN_CMD=codesign --force --sign $(CODESIGN_ID) ./blink1-tool
+CODESIGN_CMD+=&& codesign --force --sign $(CODESIGN_ID) ./blink1-tiny-server
+CODESIGN_CMD+=&& codesign --force --sign $(CODESIGN_ID) ./blink1control-tool
+CODESIGN_CHECK_CMD=codesign -v -d ./blink1-tool
+CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1-tiny-server
+CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1control-tool
+
 endif
 
 #################  Windows  ##################################################
@@ -533,9 +542,10 @@ help:
 	@echo "make lib        ... build blink1-lib shared library"
 	@echo "make blink1-tool... build blink1-tool program"
 	@echo "make blink1-tiny-server ... build tiny REST server"
-	@echo "make blink1control-tool ... build blink1control-tool (w/Blink1Control)"
+	@echo "make blink1control-tool ... build blink1control-tool (use w/Blink1Control)"
+	@echo "make codesign   ... sign binaries (MacOS/Windows)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
-	@echo "make package-tiny-server ... package tiny REST server"
+	@echo "make package-tiny-server ... package tiny HTTP REST server"
 	@echo "make package-all... package everything (and build everything first)"
 	@echo "make clean      ... delete build products, leave binaries & libs"
 	@echo "make distclean  ... delele binaries and libs too"
@@ -559,8 +569,7 @@ blink1-tool: $(OBJS) blink1-tool.o
 	$(CC) $(CFLAGS) -c blink1-tool.c -o blink1-tool.o
 	$(CC) $(CFLAGS) $(EXEFLAGS) $(OBJS) $(LIBS) blink1-tool.o -o blink1-tool$(EXE) $(LDFLAGS)
 
-blink1-tiny-server: $(OBJS) server/blink1-tiny-server.c
-#	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c server/blink1-tiny-server.c -o blink1-tiny-server.o
+blink1-tiny-server: $(OBJS) server/blink1-tiny-server.c 
 	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c server/blink1-tiny-server.c -o blink1-tiny-server.o
 	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c ./server/mongoose/mongoose.c -o ./server/mongoose/mongoose.o
 	$(CC) $(CFLAGS) $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) -lpthread  blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
@@ -573,6 +582,11 @@ lib: $(LIBTARGET)
 
 blink1control-tool:
 	$(MAKE) -C blink1control-tool
+
+codesign:
+	$(CODESIGN_CMD)
+codesign-check:
+	$(CODESIGN_CHECK_CMD)
 
 package: lib blink1-tool
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
