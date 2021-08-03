@@ -545,8 +545,10 @@ help:
 	@echo "make blink1control-tool ... build blink1control-tool (use w/Blink1Control)"
 	@echo "make codesign   ... sign binaries (MacOS/Windows)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
-	@echo "make package-tiny-server ... package tiny HTTP REST server"
-	@echo "make package-all... package everything (and build everything first)"
+	@echo "make package-tiny-server ... zip up tiny HTTP REST server"
+	@echo "make package-blink1control-tool ... zip up blink1control-tool"
+	@echo "make package-all... package all builds (building them first)"
+	@echo "make cpbuilds   ... put all builds in 'builds' dir"
 	@echo "make clean      ... delete build products, leave binaries & libs"
 	@echo "make distclean  ... delele binaries and libs too"
 	@echo
@@ -605,7 +607,10 @@ package-blink1control-tool: blink1control-tool
 	zip -j blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
 
 # package up all binaries
-package-all: build-all codesign package package-tiny-server package-blink1control-tool
+package-all: package package-tiny-server package-blink1control-tool codesign
+	@echo "packaged all"
+
+cpbuilds:
 	@mkdir -p builds
 	@mv blink1*$(PKGOS).zip builds
 	@echo "Look in 'builds' for zipfiles to publish"

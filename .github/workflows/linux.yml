@@ -43,5 +43,18 @@ jobs:
         shell: bash
         run: make build-all
 
-        
+      # do 'package-all' by hand so we can hand-exclude blink1control on Mac/Win
+      - name: package up
+        shell: bash
+        run: |
+          make package
+          make package-tiny-server
+          make package-blink1control-tool
+          make cpbuilds
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: blink1-tools
+          path: builds/*
         
