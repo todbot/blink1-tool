@@ -25,11 +25,12 @@ jobs:
         shell: bash
         run: xcodebuild -version
 
-      - name: update to xcode w/ arm
-        shell: bash
-        run: |
-          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-          sudo xcode-select -s "/Applications/Xcode_12.5.1.app"
+#      - name: update to xcode w/ arm
+#        shell: bash
+#        run: |
+#          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+#          sudo xcode-select -s "/Applications/Xcode_12.5.1.app"
+
       - name: compile blink1-tool
         shell: bash
         run: make
