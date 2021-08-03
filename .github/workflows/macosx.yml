@@ -38,10 +38,7 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
-# Remove for now, weird error "http2.c:382:40: error: variable has incomplete type 'const nghttp2_session_callbacks' (aka "
-#      - name: compile blink1control-tool
-#        shell: bash
-#        run: make blink1control-tool
-
-        
+      - name: compile all
+        shell: bash
+        run: make build-all
         

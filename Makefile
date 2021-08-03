@@ -518,7 +518,7 @@ PKGOS = $(BLINK1_VERSION)
 
 .PHONY: all install help blink1control-tool debug
 
-#all: msg blink1-tool blink1-server-simple
+# by default, just build blink1-tool and blink1-lib
 all: msg prep blink1-tool lib
 
 debug: CFLAGS += -DDEBUG -g
@@ -583,8 +583,13 @@ lib: $(LIBTARGET)
 blink1control-tool:
 	$(MAKE) -C blink1control-tool
 
-codesign:
+# build all possible binaries
+build-all: lib blink1-tool blink1-tiny-server blink1control-tool
+
+# codesign all binaries, must be done before zips
+codesign: build-all
 	$(CODESIGN_CMD)
+
 codesign-check:
 	$(CODESIGN_CHECK_CMD)
 
@@ -599,7 +604,8 @@ package-tiny-server: blink1-tiny-server
 package-blink1control-tool: blink1control-tool
 	zip -j blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
 
-package-all: package package-tiny-server package-blink1control-tool
+# package up all binaries
+package-all: build-all codesign package package-tiny-server package-blink1control-tool
 	@mkdir -p builds
 	@mv blink1*$(PKGOS).zip builds
 	@echo "Look in 'builds' for zipfiles to publish"

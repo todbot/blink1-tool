@@ -52,8 +52,7 @@ Platform Specifics (for Tod mostly)
 
 Environment: Build on 11.5 on MacBookPro Retina x64, test on 10.13.6 Mac Mini x64, 11.5 MacBookPro M1
 
-Command: `make distclean && make && make package-all`
-
+Command: `make distclean && make package-all`
 
 
 ### Windows

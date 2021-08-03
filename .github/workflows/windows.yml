@@ -32,9 +32,8 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
-# this current fails because of weird ming32-make shell and windows paths        
-#      - name: compile blink1control-tool
-#        shell: bash
-#        run: make blink1control-tool
+      - name: compile all
+        shell: bash
+        run: make build-all
        
         
