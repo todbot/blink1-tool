@@ -25,11 +25,12 @@ jobs:
         shell: bash
         run: xcodebuild -version
 
-#      - name: update to xcode w/ arm
-#        shell: bash
-#        run: |
-#          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-#          sudo xcode-select -s "/Applications/Xcode_12.5.1.app"
+      # xcode 12.5 does not have Arm support? 
+      - name: update to xcode w/ arm
+        shell: bash
+        run: |
+          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+          sudo xcode-select -s "/Applications/Xcode_12.3.app"
 
       - name: compile blink1-tool
         shell: bash
@@ -39,7 +40,8 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
-      - name: compile all
-        shell: bash
-        run: make build-all
+# why is libcurl still failing on windows?
+#      - name: compile all
+#        shell: bash
+#        run: make build-all
         
