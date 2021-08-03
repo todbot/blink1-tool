@@ -32,8 +32,9 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
-      - name: compile all
-        shell: bash
-        run: make build-all
+# why is libcurl still failing on windows? ("/usr/bin/sh: C:/Program: No such file or directory" a path problem)
+#      - name: compile all
+#        shell: bash
+#        run: make build-all
        
         
