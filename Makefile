@@ -43,6 +43,10 @@
 #   - apt-get install build-essential pkg-config libudev-dev libusb-1.0-0-dev
 #   - make
 #
+# Linux (Fedora 24+)
+#    - dnf install @development-tools systemd-devel
+#    - make
+#
 # Linux (Fedora 18+)
 #   - yum install make gcc libusbx-devel
 #   - make
@@ -159,6 +163,7 @@ PKG_CONFIG_FILE_NAME = blink1.pc
 
 #################  Mac OS X  ##################################################
 ifeq "$(OS)" "macosx"
+BLINK1_VERSION="$(GIT_TAG)-$(OS)"
 LIBTARGET = libBlink1.dylib
 CFLAGS += -Wall
 CFLAGS += -mmacosx-version-min=10.8
@@ -199,9 +204,9 @@ INCLOCATION ?= $(PREFIX)/include
 
 # This is kinda gross
 # Must set envvars CODESIGN_ID (and maybe CODESIGN_PW for Windows?)
-CODESIGN_CMD=codesign --force --sign $(CODESIGN_ID) ./blink1-tool
-CODESIGN_CMD+=&& codesign --force --sign $(CODESIGN_ID) ./blink1-tiny-server
-CODESIGN_CMD+=&& codesign --force --sign $(CODESIGN_ID) ./blink1control-tool
+CODESIGN_CMD=codesign --force --sign '$(CODESIGN_ID)' ./blink1-tool
+CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1-tiny-server
+CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1control-tool
 CODESIGN_CHECK_CMD=codesign -v -d ./blink1-tool
 CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1-tiny-server
 CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1control-tool
@@ -595,6 +600,7 @@ codesign: build-all
 codesign-check:
 	$(CODESIGN_CHECK_CMD)
 
+# TODO: how to package up both LIBUSB and HIDRAW flavors for Linux?
 package: lib blink1-tool
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
 	zip blink1-tool-$(PKGOS).zip blink1-tool$(EXE)
