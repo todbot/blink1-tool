@@ -259,7 +259,9 @@ sudo udevadm trigger \n\
   printf("Attempting to add udev rules.\n");
   printf("'sudo' will be used. Please have your password ready\n");
   printf("Script being run:\n%s\n", UDEVSHELLSCRIPT);
+  printf("Running script...\n");
   system(UDEVSHELLSCRIPT);
+  printf("...Done.\n");
   exit(0);
 }
 #endif
