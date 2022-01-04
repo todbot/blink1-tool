@@ -9,12 +9,8 @@ This is an official collection of C/C++ commandline tools for controlling
 the [blink1 USB RGB LED](https://blink1.thingm.com/).
 
 This code lives at https://github.com/todbot/blink1-tool.
-It started as the `commandline` directory in https://github.com/todbot/blink1.
 
-For pre-built binaries, see the Releases page: https://github.com/todbot/blink1-tool/releases
-
-To build, see the [Makefile](./Makefile) and down below
-for build variations and OS-specific requirements.
+For pre-built binaries, see the [Releases page](https://github.com/todbot/blink1-tool/releases).
 
 The current tools are:
 
@@ -72,12 +68,15 @@ cd blink1-tool
 make
 ```
 
+On Linux you will need to install [some requirements]#linux-debian-flavored) beforehand.
+
 If your OS is not detected automatically, you can force it with something like:
 ```
 OS=linux make
 ```
 
-To see the supported platforms, please consule the Makefile.
+To see the supported platforms, please consult the [Makefile](./Makefile)
+
 
 ### Build variants
 
@@ -100,15 +99,17 @@ HIDAPI_TYPE=LIBUSB make
 If you have the ability to compile programs on your system,
 you may already have everything you need to compile `blink1-tool`.
 
-### Linux (Debian-flavored)
+### Linux (Debian-flavored, including Raspberry Pi)
+
 - In a terminal, install pre-reqs and build:
-- `sudo apt-get install build-essential pkg-config libudev-dev`
+- `sudo apt-get install libudev-dev pkg-config build-essential`
 - `sudo apt-get install libusb-1.0-0-dev`  (optional, only for libusb variant)
 - `cd blink1-tool`
 - `make`
 - `HIDAPI_TYPE=libusb make` (if you instead you want libusb version)
 
 ### FreeBSD
+
 - Install pre-reqs and build:
 - `sudo pkg install gmake gcc git libiconv`
 - `cd blink1-tool`
@@ -116,6 +117,7 @@ you may already have everything you need to compile `blink1-tool`.
 - `sudo ./blink1-tool --red --flash 3`
 
 ### MacOS
+
 - Xcode
 - In Terminal, setup Xcode and build:
 - `xcode-select --install`
@@ -123,6 +125,7 @@ you may already have everything you need to compile `blink1-tool`.
 - `make`
 
 ### Windows
+
 - Install [Chocolatey package manager](https://chocolatey.org/)
 - In an admin CMD shell, install VisualStudio, MinGW, & MSYS2:
 - `choco install visualstudio2017community visualstudio2017-workload-vctools mingw msys2 cmake`
@@ -135,6 +138,7 @@ you may already have everything you need to compile `blink1-tool`.
 - `mingw32-make`
 
 ### Windows (old way)
+
 - Install Visual Studio 2015
 - Install MSYS2 : https://github.com/msys2/msys2/wiki/MSYS2-installation
 - In MSYS2 bash shell:
