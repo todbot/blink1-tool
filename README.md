@@ -68,7 +68,7 @@ cd blink1-tool
 make
 ```
 
-On Linux you will need to install [some requirements]#linux-debian-flavored) beforehand.
+On Linux you will need to install [some requirements](#linux-debian-flavored-including-raspberry-pi) beforehand.
 
 If your OS is not detected automatically, you can force it with something like:
 ```
