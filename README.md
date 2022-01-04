@@ -100,7 +100,7 @@ HIDAPI_TYPE=LIBUSB make
 If you have the ability to compile programs on your system,
 you may already have everything you need to compile `blink1-tool`.
 
-### Linux
+### Linux (Debian-flavored)
 - In a terminal, install pre-reqs and build:
 - `sudo apt-get install build-essential pkg-config libudev-dev`
 - `sudo apt-get install libusb-1.0-0-dev`  (optional, only for libusb variant)
