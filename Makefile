@@ -151,11 +151,17 @@ endif
 # allow overriding of GIT_TAG & BLINK1_VERSION on commandline for automated builds
 
 MACH_TYPE:="$(strip $(shell uname -m))"
-GIT_TAG?="$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))"
-# deal with case of no git or no git tags, check for presence of "v" (i.e. "v1.93")
-ifneq ($(findstring v,$(GIT_TAG)), v)
-	GIT_TAG:="v$(strip $(shell date -r . +'%Y%m%d' ))"
+# If we have a file .git-tag (from source archive), read it
+ifneq ($(wildcard .git-tag),)
+	GIT_TAG_RAW=$(file <.git-tag)
 endif
+GIT_TAG_RAW?=$(strip $(shell git tag 2>&1 | tail -1 | cut -f1 -d' '))
+# deal with case of no git or no git tags, check for presence of "v" (i.e. "v1.93")
+ifneq ($(findstring v,$(GIT_TAG_RAW)), v)
+	GIT_TAG_RAW:="v$(strip $(shell date -r . +'%Y%m%d' ))"
+endif
+GIT_TAG?="$(GIT_TAG_RAW)"
+DISTNAME=blink1-source-$(GIT_TAG_RAW)
 
 BLINK1_VERSION?="$(GIT_TAG)-$(OS)-$(MACH_TYPE)"
 
@@ -506,10 +512,12 @@ endif
 
 #####################  Common  ###############################################
 
-
-define prep_common_cmd
-  @git submodule update --init
-endef
+# Run git submodule only if we have a git workingdir
+ifeq ($(wildcard .git),)
+	prep_common_command = echo Not updating submodules
+else
+	prep_common_command = git submodule update --init
+endif
 
 #CFLAGS += -O -Wall -std=gnu99 -I ../hardware/firmware
 CFLAGS += -Wall
@@ -555,7 +563,8 @@ help:
 	@echo "make package-all... package all builds (building them first)"
 	@echo "make cpbuilds   ... put all builds in 'builds' dir"
 	@echo "make clean      ... delete build products, leave binaries & libs"
-	@echo "make distclean  ... delele binaries and libs too"
+	@echo "make distclean  ... delete binaries and libs too"
+	@echo "make dist       ... Create source archives"
 	@echo
 
 msg:
@@ -564,7 +573,7 @@ msg:
 
 # defin "prep_cmd" for any pre-compilation preparation that needs to be done (e.g. see FreeBSD)
 prep:
-	$(prep_common_cmd)
+	@$(prep_common_command)
 	$(prep_cmd)
 
 blink1-lib.o: blink1-lib*.h
@@ -657,7 +666,19 @@ distclean: clean
 	rm -f libblink1.so
 	rm -f blink1-tool
 	rm -f blink1-tool.exe
+	rm -rf $(DISTNAME) srcdist
 	$(MAKE) -C blink1control-tool distclean
+
+$(DISTNAME): distclean
+	mkdir $(DISTNAME)
+	tar cf - --exclude=".git" --exclude=$(DISTNAME) . | tar xf - -C $(DISTNAME)
+	echo "$(GIT_TAG_RAW)" > $(DISTNAME)/.git-tag
+
+dist: $(DISTNAME)
+	mkdir srcdist
+	tar chzf srcdist/$(DISTNAME).tar.gz $(DISTNAME)
+	zip -r srcdist/$(DISTNAME).zip $(DISTNAME)
+	rm -rf $(DISTNAME)
 
 # show shared library use
 # in general we want minimal to no dependecies for blink1-tool
