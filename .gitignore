@@ -38,3 +38,6 @@ builds
 .vscode
 .idea
 cmake-build-debug
+
+# src archives
+srcdist

@@ -46,6 +46,7 @@ jobs:
       - name: package up
         shell: bash
         run: |
+          make dist
           make package
           make package-tiny-server
           make package-blink1control-tool
@@ -55,5 +56,7 @@ jobs:
         uses: actions/upload-artifact@v2.2.2
         with:
           name: blink1-tools
-          path: builds/*
+          path: |
+            builds/*
+            srcdist/*
         
