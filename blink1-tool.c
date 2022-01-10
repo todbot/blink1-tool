@@ -1,7 +1,7 @@
 /*
  * blink1-tool.c -- command-line tool for controlling blink(1) usb rgb leds
  *
- * 2012-2019, Tod E. Kurt, http://todbot.com/blog/ , http://thingm.com/
+ * 2012-2022, Tod Kurt, http://todbot.com/blog/ , http://thingm.com/
  *
  *
  * Fade to RGB value #FFCC33 in 50 msec:
