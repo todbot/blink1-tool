@@ -3,6 +3,7 @@
  * blink1-tiny-server -- a small cross-platform REST/JSON server for
  *                       controlling a blink(1) device
  *
+ * 2012-2022, Tod Kurt, http://todbot.com/blog/ , http://thingm.com/
  *
  * Supported URLs:
  *
@@ -291,6 +292,15 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     else if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
         sprintf(status, "blink1 status");
+        blink1_device* dev = cache_getDeviceById(id);
+        if( dev ) { 
+            uint16_t msecs;
+            int rc = blink1_readRGB(dev, &msecs, &rgb.r,&rgb.g,&rgb.b, 0 );
+            if( rc==-1 ) {
+                printf("error on readRGB\n");
+            }
+            cache_return(dev);
+        }
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
