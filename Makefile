@@ -261,7 +261,7 @@ LIBTARGET = libblink1.so
 
 CFLAGS+=-Wall
 # suppress warnings in Dictionary and mongoose
-CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
   ifeq "$(HIDAPI_TYPE)" "HIDRAW"
@@ -307,7 +307,7 @@ LIBTARGET = libblink1.so
 
 CFLAGS+=-Wall
 # suppress warnings in Dictionary and mongoose
-CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
@@ -355,7 +355,7 @@ LIBTARGET = libblink1.so
 
 CFLAGS+=-Wall
 # suppress warnings in Dictionary and mongoose
-CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
@@ -390,7 +390,7 @@ LIBTARGET = libblink1.so
 
 CFLAGS+=-Wall
 # suppress warnings in Dictionary and mongoose
-CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast
 
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
 CFLAGS += -DUSE_HIDAPI
@@ -424,7 +424,7 @@ LIBTARGET = libblink1.so
 
 CFLAGS+=-Wall
 # suppress warnings in Dictionary and mongoose
-CFLAGS+=-Wno-format -Wno-pointer-to-int-cast 
+CFLAGS+=-Wno-format -Wno-pointer-to-int-cast
 
 # HIDAPI build doesn't work, use HIDDATA instead
 ifeq "$(USBLIB_TYPE)" "HIDAPI"
@@ -585,10 +585,21 @@ blink1-tool: $(OBJS) blink1-tool.o
 	$(CC) $(CFLAGS) -c blink1-tool.c -o blink1-tool.o
 	$(CC) $(CFLAGS) $(EXEFLAGS) $(OBJS) $(LIBS) blink1-tool.o -o blink1-tool$(EXE) $(LDFLAGS)
 
-blink1-tiny-server: $(OBJS) server/blink1-tiny-server.c 
-	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c server/blink1-tiny-server.c -o blink1-tiny-server.o
-	$(CC) $(CFLAGS) -DMG_ENABLE_THREADS -I. -I./server/mongoose -c ./server/mongoose/mongoose.c -o ./server/mongoose/mongoose.o
-	$(CC) $(CFLAGS) $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) -lpthread  blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
+blink1-tiny-server-html:
+#	cd server && \
+#	gcc -o pack mongoose/pack.c && \
+#	./pack html/**/*  > blink1-tiny-server-html.c && \
+#	cd ..
+	gcc -o server/pack server/mongoose/pack.c
+#	find server/html -type f -print0 | sed 's/server\/html//g' | xargs -0 ./server/pack
+	find server/html -type f -print0 | xargs -0 ./server/pack | sed 's/\/server\/html//g' > server/blink1-tiny-server-html.c
+
+# FIXME this and the above needs cleanup
+blink1-tiny-server: $(OBJS) blink1-tiny-server-html server/blink1-tiny-server.c
+	$(CC) $(CFLAGS) -DMG_ENABLE_PACKED_FS=1 -I. -I./server/mongoose -c server/blink1-tiny-server.c -o server/blink1-tiny-server.o
+	$(CC) $(CFLAGS) -DMG_ENABLE_PACKED_FS=1 -I. -I./server/mongoose -c server/blink1-tiny-server-html.c -o server/blink1-tiny-server-html.o
+	$(CC) $(CFLAGS) -DMG_ENABLE_PACKED_FS=1 -I. -I./server/mongoose -c ./server/mongoose/mongoose.c -o ./server/mongoose/mongoose.o
+	$(CC) $(CFLAGS) $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) server/blink1-tiny-server-html.o server/blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
 
 $(LIBTARGET): $(OBJS)
 	$(CC) $(LIBFLAGS) $(CFLAGS) $(OBJS) $(LIBS)
@@ -654,8 +665,9 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(LIBTARGET)
 	rm -f $(PKG_CONFIG_FILE_NAME)
-	rm -f blink1-tiny-server.o blink1-tool.o hiddata.o
+	rm -f server/blink1-tiny-server.o blink1-tool.o hiddata.o
 	rm -f server/mongoose/mongoose.o
+	rm -f server/blink1-tiny-server-html.{c,o}
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
 	$(MAKE) -C blink1control-tool clean
 
@@ -710,4 +722,3 @@ makepkgconfig:
 	@echo "Version: $(shell echo $(GIT_TAG) | cut -c 2- )" >> $(PKG_CONFIG_FILE_NAME)
 	@echo "Cflags: -I$(DESTDIR)$(INCLOCATION)" >> $(PKG_CONFIG_FILE_NAME)
 	@echo "Libs: -L$(DESTDIR)$(LIBLOCATION) -lBlink1" >> $(PKG_CONFIG_FILE_NAME)
-

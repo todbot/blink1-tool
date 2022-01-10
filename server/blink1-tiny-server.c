@@ -20,6 +20,7 @@
 
 #include <getopt.h>    // for getopt_long_only()
 #include <sys/time.h>
+#include <signal.h>
 
 #include "mongoose.h"
 
@@ -39,14 +40,15 @@ const char* blink1_server_version = BLINK1_VERSION;
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
-    double atime;  // time last used
+    int64_t atime;  // time last used
 } cache_info;
 
-static double idle_atime = 1.0 /* seconds */;
+static int64_t idle_atime = 1000 /* milliseconds */;
 static cache_info cache_infos[cache_max];
 
 static const char *s_http_port = "8000";
-static struct mg_serve_http_opts s_http_server_opts;
+// static struct mg_serve_http_opts s_http_server_opts;
+static struct mg_http_serve_opts http_serve_opts = {0};
 static const char* const index_files[] = { "index.html", "index.htm" };
 static bool serve_index = false;
 
@@ -73,7 +75,6 @@ static const url_info supported_urls[]
     {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
     {"/blink1/random",        "turn the blink(1) a random color"}
 };
-
 
 void usage()
 {
@@ -109,13 +110,13 @@ void usage()
 "  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
 "  /blink1/fadeToRGB?rgb=FF00FF&millis=500 -- fade to purple over 500ms\n"
 "  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink cyan 3 times\n"
-            
+
 "\n"
-            
-            );
+
+        );
 }
 
-void cache_flush(int idle_threshold);
+void cache_flush(int idle_threshold_millis);
 
 blink1_device* cache_getDeviceById(uint32_t id)
 {
@@ -152,20 +153,20 @@ void cache_return_internal( blink1_device* dev )
     int i = blink1_getCacheIndexByDev(dev);
     // printf("cache_return_internal: %p at %d\n", dev, i);
     if( i>=0 ) {
-        cache_infos[i].atime = cs_time();
+        cache_infos[i].atime = mg_millis();
     }
     else {
         blink1_close(dev);
     }
 }
 
-void cache_flush(int idle_threshold)
+void cache_flush(int idle_threshold_millis)
 {
-    double deadline = cs_time() - idle_threshold;
+    int64_t deadline = mg_millis() - idle_threshold_millis;
     int count = blink1_getCachedCount();
     for( int i=0; i< count; i++ ) {
         if( cache_infos[i].dev && cache_infos[i].atime < deadline ) {
-            // printf("cache_flush: id=%d handle=%p atime=%.3f\n", i, cache_infos[i].dev, cache_infos[i].atime);
+            printf("DEBUG cache_flush: id=%d handle=%p atime=%lld\n", i, cache_infos[i].dev, cache_infos[i].atime);
             blink1_close(cache_infos[i].dev)
             cache_infos[i].atime = 0;
         }
@@ -179,13 +180,13 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
     }
-    blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b); 
-    if( millis==0 ) { millis = 200; } 
+    blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
+    if( millis==0 ) { millis = 200; }
     int rc = blink1_fadeToRGBN( dev, millis, rgb.r,rgb.g,rgb.b, ledn );
     if( rc == -1 ) {
         fprintf(stderr, "error, couldn't fadeToRGB on blink1\n");
         sprintf(status+strlen(status), ": error, couldn't fadeToRGB on blink1");
-    } 
+    }
     else {
         sprintf(status, "blink1 set color #%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b);
     }
@@ -193,7 +194,7 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
 }
 
 //
-// 
+//
 void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d )
 {
     size_t                  i;
@@ -203,13 +204,13 @@ void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d )
 
     for( i = 0; i < d->size; i++ ) {
         item = d->items[ i ];
-        
+
         while( item ) {
             const char* v = item->value;
-            if( v[0] == '[' || v[0] == '{' ) { // hack if value is json array/object 
-                mg_printf_http_chunk(nc,"\"%s\": %s,\n", item->key,item->value);
-            } else { 
-                mg_printf_http_chunk(nc,"\"%s\": \"%s\",\n", item->key,item->value);
+            if( v[0] == '[' || v[0] == '{' ) { // hack if value is json array/object
+                mg_http_printf_chunk(nc,"\"%s\": %s,\n", item->key,item->value);
+            } else {
+                mg_http_printf_chunk(nc,"\"%s\": \"%s\",\n", item->key,item->value);
             }
             item = item->next;
         }
@@ -217,13 +218,13 @@ void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d )
 }
 
 
-static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
+static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
-    struct http_message *hm = (struct http_message *) ev_data;
-
-    if( ev != MG_EV_HTTP_REQUEST ) {
+    if(ev != MG_EV_HTTP_MSG) {
         return;
     }
+
+    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
     uint32_t id=0;
     uint8_t ledn=0, bright=0;
@@ -239,61 +240,61 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
     DictionaryCallbacks resultsdictc = DictionaryStandardStringCallbacks();
     DictionaryRef resultsdict = DictionaryCreate( 100, &resultsdictc );
-    
-    struct mg_str* uri = &hm->uri;
-    struct mg_str* querystr = &hm->query_string;
 
-    snprintf(uristr, uri->len+1, "%s", uri->p);
+    struct mg_str* uri = &hm->uri;
+    struct mg_str* querystr = &hm->query;
+
+    snprintf(uristr, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
     DictionaryInsert(resultsdict, "uri", uristr);
     DictionaryInsert(resultsdict, "version", blink1_server_version);
-    
+
     // parse all possible query args (it's just easier this way)
-    if( mg_get_http_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
         millis = strtod(tmpstr,NULL);
     }
-    if( mg_get_http_var(querystr, "time", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "time", tmpstr, sizeof(tmpstr)) > 0 ) {
         millis = 1000 * strtof(tmpstr,NULL);
     }
-    if( mg_get_http_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
         parsecolor( &rgb, tmpstr);
     }
-    if( mg_get_http_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
     }
-    if( mg_get_http_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
         char* pch;
         pch = strtok(tmpstr, " ,");
         int base = (strlen(pch)==8) ? 16:0;
         id = strtol(pch,NULL,base);
     }
-    if( mg_get_http_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
         ledn = strtod(tmpstr,NULL);
     }
-    if( mg_get_http_var(querystr, "bright", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "bright", tmpstr, sizeof(tmpstr)) > 0 ) {
         bright = strtod(tmpstr,NULL);
     }
-    if( mg_get_http_var(querystr, "pattern", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "pattern", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pattstr, tmpstr);
     }
-    if( mg_get_http_var(querystr, "pname", tmpstr, sizeof(tmpstr)) > 0 ) {
+    if( mg_http_get_var(querystr, "pname", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pnamestr, tmpstr);
     }
-    
+
     // parse URI requests
-    if( mg_vcmp( uri, "/") == 0 && !serve_index ) {
-        sprintf(status, "Welcome to %s api server. "
-                "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
-        for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-            sprintf(status+strlen(status), " %s - %s\n", 
-                    supported_urls[i].url, supported_urls[i].desc);
-        } // FIXME: result is fixed length
-    }
-    else if( mg_vcmp( uri, "/blink1") == 0 ||
+    // if( mg_vcmp( uri, "/") == 0 && !serve_index ) {
+    //     sprintf(status, "Welcome to %s api server. "
+    //             "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
+    //     for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+    //         sprintf(status+strlen(status), " %s - %s\n",
+    //                 supported_urls[i].url, supported_urls[i].desc);
+    //     } // FIXME: result is fixed length
+    // }
+    if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
         sprintf(status, "blink1 status");
         blink1_device* dev = cache_getDeviceById(id);
-        if( dev ) { 
+        if( dev ) {
             uint16_t msecs;
             int rc = blink1_readRGB(dev, &msecs, &rgb.r,&rgb.g,&rgb.b, 0 );
             if( rc==-1 ) {
@@ -316,7 +317,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         }
         sprintf(tmpstr+strlen(tmpstr), "]");
         DictionaryInsert(resultsdict, "blink1_serialnums", tmpstr);
-        
+
         const char* blink1_serialnum = blink1_getCachedSerial(0);
         if( blink1_serialnum ) {
             sprintf(tmpstr, "%s00000000", blink1_serialnum);
@@ -365,7 +366,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
                 (float)millis/1000.0);
         msg("pattstr:%s\n", tmpstr);
         int pattlen = parsePattern( tmpstr, &repeats, pattern);
-        
+
         blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
@@ -383,7 +384,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
         tmpstr
         DictionaryInsert(statussdict, "patterns", tmpstr);
-        
+
     }
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
         sprintf(result, "blink1 pattern add");
@@ -394,7 +395,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
         /*
-        if( pnamestr[0] != 0 && pattstr[0] != 0 ) { 
+        if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
             DictionaryInsert(patterndict, pnamestr, pattstr);
         }
         if( pnamestr[0] != 0 ) {
@@ -403,12 +404,12 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         */
         if( pattstr[0] == 0 ) { // no pattern
         }
-        
+
         patternline_t pattern[32];
         int repeats = -1;
         int pattlen = parsePattern( pattstr, &repeats, pattern);
         if( !count ) { count = repeats; }
-        
+
         blink1_device* dev = cache_getDeviceById(id);
 
         msg("pattlen:%d, repeats:%d\n", pattlen,repeats);
@@ -426,7 +427,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         sprintf(status, "blink1 blink");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
-        
+
         blink1_device* dev = cache_getDeviceById(id);
         //blink1_adjustBrightness( bright, &r, &g, &b);
         //msg("rgb:%d,%d,%d\n",r,g,b);
@@ -453,23 +454,28 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
         }
         cache_return(dev);
     }
-    else if( s_http_server_opts.document_root != NULL ) {
-        mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
-    }
     else {
-        sprintf(status+strlen(status), ": unrecognized uri");
+        struct mg_http_serve_opts opts = {0};
+        opts.fs = &mg_fs_packed; // Set packed ds as a file system
+        mg_http_serve_dir(c, ev_data, &opts);
     }
+    // else if( s_http_server_opts.document_root != NULL ) {
+    //     mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
+    // }
+    // else {
+    //     sprintf(status+strlen(status), ": unrecognized uri");
+    // }
 
     if( status[0] != '\0' ) {
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
-        mg_printf(nc, "%s", "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
-        mg_printf_http_chunk(nc,
+        mg_printf(c, "%s", "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
+        mg_http_printf_chunk(c,
                              "{\n");
 
-        DictionaryPrintAsJsonMg(nc, resultsdict);
-        
-        mg_printf_http_chunk(nc,
-                             "\"millis\": %d,\n" 
+        DictionaryPrintAsJsonMg(c, resultsdict);
+
+        mg_http_printf_chunk(c,
+                             "\"millis\": %d,\n"
                              "\"rgb\": \"%s\",\n"
                              "\"ledn\": %d,\n"
                              "\"bright\": %d,\n"
@@ -483,19 +489,25 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
                              status
                              );
 
-        mg_printf_http_chunk(nc,
+        mg_http_printf_chunk(c,
                              "}\n"
                              );
-        
-        mg_send_http_chunk(nc, "", 0); /* Send empty chunk, the end of response */
+
+        mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
     }
 
 }
 
+// Handle interrupts, like Ctrl-C
+static int s_signo;
+static void signal_handler(int signo) {
+  s_signo = signo;
+}
+
 int main(int argc, char *argv[]) {
     struct mg_mgr mgr;
-    struct mg_connection *nc;
-    struct mg_bind_opts bind_opts;
+    struct mg_connection *c;
+    // struct mg_bind_opts bind_opts;
     //int i;
     //char *cp;
     const char *err_str;
@@ -503,11 +515,9 @@ int main(int argc, char *argv[]) {
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand( time(NULL) * getpid() );
 
-    mg_mgr_init(&mgr, NULL);
-
     patterndictc = DictionaryStandardStringCallbacks();
     patterndict = DictionaryCreate( 100, &patterndictc );
-        
+
     // parse options
     int option_index = 0, opt;
     char* opt_str = "qvhp:d:";
@@ -520,12 +530,12 @@ int main(int argc, char *argv[]) {
         {"version",    no_argument, 0,            'V'},
         {NULL,         0,           0,             0 },
     };
-    
+
     while(1) {
         opt = getopt_long_only(argc, argv, opt_str, loptions, &option_index);
         if (opt==-1) break; // parsed all the args
         switch (opt) {
-        case 'V': 
+        case 'V':
             printf("%s version %s\n", blink1_server_name,blink1_server_version);
             exit(1);
             break;
@@ -536,16 +546,16 @@ int main(int argc, char *argv[]) {
             s_http_port = optarg; //argv[++i];
             break;
         case 'd':
-            s_http_server_opts.document_root = optarg;
-            char path[MAX_PATH_SIZE];
-            cs_stat_t st;
-            for( int i=0; i< sizeof(index_files)/sizeof(char* const); i++ ) {
-                snprintf(path, sizeof(path), "%s/%s", s_http_server_opts.document_root, index_files[i]);
-                if( mg_stat(path, &st) == 0 ) {
-                    serve_index = true;
-                    break;
-                }
-            }
+            // s_http_server_opts.document_root = optarg;
+            // char path[MAX_PATH_SIZE];
+            // cs_stat_t st;
+            // for( int i=0; i< sizeof(index_files)/sizeof(char* const); i++ ) {
+            //     snprintf(path, sizeof(path), "%s/%s", s_http_server_opts.document_root, index_files[i]);
+            //     if( mg_stat(path, &st) == 0 ) {
+            //         serve_index = true;
+            //         break;
+            //     }
+            // }
             break;
         case 'h':
             usage();
@@ -554,30 +564,46 @@ int main(int argc, char *argv[]) {
         }
     } //while(1) arg parsing
 
-   
-    // Set HTTP server options 
-    memset(&bind_opts, 0, sizeof(bind_opts));
-    bind_opts.error_string = &err_str;
 
-    nc = mg_bind_opt(&mgr, s_http_port, ev_handler, bind_opts);
-    if (nc == NULL) {
-        fprintf(stderr, "Error starting server on port %s: %s\n", s_http_port,
-                *bind_opts.error_string);
-        exit(1);
-    }
+    // // Set HTTP server options
+    // memset(&bind_opts, 0, sizeof(bind_opts));
+    // bind_opts.error_string = &err_str;
+    //
+    // nc = mg_bind_opt(&mgr, s_http_port, ev_handler, bind_opts);
+    // if (nc == NULL) {
+    //     fprintf(stderr, "Error starting server on port %s: %s\n", s_http_port,
+    //             *bind_opts.error_string);
+    //     exit(1);
+    // }
+    //
+    // mg_set_protocol_http_websocket(nc);
 
-    mg_set_protocol_http_websocket(nc);
-
-    s_http_server_opts.enable_directory_listing = "no";
+    //s_http_server_opts.enable_directory_listing = "no";
 
     printf("%s version %s: running on port %s \n",
            blink1_server_name, blink1_server_version, s_http_port);
-    if( s_http_server_opts.document_root ) {
-        printf("  serving static HTML %s (with%s root index)\n",
-               s_http_server_opts.document_root, serve_index ? "" : "out");
+
+    // if( s_http_server_opts.document_root ) {
+    // printf("  serving static HTML %s (with%s root index)\n",
+    //            //s_http_server_opts.document_root, serve_index ? "" : "out");
+    //            s_http_server_opts.fs = &mg_fs_packed; // Set packed ds as a file system
+    //            mg_http_serve_dir(c, ev_data, &opts);
+    // // }
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    mg_mgr_init(&mgr);
+
+    static const char *s_listening_address = "http://localhost:8000";
+
+    if ((c = mg_http_listen(&mgr, s_listening_address, ev_handler, &mgr)) == NULL) {
+      LOG(LL_ERROR, ("Cannot listen on %s. Use http://ADDR:PORT or :PORT",
+                     s_listening_address));
+      exit(EXIT_FAILURE);
     }
 
-    for (;;) {
+    while (s_signo == 0) {
         mg_mgr_poll(&mgr, 1000);
         cache_flush(idle_atime);
     }
