@@ -5,7 +5,7 @@
  *
  * 2012-2022, Tod Kurt, http://todbot.com/blog/ , http://thingm.com/
  *
- * Supported URLs:
+ * Example supported URLs:
  *
  *  localhost:8000/blink1/on
  *  localhost:8000/blink1/off
@@ -38,15 +38,11 @@
 const char* blink1_server_name = "blink1-tiny-server";
 const char* blink1_server_version = BLINK1_VERSION;
 
+static bool show_html = true;
+
 static char http_listen_host[120] = "localhost";
 static int http_listen_port = 8000;
 static char http_listen_address[100]; // will be "http://localhost:8000"
-
-//static const char * http_port = "8000";
-// static struct mg_serve_http_opts s_http_server_opts;
-//static struct mg_http_serve_opts http_serve_opts = {0};
-//static const char* const index_files[] = { "index.html", "index.htm" };
-//static bool serve_index = false;
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
@@ -71,10 +67,14 @@ static const url_info supported_urls[]
     {"/blink1/",              "simple status page"},
     {"/blink1/id",            "get blink1 serial number"},
     {"/blink1/on",            "turn blink(1) full bright white"},
+    {"/blink1/off",           "turn blink(1) dark"},
     {"/blink1/red",           "turn blink(1) solid red"},
     {"/blink1/green",         "turn blink(1) solid green"},
     {"/blink1/blue",          "turn blink(1) solid blue"},
-    {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color"},
+    {"/blink1/cyan",          "turn blink(1) solid cyan"},
+    {"/blink1/yellow",        "turn blink(1) solid yellow"},
+    {"/blink1/magenta",       "turn blink(1) solid magenta"},
+    {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color by 'rgb' arg"},
     {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
     {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
     {"/blink1/random",        "turn the blink(1) a random color"}
@@ -86,12 +86,13 @@ void usage()
 "Usage: \n"
 "  %s [options]\n"
 "where [options] can be:\n"
-"  --port port, -p port           port to listen on (default 8000)\n"
-"  --document_root path, -d path  path to serve static HTML files\n"
+"  --port port, -p port           port to listen on (default %d)\n"
+"  --baseurl url, -U url          set baseurl to listen in (default http://%s:%d)"
+"  --no-html                      do not serve static HTML help\n"
 "  --version                      version of this program\n"
 "  --help, -h                     this help page\n"
 "\n",
-            blink1_server_name);
+        blink1_server_name, http_listen_port, http_listen_host, http_listen_port);
 
     fprintf(stderr,
 "Supported URIs:\n");
@@ -169,7 +170,7 @@ void cache_flush(int idle_threshold_millis)
     int count = blink1_getCachedCount();
     for( int i=0; i< count; i++ ) {
         if( cache_infos[i].dev && cache_infos[i].atime < deadline ) {
-            printf("DEBUG cache_flush: id=%d handle=%p atime=%lld\n", i, cache_infos[i].dev, cache_infos[i].atime);
+            // printf("DEBUG cache_flush: id=%d handle=%p atime=%lld\n", i, cache_infos[i].dev, cache_infos[i].atime);
             blink1_close(cache_infos[i].dev)
             cache_infos[i].atime = 0;
         }
@@ -352,6 +353,21 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         rgb.r = 0; rgb.g = 0; rgb.b = 255;
         blink1_do_color(rgb, millis, id, ledn, bright, status);
     }
+    else if( mg_vcmp( uri, "/blink1/cyan") == 0 ) {
+        sprintf(status, "blink1 cyan");
+        rgb.r = 0; rgb.g = 255; rgb.b = 255;
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
+    }
+    else if( mg_vcmp( uri, "/blink1/yellow") == 0 ) {
+        sprintf(status, "blink1 yellow");
+        rgb.r = 255; rgb.g = 255; rgb.b = 0;
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
+    }
+    else if( mg_vcmp( uri, "/blink1/magenta") == 0 ) {
+        sprintf(status, "blink1 magenta");
+        rgb.r = 255; rgb.g = 0; rgb.b = 255;
+        blink1_do_color(rgb, millis, id, ledn, bright, status);
+    }
     else if( mg_vcmp( uri, "/blink1/fadeToRGB") == 0 ) {
         sprintf(status, "blink1 fadeToRGB");
         blink1_do_color(rgb, millis, id, ledn, bright, status);
@@ -458,16 +474,20 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         cache_return(dev);
     }
     else {
-        struct mg_http_serve_opts opts = {0};
-        opts.fs = &mg_fs_packed; // Set packed ds as a file system
-        mg_http_serve_dir(c, ev_data, &opts);
+        if( show_html ) {
+            struct mg_http_serve_opts opts = {0};
+            opts.fs = &mg_fs_packed; // Set packed ds as a file system
+            mg_http_serve_dir(c, ev_data, &opts);
+        }
+        else if ( mg_vcmp( uri, "/") == 0 ) {
+            sprintf(status, "Welcome to %s api server. "
+                    "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
+            for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+                sprintf(status+strlen(status), " %s - %s\n",
+                        supported_urls[i].url, supported_urls[i].desc);
+            } // FIXME: result is fixed length
+        }
     }
-    // else if( s_http_server_opts.document_root != NULL ) {
-    //     mg_serve_http(nc, hm, s_http_server_opts); /* Serve static content */
-    // }
-    // else {
-    //     sprintf(status+strlen(status), ": unrecognized uri");
-    // }
 
     if( status[0] != '\0' ) {
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
@@ -522,14 +542,14 @@ int main(int argc, char *argv[]) {
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:d:U:A:";
+    char* opt_str = "qvhp:U:A:";
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
-        {"document_root", required_argument, 0,   'd'},
         {"baseurl",    required_argument, 0,      'U'},
         {"host",       required_argument, 0,      'H'},
         {"port",       required_argument, 0,      'p'},
+        {"no-html",    no_argument,       0,      'N'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
         {NULL,         0,           0,             0 },
@@ -548,6 +568,9 @@ int main(int argc, char *argv[]) {
             exit(1);
             break;
         case 'v':
+            break;
+        case 'N':
+            show_html = false;
             break;
         case 'U':
             strncpy(http_listen_address, optarg, sizeof(http_listen_address));
@@ -579,8 +602,9 @@ int main(int argc, char *argv[]) {
         }
     } //while(1) arg parsing
 
-    printf("%s version %s: running on http://%s:%d/ \n",
-           blink1_server_name, blink1_server_version, http_listen_host, http_listen_port);
+    printf("%s version %s: running on http://%s:%d/ (%s)\n",
+          blink1_server_name, blink1_server_version, http_listen_host,
+          http_listen_port,  (show_html) ? "html help enabeld": "no html help");
 
     snprintf(http_listen_address, sizeof(http_listen_address), "http://%s:%d/",
            http_listen_host, http_listen_port);
