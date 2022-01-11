@@ -38,6 +38,16 @@
 const char* blink1_server_name = "blink1-tiny-server";
 const char* blink1_server_version = BLINK1_VERSION;
 
+static char http_listen_host[120] = "localhost";
+static int http_listen_port = 8000;
+static char http_listen_address[100]; // will be "http://localhost:8000"
+
+//static const char * http_port = "8000";
+// static struct mg_serve_http_opts s_http_server_opts;
+//static struct mg_http_serve_opts http_serve_opts = {0};
+//static const char* const index_files[] = { "index.html", "index.htm" };
+//static bool serve_index = false;
+
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
     int64_t atime;  // time last used
@@ -45,12 +55,6 @@ typedef struct cache_info_ {
 
 static int64_t idle_atime = 1000 /* milliseconds */;
 static cache_info cache_infos[cache_max];
-
-static const char *s_http_port = "8000";
-// static struct mg_serve_http_opts s_http_server_opts;
-static struct mg_http_serve_opts http_serve_opts = {0};
-static const char* const index_files[] = { "index.html", "index.htm" };
-static bool serve_index = false;
 
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
@@ -78,7 +82,6 @@ static const url_info supported_urls[]
 
 void usage()
 {
-
     fprintf(stderr,
 "Usage: \n"
 "  %s [options]\n"
@@ -498,6 +501,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
 
 }
 
+// ----------------------------------------------------------------------
+
 // Handle interrupts, like Ctrl-C
 static int s_signo;
 static void signal_handler(int signo) {
@@ -507,10 +512,7 @@ static void signal_handler(int signo) {
 int main(int argc, char *argv[]) {
     struct mg_mgr mgr;
     struct mg_connection *c;
-    // struct mg_bind_opts bind_opts;
-    //int i;
-    //char *cp;
-    const char *err_str;
+    int port;
 
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand( time(NULL) * getpid() );
@@ -520,11 +522,13 @@ int main(int argc, char *argv[]) {
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:d:";
+    char* opt_str = "qvhp:d:U:A:";
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
         {"document_root", required_argument, 0,   'd'},
+        {"baseurl",    required_argument, 0,      'U'},
+        {"host",       required_argument, 0,      'H'},
         {"port",       required_argument, 0,      'p'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
@@ -535,15 +539,30 @@ int main(int argc, char *argv[]) {
         opt = getopt_long_only(argc, argv, opt_str, loptions, &option_index);
         if (opt==-1) break; // parsed all the args
         switch (opt) {
+        case 'h':
+            usage();
+            exit(1);
+            break;
         case 'V':
             printf("%s version %s\n", blink1_server_name,blink1_server_version);
             exit(1);
             break;
         case 'v':
             break;
+        case 'U':
+            strncpy(http_listen_address, optarg, sizeof(http_listen_address));
+            break;
+        case 'H':
+            strncpy(http_listen_host, optarg, sizeof(http_listen_host));
+            break;
         case 'p':
-            //port = strtol(optarg,NULL,10);
-            s_http_port = optarg; //argv[++i];
+            port = strtod(optarg,NULL);
+            if( port > 0 && port < 65535 ) {
+                http_listen_port = port;
+            }
+            else {
+                printf("bad port specified: %s\n", optarg);
+            }
             break;
         case 'd':
             // s_http_server_opts.document_root = optarg;
@@ -557,31 +576,14 @@ int main(int argc, char *argv[]) {
             //     }
             // }
             break;
-        case 'h':
-            usage();
-            exit(1);
-            break;
         }
     } //while(1) arg parsing
 
+    printf("%s version %s: running on http://%s:%d/ \n",
+           blink1_server_name, blink1_server_version, http_listen_host, http_listen_port);
 
-    // // Set HTTP server options
-    // memset(&bind_opts, 0, sizeof(bind_opts));
-    // bind_opts.error_string = &err_str;
-    //
-    // nc = mg_bind_opt(&mgr, s_http_port, ev_handler, bind_opts);
-    // if (nc == NULL) {
-    //     fprintf(stderr, "Error starting server on port %s: %s\n", s_http_port,
-    //             *bind_opts.error_string);
-    //     exit(1);
-    // }
-    //
-    // mg_set_protocol_http_websocket(nc);
-
-    //s_http_server_opts.enable_directory_listing = "no";
-
-    printf("%s version %s: running on port %s \n",
-           blink1_server_name, blink1_server_version, s_http_port);
+    snprintf(http_listen_address, sizeof(http_listen_address), "http://%s:%d/",
+           http_listen_host, http_listen_port);
 
     // if( s_http_server_opts.document_root ) {
     // printf("  serving static HTML %s (with%s root index)\n",
@@ -595,11 +597,8 @@ int main(int argc, char *argv[]) {
 
     mg_mgr_init(&mgr);
 
-    static const char *s_listening_address = "http://localhost:8000";
-
-    if ((c = mg_http_listen(&mgr, s_listening_address, ev_handler, &mgr)) == NULL) {
-      LOG(LL_ERROR, ("Cannot listen on %s. Use http://ADDR:PORT or :PORT",
-                     s_listening_address));
+    if ((c = mg_http_listen(&mgr, http_listen_address, ev_handler, &mgr)) == NULL) {
+      LOG(LL_ERROR, ("Cannot listen on %s. http_listen_address", http_listen_address));
       exit(EXIT_FAILURE);
     }
 
