@@ -4,15 +4,16 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,maximum-scale=2">
-    <link rel="stylesheet" type="text/css" media="screen" href="https://pages-themes.github.io/slate/assets/css/style.css">
-    <title>blink1-tool</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="css/style-slate.css">
+    <title>blink1-tiny-server</title>
+
   </head>
   <body>
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/todbot/blink1-tool">View on GitHub</a>
-          <h1 id="project_title">blink1-tool</h1>
+          <h1 id="project_title">blink1-tiny-server</h1>
         </header>
     </div>
 
@@ -21,25 +22,39 @@
       <section id="main_content" class="inner">
         <h1 id="blink1-tool">blink(1) URL API examples</h1>
 
-<p>Example of using the Fetch API to talk to <a href="https://blink1.thingm.com/">blink(1) USB RGB LED notification lights</a>.</p>
-
-<p>For more details on the URL API, see <a href="https://github.com/todbot/blink1/blob/master/docs/app-url-api.md">documentation</a></p>
+<p>Example of using the HTTP REST API to talk to <a href="https://blink1.thingm.com/">blink(1) USB RGB LED notification lights</a>.</p>
 
 <p>To see the source visit: <a href="https://github.com/todbot/blink1-tool/tree/master/server/html">https://github.com/todbot/blink1-tool/tree/master/server/html</a></p>
 
-<p>List of examples:</p>
+<h3> List of examples: </h3>
+
+<p>Some browesr-based examples controlling a blink(1) via <code>blink1-tiny-server</code> HTTP API</p>
+
 <ul>
   <li><a href="./blink1-demo-simplest/">blink1-demo-simplest</a> – bare-bones example of lighting a blink(1)</li>
-  <li><a href="./blink1-demo-party/">blink1-demo-party</a> – slightly more complex example</li>
   <li><a href="./blink1-demo-colorpicker/">blink1-demo-colorpicker</a> – color picker with fast updates to blink(1)</li>
+  <li><a href="./blink1-demo-party/">blink1-demo-party</a> – slightly more complex example</li>
 </ul>
 
-<p>Pre-requisites for these examples, you will need:</p>
+
+<h3> API documentation: </h3>
+
+<p>
+  The API understood by <code>blink1-tiny-server</code> is a subset of the HTTP REST API provided by the Blink1Control2 app.
+</p>
+
+<ul>
+  <li><a href="https://github.com/todbot/blink1/blob/master/docs/app-url-api-examples.md">HTTP API examples </a>(for Blink1Control)</li>
+  <li><a href="https://github.com/todbot/blink1/blob/master/docs/app-url-api.md">HTTP API documentation for Blink1Control</a> (for Blink1Control)</li>
+</ul>
+
+<h3> Pre-requisites for these examples, you will need: </h3>
+
 <ul>
   <li>blink(1) USB LED</li>
   <li>A browser that supports <a href="https://caniuse.com/fetch">Fetch</a></li>
-  <li>Run <code class="language-plaintext highlighter-rouge">blink1-tiny-server -d /path/to/blink1-tool/server/html</code></li>
-  <li>Visit: <a href="http://localhost:8000">http://localhost:8000</a></li>
+  <li>Run <code class="language-plaintext highlighter-rouge">blink1-tiny-server -p <span id="port1">8000</span> </code></li>
+  <li>Visit: <a id="url1" href="http://localhost:8000">http://localhost:<span id="port2">8000</span></a></li>
 </ul>
 
       </section>
@@ -50,4 +65,12 @@
       </footer>
     </div>
   </body>
+
+<script>
+// rewrite the localhost URLs so they work if user changes port
+let port = location.port;
+document.getElementById("port1").innerHTML = "" + port;
+document.getElementById("port2").innerHTML = "" + port;
+document.getElementById("url1").href = "http://localhost:"+port+"/";
+</script>
 </html>
