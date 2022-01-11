@@ -586,12 +586,7 @@ blink1-tool: $(OBJS) blink1-tool.o
 	$(CC) $(CFLAGS) $(EXEFLAGS) $(OBJS) $(LIBS) blink1-tool.o -o blink1-tool$(EXE) $(LDFLAGS)
 
 blink1-tiny-server-html:
-#	cd server && \
-#	gcc -o pack mongoose/pack.c && \
-#	./pack html/**/*  > blink1-tiny-server-html.c && \
-#	cd ..
 	gcc -o server/pack server/mongoose/pack.c
-#	find server/html -type f -print0 | sed 's/server\/html//g' | xargs -0 ./server/pack
 	find server/html -type f -print0 | xargs -0 ./server/pack | sed 's/\/server\/html//g' > server/blink1-tiny-server-html.c
 
 # FIXME this and the above needs cleanup
