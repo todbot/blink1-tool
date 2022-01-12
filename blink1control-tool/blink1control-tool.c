@@ -148,7 +148,7 @@ char* curl_fetch( char* baseUrl, char* urlbuf)
     }
     snprintf(urlstr, urlmaxsize, "%s%s", baseUrl, urlbuf);
 
-    printf("curl_fetch:%s\n", urlstr);
+    msg("curl_fetch:%s\n", urlstr);
     
     struct curlMemoryStruct chunk;
 
@@ -568,7 +568,7 @@ int main(int argc, char** argv)
                 }
                 // verbose
                 for( int i=0; i<numDevicesToUse; i++ ) {
-                    printf("deviceId[%d]: %s\n", i, deviceIds[i]);
+                    msg("deviceId[%d]: %s\n", i, deviceIds[i]);
                 }
             }
             break;
