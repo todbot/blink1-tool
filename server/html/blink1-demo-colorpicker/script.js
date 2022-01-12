@@ -20,7 +20,7 @@ var pending = null;
 
 // copy the image to the canvas
 img.addEventListener('load', function() {
-	  canvas.drawImage(img,0,0);
+    canvas.drawImage(img,0,0);
 });
 
 async function handleDOMContentLoaded() {
@@ -59,14 +59,14 @@ async function handleDOMContentLoaded() {
 // http://www.javascripter.net/faq/rgbtohex.htm
 function rgbToHex(R,G,B) { return toHex(R)+toHex(G)+toHex(B); }
 function toHex(n) {
-	n = parseInt(n,10);
-	if (isNaN(n)) return "00";
-	n = Math.max(0,Math.min(n,255));
-	return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
+    n = parseInt(n,10);
+    if (isNaN(n)) return "00";
+    n = Math.max(0,Math.min(n,255));
+    return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
 }
 
 async function handleClick(event) {
-	// get click coordinates in image space
+    // get click coordinates in image space
     const [x, y] = function() {
         if (event.type == "touchmove") {
             event.preventDefault();
@@ -78,17 +78,17 @@ async function handleClick(event) {
         }
         return [event.offsetX, event.offsetY];
     }();
-	// get image data and RGB values
-	const img_data = canvas.getImageData(x, y, 1, 1).data;
-	const r = img_data[0];
-	const g = img_data[1];
-	const b = img_data[2];
+    // get image data and RGB values
+    const img_data = canvas.getImageData(x, y, 1, 1).data;
+    const r = img_data[0];
+    const g = img_data[1];
+    const b = img_data[2];
     const rgbstr = r + ',' + g + ',' + b;
-	const hexstr = rgbToHex(r,g,b);
+    const hexstr = rgbToHex(r,g,b);
 
     if ( rgbinput.value == rgbstr ) return;
     rgbinput.value = rgbstr;
-	hexinput.value = '#' + hexstr;
+    hexinput.value = '#' + hexstr;
     console.log("hex:",hexstr);
 
     await fadeToColor([r,g,b], 100, 0 );
