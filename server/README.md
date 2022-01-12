@@ -18,22 +18,23 @@ Use:
 ```
 ./blink1-tiny-server -p 8000
 ```
-Or to serve the blink(1) URL API examples:
-```
-./blink1-tiny-server -p 8000 -d ./server/html
-```
-And then in a browser visit: http://localhost:8000/
+By default the HTML API examples are built-in and served. To try them out,
+open a browser to: http://localhost:8000/
 
-Static HTML serving is disabled by default, you must specific `-d docroot` to enable it.
+To disable the HTML examples, use:
+```
+./blink1-tiny-server -p 8000 -no-html
+```
 
 Usage:
 ```
-./blink1-tiny-server --help
+% ./blink1-tiny-server --help
 Usage:
   blink1-tiny-server [options]
 where [options] can be:
   --port port, -p port           port to listen on (default 8000)
-  --document_root path, -d path  path to serve static HTML files
+  --baseurl url, -U url          set baseurl to listen in (default http://localhost:8000)
+  --no-html                      do not serve static HTML help
   --version                      version of this program
   --help, -h                     this help page
 
@@ -41,10 +42,14 @@ Supported URIs:
   /blink1/ -- simple status page
   /blink1/id -- get blink1 serial number
   /blink1/on -- turn blink(1) full bright white
+  /blink1/off -- turn blink(1) dark
   /blink1/red -- turn blink(1) solid red
   /blink1/green -- turn blink(1) solid green
   /blink1/blue -- turn blink(1) solid blue
-  /blink1/fadeToRGB -- turn blink(1) specified RGB color
+  /blink1/cyan -- turn blink(1) solid cyan
+  /blink1/yellow -- turn blink(1) solid yellow
+  /blink1/magenta -- turn blink(1) solid magenta
+  /blink1/fadeToRGB -- turn blink(1) specified RGB color by 'rgb' arg
   /blink1/blink -- blink the blink(1) the specified RGB color
   /blink1/pattern/play -- play color pattern specified by 'pattern' arg
   /blink1/random -- turn the blink(1) a random color

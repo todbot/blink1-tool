@@ -87,7 +87,7 @@ void usage()
 "  %s [options]\n"
 "where [options] can be:\n"
 "  --port port, -p port           port to listen on (default %d)\n"
-"  --baseurl url, -U url          set baseurl to listen in (default http://%s:%d)"
+"  --baseurl url, -U url          set baseurl to listen in (default http://%s:%d)\n"
 "  --no-html                      do not serve static HTML help\n"
 "  --version                      version of this program\n"
 "  --help, -h                     this help page\n"
