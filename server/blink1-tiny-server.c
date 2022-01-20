@@ -40,9 +40,9 @@ const char* blink1_server_version = BLINK1_VERSION;
 
 static bool show_html = true;
 
-static char http_listen_host[120] = "localhost";
+static char http_listen_host[120] = "localhost"; // or 0.0.0.0 for any
 static int http_listen_port = 8000;
-static char http_listen_address[100]; // will be "http://localhost:8000"
+static char http_listen_url[100]; // will be "http://localhost:8000"
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
@@ -87,12 +87,12 @@ void usage()
 "  %s [options]\n"
 "where [options] can be:\n"
 "  --port port, -p port           port to listen on (default %d)\n"
-"  --baseurl url, -U url          set baseurl to listen in (default http://%s:%d)\n"
+"  --host host, -H host           host to listen on ('127.0.0.1' or '0.0.0.0')\n"
 "  --no-html                      do not serve static HTML help\n"
 "  --version                      version of this program\n"
 "  --help, -h                     this help page\n"
 "\n",
-        blink1_server_name, http_listen_port, http_listen_host, http_listen_port);
+        blink1_server_name, http_listen_port);
 
     fprintf(stderr,
 "Supported URIs:\n");
@@ -542,11 +542,11 @@ int main(int argc, char *argv[]) {
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:U:A:";
+    char* opt_str = "qvhp:H:U:A:";
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
-        {"baseurl",    required_argument, 0,      'U'},
+      //{"baseurl",    required_argument, 0,      'U'},
         {"host",       required_argument, 0,      'H'},
         {"port",       required_argument, 0,      'p'},
         {"no-html",    no_argument,       0,      'N'},
@@ -571,9 +571,6 @@ int main(int argc, char *argv[]) {
             break;
         case 'N':
             show_html = false;
-            break;
-        case 'U':
-            strncpy(http_listen_address, optarg, sizeof(http_listen_address));
             break;
         case 'H':
             strncpy(http_listen_host, optarg, sizeof(http_listen_host));
@@ -606,7 +603,7 @@ int main(int argc, char *argv[]) {
           blink1_server_name, blink1_server_version, http_listen_host,
           http_listen_port,  (show_html) ? "html help enabeld": "no html help");
 
-    snprintf(http_listen_address, sizeof(http_listen_address), "http://%s:%d/",
+    snprintf(http_listen_url, sizeof(http_listen_url), "http://%s:%d/",
            http_listen_host, http_listen_port);
 
     // if( s_http_server_opts.document_root ) {
@@ -621,8 +618,8 @@ int main(int argc, char *argv[]) {
 
     mg_mgr_init(&mgr);
 
-    if ((c = mg_http_listen(&mgr, http_listen_address, ev_handler, &mgr)) == NULL) {
-      LOG(LL_ERROR, ("Cannot listen on %s. http_listen_address", http_listen_address));
+    if ((c = mg_http_listen(&mgr, http_listen_url, ev_handler, &mgr)) == NULL) {
+      LOG(LL_ERROR, ("Cannot listen on %s.", http_listen_url));
       exit(EXIT_FAILURE);
     }
 
