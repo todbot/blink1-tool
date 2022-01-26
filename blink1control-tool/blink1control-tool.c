@@ -95,45 +95,6 @@ curlWriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 }
 
 
-json_value* json_convert_value( json_value* jv)
-{
-    switch(jv->type) {
-    case json_object:
-        printf("json_object: \n");
-        for( int i=0; i< jv->u.object.length; i++ ) {
-            char* name = jv->u.object.values[i].name;
-            json_value* jjv = jv->u.object.values[i].value;
-            printf("- '%s'\n", name);
-            json_convert_value( jjv );
-        }
-        break;
-    case json_array:
-        printf("json_array:\n");
-        for( int i=0; i< jv->u.array.length; i++ ) {
-            return json_convert_value( jv->u.array.values[i] );
-        }
-        break;
-    case json_string:
-        printf("json_string: '%s'\n", jv->u.string.ptr);
-        break;
-    case json_integer:
-        printf("json_integer:%ld\n", (long)jv->u.integer );
-        //printf("json_integer:%lld\n", (long long)jv->u.integer );
-        break;
-    case json_double:
-        printf("json_double:\n");
-        break;
-    case json_boolean:
-        printf("json_boolean:\n");
-        break;
-    default:
-        printf("default:\n");
-        break;
-    }
-    printf("at end\n");
-    return NULL;
-}
-
 // do the actual fetch using curl lib
 char* curl_fetch( char* baseUrl, char* urlbuf)
 {
@@ -148,7 +109,7 @@ char* curl_fetch( char* baseUrl, char* urlbuf)
     }
     snprintf(urlstr, urlmaxsize, "%s%s", baseUrl, urlbuf);
 
-    printf("curl_fetch:%s\n", urlstr);
+    msg("curl_fetch:%s\n", urlstr);
     
     struct curlMemoryStruct chunk;
 
@@ -568,7 +529,7 @@ int main(int argc, char** argv)
                 }
                 // verbose
                 for( int i=0; i<numDevicesToUse; i++ ) {
-                    printf("deviceId[%d]: %s\n", i, deviceIds[i]);
+                    msg("deviceId[%d]: %s\n", i, deviceIds[i]);
                 }
             }
             break;
