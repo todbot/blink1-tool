@@ -210,6 +210,8 @@ INCLOCATION ?= $(PREFIX)/include
 
 # This is kinda gross
 # Must set envvars CODESIGN_ID (and maybe CODESIGN_PW for Windows?)
+# macos find CODESIGN_ID with 'security find-identity -v -p codesigning'
+# check with 'codesign -vvvv -d blink1-tool'
 CODESIGN_CMD=codesign --force --sign '$(CODESIGN_ID)' ./blink1-tool
 CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1-tiny-server
 CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1control-tool
