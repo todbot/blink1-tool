@@ -131,7 +131,7 @@ curl-setup:
 	@echo "setting up curl... $(CURL_VER)"
 #   wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
 	tar xzf $(CURL_DIR).tar.gz
-	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install
+	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" --disable-shared --disable-ldap --without-zlib --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install-exec
 
 json-parser-setup:
 	@echo "setting up json-parser"
