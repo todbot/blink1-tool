@@ -21,25 +21,56 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-#      - name: setup prerequisites (windows)
-#        run: echo "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      
-      - name: set up Visual Studio shell (path to lib.exe)
+      - name: Set up Visual Studio shell (path to lib.exe)
         uses: egor-tensin/vs-shell@v2
         with:
           arch: x64
 
-      - name: compile blink1-tool
+      - name: Compile blink1-tool
         shell: bash
-        run: make
-        
-      - name: compile blink1-tiny-server
-        shell: bash
-        run: make blink1-tiny-server
+        run: cd blink1-tool && make
 
-# why is libcurl still failing on windows? ("/usr/bin/sh: C:/Program: No such file or directory" a path problem)
-#      - name: compile all
-#        shell: bash
-#        run: make build-all
-       
+      - name: Package blink1-tool
+        shell: bash
+        run: |
+          cd blink1-tool && make package
+
+      - name: 'Upload blink1-tool artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-artifacts
+          path: blink1-tool/blink1*.zip
+          retention-days: 5
+
+      - name: Compile blink1-tiny-server
+        shell: bash
+        run: cd blink1-tool && make blink1-tiny-server
+
+      - name: Package blink1-tiny-server
+        shell: bash
+        run: |
+          cd blink1-tool && make package-tiny-server
+
+      - name: 'Upload blink1-tiny-server artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tiny-server-artifacts
+          path: blink1-tool/blink1*.zip
+          retention-days: 5
+
+      - name: Compile blink1control-tool
+        shell: bash
+        run: cd blink1-tool && make blink1control-tool
+
+      - name: Package blink1control-tool
+        shell: bash
+        run: |
+          cd blink1-tool && make package-blink1control-tool
+
+      - name: 'Upload blink1control-tool artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-windows-all-artifacts
+          path: blink1-tool/blink1*.zip
+          retention-days: 5
         
