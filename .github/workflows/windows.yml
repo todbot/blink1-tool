@@ -26,6 +26,11 @@ jobs:
         with:
           arch: x64
 
+      - name: Setup prerequisites (windows)
+        run: |
+          echo 'C:\msys64\usr\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          C:\msys64\usr\bin\pacman -S --noconfirm zip unzip
+
       - name: Compile blink1-tool
         shell: bash
         run: make
