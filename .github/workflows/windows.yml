@@ -28,49 +28,46 @@ jobs:
 
       - name: Compile blink1-tool
         shell: bash
-        run: cd blink1-tool && make
+        run: make
 
       - name: Package blink1-tool
         shell: bash
-        run: |
-          cd blink1-tool && make package
+        run: make package
 
       - name: 'Upload blink1-tool artifact'
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tool-artifacts
-          path: blink1-tool/blink1*.zip
+          path: blink1*.zip
           retention-days: 5
 
       - name: Compile blink1-tiny-server
         shell: bash
-        run: cd blink1-tool && make blink1-tiny-server
+        run: make blink1-tiny-server
 
       - name: Package blink1-tiny-server
         shell: bash
-        run: |
-          cd blink1-tool && make package-tiny-server
+        run: make package-tiny-server
 
       - name: 'Upload blink1-tiny-server artifact'
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tiny-server-artifacts
-          path: blink1-tool/blink1*.zip
+          path: blink1*.zip
           retention-days: 5
 
       - name: Compile blink1control-tool
         shell: bash
-        run: cd blink1-tool && make blink1control-tool
+        run: make blink1control-tool
 
       - name: Package blink1control-tool
         shell: bash
-        run: |
-          cd blink1-tool && make package-blink1control-tool
+        run: make package-blink1control-tool
 
       - name: 'Upload blink1control-tool artifact'
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tool-windows-all-artifacts
-          path: blink1-tool/blink1*.zip
+          path: blink1*.zip
           retention-days: 5
         
