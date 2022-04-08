@@ -124,19 +124,6 @@ you may already have everything you need to compile `blink1-tool`.
 - `cd blink1-tool`
 - `make`
 
-### Windows
-
-- Install [Chocolatey package manager](https://chocolatey.org/)
-- In an admin CMD shell, install VisualStudio, MinGW, & MSYS2:
-- `choco install visualstudio2017community visualstudio2017-workload-vctools mingw msys2 cmake`
-- In a normal CMD shell, set paths and build:
-- `set PATH=C:\tools\msys64\usr\bin;%PATH%`
-- `pacman -S zip unzip`
-- `call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"`
-- `set MAKE=mingw32-make`
-- `cd blink1-tool`
-- `mingw32-make`
-
 ### Windows (old way)
 
 - Install Visual Studio 2015
