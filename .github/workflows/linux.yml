@@ -39,11 +39,22 @@ jobs:
         shell: bash
         run: make package
 
+      - name: Look at dir
+        shell: bash
+        run: ls -al
+
+      - name: Upload blink1-tool artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-artifacts
+          path: blink1*.zip
+          # retention-days: 5
+
       - name: Compile blink1-tiny-server
         shell: bash
         run: make blink1-tiny-server
 
-      - name: 'Upload blink1-tiny-server artifacts'
+      - name: Upload blink1-tiny-server artifacts
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tiny-server-artifacts
@@ -58,7 +69,7 @@ jobs:
         shell: bash
         run: make package-blink1control-tool
 
-      - name: 'Upload blink1control-tool artifact'
+      - name: Upload blink1control-tool artifact
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tool-linux-all-artifacts
