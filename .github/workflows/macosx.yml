@@ -2,46 +2,77 @@
 
 name: macos
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow
+# on push or pull request events but only for the master branch
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     runs-on: macos-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    # Steps represent a sequence of tasks executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: check xcode version
+      - name: Check xcode version
         shell: bash
         run: xcodebuild -version
 
-      # xcode 12.5 does not have Arm support? 
-      - name: update to xcode w/ arm
+      # xcode 12.5 does not have Arm support?
+      - name: Update to xcode w/ arm
         shell: bash
         run: |
           sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
           sudo xcode-select --switch "/Applications/Xcode_12.5.app"
 
-      - name: compile blink1-tool
+      - name: Compile blink1-tool
         shell: bash
         run: make
-        
-      - name: compile blink1-tiny-server
+
+      - name: Package blink1-tool
+        shell: bash
+        run: make package
+
+      - name: Upload blink1-tool artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-artifacts
+          path: blink1*.zip
+          #retention-days: 5
+
+      - name: Compile blink1-tiny-server
         shell: bash
         run: make blink1-tiny-server
 
-# why is libcurl still failing on windows?
-#      - name: compile all
-#        shell: bash
-#        run: make build-all
-        
+      - name: Package blink1-tiny-server
+        shell: bash
+        run: make package-tiny-server
+
+      - name: Upload blink1-tiny-server artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tiny-server-artifacts
+          path: blink1*.zip
+          #retention-days: 5
+
+      - name: Compile blink1control-tool
+        shell: bash
+        run: make blink1control-tool
+
+      - name: Package blink1control-tool
+        shell: bash
+        run: make package-blink1control-tool
+
+      - name: Upload blink1control-tool artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-macos-all-artifacts
+          path: blink1*.zip
+          #retention-days: 5

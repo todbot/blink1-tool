@@ -134,8 +134,9 @@ you may already have everything you need to compile `blink1-tool`.
 - `export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"`
 - `make`
 
+### Other OSes
 
-For other OSes, see the Makefile for details
+See the blink1-tool/Makefile for details
 
 
 ## Using blink1-lib in your C/C++ project

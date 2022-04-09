@@ -2,22 +2,22 @@
 
 name: linux
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow
+# on push or pull request events but only for the master branch
 on:
   push:
   pull_request:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
-    runs-on:  ubuntu-latest
+    runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    # Steps represent a sequence of tasks executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: setup prerequisites (linux)
@@ -25,38 +25,59 @@ jobs:
         run: |
           sudo apt update
           sudo apt install build-essential pkg-config libudev-dev libusb-1.0-0-dev
-          
-      - name: compile blink1-tool
-        shell: bash
-        run: make
 
-      - name: compile blink1-tool (libusb)
+      - name: Compile blink1-tool (libusb test)
         shell: bash
         run: make HIDAPI_TYPE=LIBUSB
 
-      - name: compile blink1-tiny-server
+      - name: Compile blink1-tool (hidraw)
+        shell: bash
+        run: make clean && make
+
+      - name: Package blink1-tool
+        shell: bash
+        run: make package
+
+      - name: Compile blink1-tiny-server
         shell: bash
         run: make blink1-tiny-server
 
-      - name: compile all
-        shell: bash
-        run: make build-all
-
-      # do 'package-all' by hand so we can hand-exclude blink1control on Mac/Win
-      - name: package up
-        shell: bash
-        run: |
-          make dist
-          make package
-          make package-tiny-server
-          make package-blink1control-tool
-          make cpbuilds
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v2.2.2
+      - name: 'Upload blink1-tiny-server artifacts'
+        uses: actions/upload-artifact@v3
         with:
-          name: blink1-tools
-          path: |
-            builds/*
-            srcdist/*
-        
+          name: blink1-tiny-server-artifacts
+          path: blink1-tool/blink1*.zip
+          # retention-days: 5
+
+      - name: Compile blink1control-tool
+        shell: bash
+        run: make blink1control-tool
+
+      - name: Package blink1control-tool
+        shell: bash
+        run: make package-blink1control-tool
+
+      - name: 'Upload blink1control-tool artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: blink1-tool-linux-all-artifacts
+          path: blink1-tool/blink1*.zip
+          # retention-days: 5
+
+      # # do 'package-all' by hand so we can exclude blink1control on Mac/Win
+      # - name: package up
+      #   shell: bash
+      #   run: |
+      #     make dist
+      #     make package
+      #     make package-tiny-server
+      #     make package-blink1control-tool
+      #     make cpbuilds
+
+      # - name: Upload a Build Artifact
+      #   uses: actions/upload-artifact@v2.2.2
+      #   with:
+      #     name: blink1-tools
+      #     path: |
+      #       builds/*
+      #       srcdist/*

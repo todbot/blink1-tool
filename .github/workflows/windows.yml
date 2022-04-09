@@ -2,23 +2,23 @@
 
 name: windows
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow
+# on push or pull request events but only for the master branch
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     runs-on: windows-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    # Steps represent a sequence of tasks executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Set up Visual Studio shell (path to lib.exe)
@@ -44,7 +44,7 @@ jobs:
         with:
           name: blink1-tool-artifacts
           path: blink1*.zip
-          retention-days: 5
+          # retention-days: 5
 
       - name: Compile blink1-tiny-server
         shell: bash
@@ -59,7 +59,7 @@ jobs:
         with:
           name: blink1-tiny-server-artifacts
           path: blink1*.zip
-          retention-days: 5
+          # retention-days: 5
 
       - name: Compile blink1control-tool
         shell: bash
@@ -74,5 +74,4 @@ jobs:
         with:
           name: blink1-tool-windows-all-artifacts
           path: blink1*.zip
-          retention-days: 5
-        
+          # retention-days: 5
