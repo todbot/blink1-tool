@@ -25,12 +25,12 @@ jobs:
         shell: bash
         run: xcodebuild -version
 
-      # xcode 12.5 does not have Arm support?
-      - name: Update to xcode w/ arm
-        shell: bash
-        run: |
-          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-          sudo xcode-select --switch "/Applications/Xcode_12.5.app"
+      # # xcode 12.5 does not have Arm support?
+      # - name: Update to xcode w/ arm
+      #   shell: bash
+      #   run: |
+      #     sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+      #     sudo xcode-select --switch "/Applications/Xcode_12.5.app"
 
       - name: Compile blink1-tool
         shell: bash

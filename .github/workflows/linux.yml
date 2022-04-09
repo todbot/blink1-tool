@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tiny-server-artifacts
-          path: blink1-tool/blink1*.zip
+          path: blink1*.zip
           # retention-days: 5
 
       - name: Compile blink1control-tool
@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tool-linux-all-artifacts
-          path: blink1-tool/blink1*.zip
+          path: blink1*.zip
           # retention-days: 5
 
       # # do 'package-all' by hand so we can exclude blink1control on Mac/Win
