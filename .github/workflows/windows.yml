@@ -6,9 +6,9 @@ name: windows
 # on push or pull request events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 # A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: make package
 
-      - name: 'Upload blink1-tool artifact'
+      - name: Upload blink1-tool artifact
         uses: actions/upload-artifact@v3
         with:
           name: blink1-tool-artifacts

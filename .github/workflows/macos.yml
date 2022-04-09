@@ -6,9 +6,9 @@ name: macos
 # on push or pull request events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ main]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 # A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
