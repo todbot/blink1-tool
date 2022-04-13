@@ -62,13 +62,13 @@ jobs:
           path: blink1*.zip
           #retention-days: 5
 
-#      - name: Compile blink1control-tool
-#        shell: bash
-#        run: make blink1control-tool
-#
-#      - name: Package blink1control-tool
-#        shell: bash
-#        run: make package-blink1control-tool
+     - name: Compile blink1control-tool
+       shell: bash
+       run: make blink1control-tool
+
+     - name: Package blink1control-tool
+       shell: bash
+       run: make package-blink1control-tool
 
       - name: Upload blink1control-tool artifact
         uses: actions/upload-artifact@v3
