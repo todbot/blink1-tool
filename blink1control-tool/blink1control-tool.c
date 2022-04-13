@@ -109,7 +109,7 @@ char* curl_fetch( char* baseUrl, char* urlbuf)
     }
     snprintf(urlstr, urlmaxsize, "%s%s", baseUrl, urlbuf);
 
-    msg("curl_fetch:%s\n", urlstr);
+    msg("curl_fetch: %s\n", urlstr);
     
     struct curlMemoryStruct chunk;
 

@@ -108,9 +108,6 @@ CFLAGS += -lm
 # to fix usleep() not being found on Ubuntu14
 CFLAGS += -D_BSD_SOURCE
 
-#CFLAGS += -I jsmn-example
-#JSFILES=jsmn-example/jsmn.c jsmn-example/json.c jsmn-example/buf.c jsmn-example/log.c
-
 CFLAGS += -Wno-pointer-to-int-cast
 CFLAGS +=  -I json-parser
 JSFILES = json-parser/json.c
@@ -120,7 +117,6 @@ CURL_DIR=curl-7.78.0
 #$(OBJS): %.o: %.c
 #	$(CC) $(CFLAGS) -c $< -o $@
 
-#all: bjsmn blink1control-tool
 all: msg depcheck blink1control-tool
 
 msg:
@@ -129,9 +125,17 @@ msg:
 
 curl-setup:
 	@echo "setting up curl... $(CURL_VER)"
-#   wget http://curl.haxx.se/download/curl-7.37.1.tar.gz
 	tar xzf $(CURL_DIR).tar.gz
-	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" --disable-shared --disable-ldap --without-zlib --without-brotli --without-zstd --without-libssh2 --without-ssl --disable-crypto-auth && $(MAKE) && $(MAKE) install 2>&1 || echo "curl-setup: probable non-critical error"
+	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" \
+		--disable-shared --disable-ftp --disable-file --disable-ldap \
+		--disable-ldaps --disable-rtsp --disable-telnet --disable-tftp \
+		--disable-pop3 --disable-imap --disable-smb --disable-smtp \
+		--disable-gopher --disable-mqtt --disable-manual \
+		--disable-crypto-auth --disable-verbose \
+		--without-zlib --without-brotli --without-zstd --without-librtmp \
+		--without-libssh2 --without-ssl --without-quiche \
+		--without-zsh-functions-dir --without-fish-functions-dir \
+		&& $(MAKE) && $(MAKE) install 2>&1 || echo "curl-setup: probable non-critical error"
 
 json-parser-setup:
 	@echo "setting up json-parser"
