@@ -18,6 +18,7 @@
 #include <getopt.h>    // for getopt_long()
 #include <time.h>
 #include <unistd.h>    // getuid()
+#include <sys/stat.h>  // stat
 
 #include "blink1-lib.h"
 extern int blink1_lib_verbose;
@@ -246,23 +247,29 @@ int blink1_fadeToRGBForDevices( uint16_t mils, uint8_t rr,uint8_t gg, uint8_t bb
 }
 
 #if __linux__
+#define UDEV_FILENAME "/etc/udev/rules.d/51-blink1.rules"
 void add_udev_rules() {
-#define UDEVSHELLSCRIPT "\
-#/bin/bash \n\
-fn=/etc/udev/rules.d/51-blink1.rules \n\
-if [ ! -e $fn ] ; then \n\
-  echo 'ATTRS{idVendor}==\"27b8\", ATTRS{idProduct}==\"01ed\", MODE:=\"666\", GROUP=\"plugdev\"' | sudo tee $fn \n\
-fi \n\
-sudo udevadm control --reload \n\
-sudo udevadm trigger \n\
-"
+  #define UDEV_SHELLSCRIPT "\
+  #/bin/bash \n\
+  fn=/etc/udev/rules.d/51-blink1.rules \n\
+  if [ ! -e $fn ] ; then \n\
+    echo 'ATTRS{idVendor}==\"27b8\", ATTRS{idProduct}==\"01ed\", MODE:=\"666\", GROUP=\"plugdev\"' | sudo tee $fn \n\
+  fi \n\
+  sudo udevadm control --reload \n\
+  sudo udevadm trigger \n\
+  "
   printf("Attempting to add udev rules.\n");
   printf("'sudo' will be used. Please have your password ready\n");
-  printf("Script being run:\n%s\n", UDEVSHELLSCRIPT);
+  printf("Script being run:\n%s\n", UDEV_SHELLSCRIPT);
   printf("Running script...\n");
-  system(UDEVSHELLSCRIPT);
+  system(UDEV_SHELLSCRIPT);
   printf("...Done.\n");
   exit(0);
+}
+// returns 1 if file exists, 0 if it doesn't exist
+int udev_file_exists() {
+  struct stat statbuffer;
+  return (stat(UDEV_FILENAME, &statbuffer) == 0 ); // file exists
 }
 #endif
 
@@ -549,7 +556,9 @@ int main(int argc, char** argv)
     if( count == 0 ) {
         msg("no blink(1) devices found\n");
 #if __linux__
-	printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+	if( !udev_file_exists() ) {
+            printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+        }
 #endif
         exit(1);
     }
@@ -572,7 +581,9 @@ int main(int argc, char** argv)
     if( dev == NULL ) {
         msg("cannot open blink(1), bad id or serial number\n");
 #if __linux__
-	printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+	if( !udev_file_exists() ) {
+	  printf("Have you added udev rules? Try blink1-tool --add_udev_rules\n");
+	}
 #endif
         exit(1);
     }
