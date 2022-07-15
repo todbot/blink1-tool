@@ -39,6 +39,7 @@ const char* blink1_server_name = "blink1-tiny-server";
 const char* blink1_server_version = BLINK1_VERSION;
 
 static bool show_html = true;
+static bool enable_logging = false;
 
 static char http_listen_host[120] = "localhost"; // or 0.0.0.0 for any
 static int http_listen_port = 8000;
@@ -89,6 +90,7 @@ void usage()
 "  --port port, -p port           port to listen on (default %d)\n"
 "  --host host, -H host           host to listen on ('127.0.0.1' or '0.0.0.0')\n"
 "  --no-html                      do not serve static HTML help\n"
+"  --logging                      log accesses to stdout\n"
 "  --version                      version of this program\n"
 "  --help, -h                     this help page\n"
 "\n",
@@ -221,6 +223,17 @@ void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d )
     }
 }
 
+static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
+    //CLF format: 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
+    time_t rawtime;
+    time( &rawtime );
+    char date_str[100];
+    strftime(date_str, sizeof(date_str), "%d/%b/%Y:%H:%M:%S %z", localtime(&rawtime));
+    char ip_str[20];
+    mg_ntoa( &(c->peer), ip_str, sizeof(ip_str));
+    printf("%s - [%s] \"%s %s HTTP/1.1\" %d %d\n", ip_str, date_str, "GET", uri_str, resp_code, 0 ); // can't get response length I guess
+}
+
 
 static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
@@ -233,7 +246,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     uint32_t id=0;
     uint8_t ledn=0, bright=0;
     char status[1000];  status[0] = 0;
-    char uristr[1000];
+    char uri_str[1000];
     char tmpstr[1000];
     char pattstr[1000];
     char pnamestr[1000];
@@ -241,6 +254,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
     uint8_t count = 0;
+    uint8_t st_on = 0;  // for servertickle
 
     DictionaryCallbacks resultsdictc = DictionaryStandardStringCallbacks();
     DictionaryRef resultsdict = DictionaryCreate( 100, &resultsdictc );
@@ -248,9 +262,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     struct mg_str* uri = &hm->uri;
     struct mg_str* querystr = &hm->query;
 
-    snprintf(uristr, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
+    snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
-    DictionaryInsert(resultsdict, "uri", uristr);
+    DictionaryInsert(resultsdict, "uri", uri_str);
     DictionaryInsert(resultsdict, "version", blink1_server_version);
 
     // parse all possible query args (it's just easier this way)
@@ -283,6 +297,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     }
     if( mg_http_get_var(querystr, "pname", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pnamestr, tmpstr);
+    }
+    if( mg_http_get_var(querystr, "on", tmpstr, sizeof(tmpstr)) > 0 ) {
+        st_on = strtod(tmpstr,NULL);
     }
 
     // parse URI requests
@@ -443,7 +460,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         cache_return(dev);
     }
     else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
-        sprintf(status, "blink1 blink");
+        sprintf(status, "blink1 blinkserver");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
 
@@ -457,6 +474,17 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
             blink1_sleep( millis/2 ); // fixme
         }
         cache_return(dev);
+    }
+    else if( mg_vcmp( uri, "/blink1/servertickle") == 0 ) {
+        sprintf(status, "blink1 servertickle");
+        if( millis==0 ) { millis = 2000; }
+        uint8_t start_pos = 0;
+        uint8_t end_pos = 0;
+        uint8_t st_off_state = 0;
+        blink1_device* dev = cache_getDeviceById(id);
+        blink1_serverdown( dev, st_on, millis, st_off_state, start_pos, end_pos );
+        cache_return(dev);
+        DictionaryInsert(resultsdict, "on", st_on? "1":"0");
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
         sprintf(status, "blink1 random");
@@ -489,9 +517,12 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         }
     }
 
+    int resp_code = 404;  // no found by default
+
     if( status[0] != '\0' ) {
+        resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
-        mg_printf(c, "%s", "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
+        mg_printf(c, "%s", "HTTP/1.1 %d OK\r\nTransfer-Encoding: chunked\r\n\r\n", resp_code);
         mg_http_printf_chunk(c,
                              "{\n");
 
@@ -519,6 +550,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
     }
 
+    // access logging
+    if( enable_logging ) { 
+        log_access(c, uri_str, resp_code);
+    }
 }
 
 // ----------------------------------------------------------------------
@@ -533,7 +568,7 @@ int main(int argc, char *argv[]) {
     struct mg_mgr mgr;
     struct mg_connection *c;
     int port;
-
+    
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand( time(NULL) * getpid() );
 
@@ -542,7 +577,7 @@ int main(int argc, char *argv[]) {
 
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:H:U:A:";
+    char* opt_str = "qvhp:H:U:A:Nl";
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
       //{"quiet",      optional_argument, 0,      'q'},
@@ -550,6 +585,7 @@ int main(int argc, char *argv[]) {
         {"host",       required_argument, 0,      'H'},
         {"port",       required_argument, 0,      'p'},
         {"no-html",    no_argument,       0,      'N'},
+        {"logging",    no_argument,       0,      'l'},
         {"help",       no_argument, 0,            'h'},
         {"version",    no_argument, 0,            'V'},
         {NULL,         0,           0,             0 },
@@ -571,6 +607,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'N':
             show_html = false;
+            break;
+        case 'l':
+            enable_logging = true;
             break;
         case 'H':
             strncpy(http_listen_host, optarg, sizeof(http_listen_host));
