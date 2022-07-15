@@ -87,7 +87,7 @@ blink1_device* blink1_openBySerial(const char* serial)
     }
 
     wchar_t wserialstr[serialstrmax] = {L'\0'};
-#ifdef _WIN32   // omg windows you suck
+#ifdef _WIN32   // omg windows
     swprintf( wserialstr, serialstrmax, L"%S", serial); // convert to wchar_t*
 #else
     swprintf( wserialstr, serialstrmax, L"%s", serial); // convert to wchar_t*
@@ -114,7 +114,7 @@ blink1_device* blink1_openById( uint32_t i )
     LOG("blink1_openById: %d \n", i );
     if( i > blink1_max_devices ) { // then i is a serial number not an array index
         char serialstr[serialstrmax];
-        snprintf(serialstr, sizeof(serialstr), "%x", i); // convert to wchar_t*
+        snprintf(serialstr, sizeof(serialstr), "%x", i);
         return blink1_openBySerial( serialstr );
     }
     // otherwise it's an index 0-(count-1)
