@@ -42,7 +42,7 @@ static bool show_html = true;
 static bool enable_logging = false;
 
 static char http_listen_host[120] = "localhost"; // or 0.0.0.0 for any
-static int http_listen_port = 8000;
+static int http_listen_port = 8934;  // was 8000
 static char http_listen_url[100]; // will be "http://localhost:8000"
 
 typedef struct cache_info_ {
