@@ -522,7 +522,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     if( status[0] != '\0' ) {
         resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
-        mg_printf(c, "%s", "HTTP/1.1 %d OK\r\nTransfer-Encoding: chunked\r\n\r\n", resp_code);
+        mg_printf(c, "HTTP/1.1 %d OK\r\nTransfer-Encoding: chunked\r\n\r\n", resp_code);
         mg_http_printf_chunk(c,
                              "{\n");
 
