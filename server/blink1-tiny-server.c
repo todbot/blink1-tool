@@ -230,7 +230,7 @@ static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
     char date_str[100];
     strftime(date_str, sizeof(date_str), "%d/%b/%Y:%H:%M:%S %z", localtime(&rawtime));
     char ip_str[20];
-    mg_ntoa( &(c->peer), ip_str, sizeof(ip_str));
+    mg_ntoa( &(c->rem), ip_str, sizeof(ip_str));
     printf("%s - [%s] \"%s %s HTTP/1.1\" %d %d\n", ip_str, date_str, "GET", uri_str, resp_code, 0 ); // can't get response length I guess
 }
 
@@ -262,7 +262,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     struct mg_str* uri = &hm->uri;
     struct mg_str* querystr = &hm->query;
 
-    snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
+    mg_snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
     DictionaryInsert(resultsdict, "uri", uri_str);
     DictionaryInsert(resultsdict, "version", blink1_server_version);
@@ -658,7 +658,7 @@ int main(int argc, char *argv[]) {
     mg_mgr_init(&mgr);
 
     if ((c = mg_http_listen(&mgr, http_listen_url, ev_handler, &mgr)) == NULL) {
-      LOG(LL_ERROR, ("Cannot listen on %s.", http_listen_url));
+      MG_LOG(MG_LL_ERROR, ("Cannot listen on %s.", http_listen_url));
       exit(EXIT_FAILURE);
     }
 
