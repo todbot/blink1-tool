@@ -124,14 +124,15 @@ you may already have everything you need to compile `blink1-tool`.
 - `cd blink1-tool`
 - `make`
 
-### Windows (old way)
+### Windows
 
-- Install Visual Studio 2015
-- Install MSYS2 : https://github.com/msys2/msys2/wiki/MSYS2-installation
+- Install Visual Studio 2015 or 2019
+- Install MSYS2: https://www.msys2.org/
 - In MSYS2 bash shell:
-- `pacman -S base-devel make git zip unzip mingw-w64-x86_64-toolchain`
+- `pacman -S base-devel make git zip unzip mingw-w64-x86_64-gcc` 
 - `export PATH=${PATH}:/c/msys64/mingw64/bin`
 - `export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"`
+- `export PATH=${PATH}:'/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64'"`
 - `make`
 
 ### Other OSes

@@ -523,7 +523,7 @@ endif
 
 #CFLAGS += -O -Wall -std=gnu99 -I ../hardware/firmware
 CFLAGS += -Wall
-CFLAGS += -std=gnu99
+#CFLAGS += -std=gnu99
 CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
 
 OBJS +=  blink1-lib.o
