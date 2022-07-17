@@ -78,7 +78,9 @@ static const url_info supported_urls[]
     {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color by 'rgb' arg"},
     {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
     {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
-    {"/blink1/random",        "turn the blink(1) a random color"}
+    {"/blink1/random",        "turn the blink(1) a random color"},
+    {"/blink1/servertickle/on","Enable servertickle, uses 'millis' or 'time' arg"},
+    {"/blink1/servertickle/off","Disable servertickle"}
 };
 
 void usage()
@@ -116,9 +118,8 @@ void usage()
 "  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
 "  /blink1/fadeToRGB?rgb=FF00FF&millis=500 -- fade to purple over 500ms\n"
 "  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink cyan 3 times\n"
-
+"  /blink1/servertickle?on=1&millis=5000 -- turn servertickle on with 5 sec timer\n"
 "\n"
-
         );
 }
 
@@ -254,7 +255,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
     uint8_t count = 0;
-    uint8_t st_on = 0;  // for servertickle
 
     DictionaryCallbacks resultsdictc = DictionaryStandardStringCallbacks();
     DictionaryRef resultsdict = DictionaryCreate( 100, &resultsdictc );
@@ -298,19 +298,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     if( mg_http_get_var(querystr, "pname", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pnamestr, tmpstr);
     }
-    if( mg_http_get_var(querystr, "on", tmpstr, sizeof(tmpstr)) > 0 ) {
-        st_on = strtod(tmpstr,NULL);
-    }
 
-    // parse URI requests
-    // if( mg_vcmp( uri, "/") == 0 && !serve_index ) {
-    //     sprintf(status, "Welcome to %s api server. "
-    //             "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
-    //     for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-    //         sprintf(status+strlen(status), " %s - %s\n",
-    //                 supported_urls[i].url, supported_urls[i].desc);
-    //     } // FIXME: result is fixed length
-    // }
     if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
         sprintf(status, "blink1 status");
@@ -475,9 +463,12 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
         }
         cache_return(dev);
     }
-    else if( mg_vcmp( uri, "/blink1/servertickle") == 0 ) {
-        sprintf(status, "blink1 servertickle");
+    //else if( mg_http_match_uri(hm, "/blink1/servertickle/*")) { 
+    else if( mg_vcmp( uri, "/blink1/servertickle/on") == 0 ||
+             mg_vcmp( uri, "/blink1/servertickle/off") == 0 ) {
+        bool st_on = (mg_vcmp(uri, "/blink1/servertickle/on") == 0);
         if( millis==0 ) { millis = 2000; }
+        sprintf(status, "blink1 servertickle %s", st_on? "on":"off");
         uint8_t start_pos = 0;
         uint8_t end_pos = 0;
         uint8_t st_off_state = 0;
@@ -528,14 +519,17 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
 
         DictionaryPrintAsJsonMg(c, resultsdict);
 
+        // these aren't in the resultsdict because storing numbers is annoying
         mg_http_printf_chunk(c,
                              "\"millis\": %d,\n"
+                             "\"time\": %g,\n"
                              "\"rgb\": \"%s\",\n"
                              "\"ledn\": %d,\n"
                              "\"bright\": %d,\n"
                              "\"count\": %d,\n"
                              "\"status\":  \"%s\"\n",
                              millis,
+                            (millis/1000.0),
                              tmpstr,
                              ledn,
                              bright,
