@@ -174,8 +174,8 @@ static void usage(char *myName)
 enum {
     CMD_NONE = 0,
     CMD_LIST,
-    CMD_EEREAD,
-    CMD_EEWRITE,
+    CMD_EEREAD,  // mk1 cmd now unsupported
+    CMD_EEWRITE, // mk1 cmd now unsupported
     CMD_RGB,
     CMD_HSB,
     CMD_RGBREAD,
@@ -322,8 +322,8 @@ int main(int argc, char** argv)
         {"pid",        required_argument, 0,      'P'},
         {"help",       no_argument,       0,      'h'},
         {"list",       no_argument,       &cmd,   CMD_LIST },
-        {"eeread",     required_argument, &cmd,   CMD_EEREAD },
-        {"eewrite",    required_argument, &cmd,   CMD_EEWRITE },
+        //{"eeread",     required_argument, &cmd,   CMD_EEREAD },
+        //{"eewrite",    required_argument, &cmd,   CMD_EEWRITE },
         {"rgb",        required_argument, &cmd,   CMD_RGB },
         {"hsb",        required_argument, &cmd,   CMD_HSB },
         {"rgbread",    no_argument,       &cmd,   CMD_RGBREAD},
@@ -391,8 +391,8 @@ int main(int argc, char** argv)
                 hsbtorgb( &rgbbuf, tmpbuf );
                 cmd = CMD_RGB; // haha!
                 break;
-            case CMD_EEREAD:
-            case CMD_EEWRITE:
+            //case CMD_EEREAD:
+            //case CMD_EEWRITE:
             case CMD_SETPATTLINE:
             case CMD_GETPATTLINE:
             case CMD_PLAY:
@@ -630,7 +630,8 @@ int main(int argc, char** argv)
         printf("(Listing not supported in HIDDATA builds)\n");
 #endif
     }
-    else if( cmd == CMD_EEREAD ) {  // FIXME
+    /*
+    else if( cmd == CMD_EEREAD ) {
         msg("eeread:  addr 0x%2.2x = ", cmdbuf[0]);
         uint8_t val = 0;
         rc = blink1_eeread(dev, cmdbuf[0], &val );
@@ -640,13 +641,14 @@ int main(int argc, char** argv)
             printf("%2.2x\n", val);
         }
     }
-    else if( cmd == CMD_EEWRITE ) {  // FIXME
+    else if( cmd == CMD_EEWRITE ) {
         msg("eewrite: \n");
         rc = blink1_eewrite(dev, cmdbuf[0], cmdbuf[1] );
         if( rc==-1  && !quiet ) { // error
             printf("error\n");
         }
     }
+    */
     else if( cmd == CMD_FWVERSION ) {
         blink1_close(dev);
         for( int i=0; i<count; i++ ) {
