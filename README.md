@@ -126,7 +126,7 @@ you may already have everything you need to compile `blink1-tool`.
 
 ### Windows
 
-- Install Visual Studio 2015 or 2019
+- Install Visual Studio 2017 or 2019
 - Install MSYS2: https://www.msys2.org/
 - In MSYS2 bash shell:
 - `pacman -S base-devel make git zip unzip mingw-w64-x86_64-gcc` 
