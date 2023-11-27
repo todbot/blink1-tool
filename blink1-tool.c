@@ -985,26 +985,41 @@ int main(int argc, char** argv)
     }
     else if( cmd == CMD_WRITENOTE ) {
       msg("writenote:");
-      uint8_t noteid = arg;
-      uint8_t* notebuf = (uint8_t*)argbuf;
-      blink1_writeNote( dev, noteid, notebuf);
+      if( blink1_deviceType(dev) < BLINK1_MK3 ) {
+          msg(" cannot use --writenote on mk2 or mk1 devices\n");
+      }
+      else {
+          uint8_t noteid = arg;
+          uint8_t* notebuf = (uint8_t*)argbuf;
+          blink1_writeNote( dev, noteid, notebuf);
+      }
     }
     else if( cmd == CMD_READNOTE ) {
       msg("readnote:");
-      uint8_t noteid = arg;
-      uint8_t notebuf[blink1_note_size];
-      uint8_t* notebufp = notebuf; // why do I need to do this?
+      if( blink1_deviceType(dev) < BLINK1_MK3 ) {
+          msg(" cannot use --readnote on mk2 or mk1 devices\n");
+      }
+      else {
+          uint8_t noteid = arg;
+          uint8_t notebuf[blink1_note_size];
+          uint8_t* notebufp = notebuf; // why do I need to do this?
 
-      blink1_readNote( dev, noteid, &notebufp);
+          blink1_readNote( dev, noteid, &notebufp);
 
-      printf("note %d: %s\n", noteid, notebuf);
+          printf("note %d: %s\n", noteid, notebuf);
+      }
     }
     else if( cmd == CMD_READNOTES_ALL ) {
-      uint8_t notebuf[blink1_note_size];
-      uint8_t* notebufp = notebuf; // why do I need to do this?
-      for( int i=0; i<10; i++) {
-        blink1_readNote( dev, i, &notebufp);
-        printf("%d: %s\n", i, notebuf);
+      if( blink1_deviceType(dev) < BLINK1_MK3 ) {
+          msg(" cannot use --readnote on mk2 or mk1 devices\n");
+      }
+      else {
+          uint8_t notebuf[blink1_note_size];
+          uint8_t* notebufp = notebuf; // why do I need to do this?
+          for( int i=0; i<10; i++) {
+              blink1_readNote( dev, i, &notebufp);
+              printf("%d: %s\n", i, notebuf);
+          }
       }
     }
     else if( cmd == CMD_GOBOOTLOAD ) {
