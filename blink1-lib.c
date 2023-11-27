@@ -284,7 +284,7 @@ int blink1_fadeToRGBN(blink1_device *dev,  uint16_t fadeMillis,
     buf[3] = ((blink1_enable_degamma) ? blink1_degamma(g) : g );
     buf[4] = ((blink1_enable_degamma) ? blink1_degamma(b) : b );
     buf[5] = (dms >> 8);
-    buf[6] = dms % 0xff;
+    buf[6] = dms & 0xff;
     buf[7] = n;
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
@@ -307,7 +307,7 @@ int blink1_fadeToRGB(blink1_device *dev,  uint16_t fadeMillis,
     buf[3] = ((blink1_enable_degamma) ? blink1_degamma(g) : g );
     buf[4] = ((blink1_enable_degamma) ? blink1_degamma(b) : b );
     buf[5] = (dms >> 8);
-    buf[6] = dms % 0xff;
+    buf[6] = dms & 0xff;
     buf[7] = 0;
 
     int rc = blink1_write(dev, buf, sizeof(buf) );
@@ -377,7 +377,7 @@ int blink1_serverdown(blink1_device *dev, uint8_t on, uint32_t millis, uint8_t s
     buf[1] = 'D';
     buf[2] = on;
     buf[3] = (dms>>8);
-    buf[4] = (dms % 0xff);
+    buf[4] = (dms & 0xff);
     buf[5] = st;  // mk2 only
     buf[6] = startpos;
     buf[7] = endpos;
@@ -439,7 +439,7 @@ int blink1_writePatternLine(blink1_device *dev, uint16_t fadeMillis,
     b = (blink1_enable_degamma) ? blink1_degamma(b) : b ;
 
     uint8_t buf[blink1_buf_size] =
-        {blink1_report_id, 'P', r,g,b, (dms>>8), (dms % 0xff), pos };
+        {blink1_report_id, 'P', r,g,b, (dms>>8), (dms & 0xff), pos };
     int rc = blink1_write(dev, buf, sizeof(buf) );
     return rc;
 }
