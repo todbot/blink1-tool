@@ -154,11 +154,7 @@ int blink1_clearCacheDev( blink1_device* dev )
 
 blink1Type_t blink1_deviceTypeById( int i )
 {
-    //if( i>=0  && blink1_infos[i].type == BLINK1_MK2 ) return 1;
-    //if( i>= 0 ) {
     return blink1_infos[i].type;
-    //}
-    //return 0;
 }
 
 // returns BLINK1_MK2, BLINK1_MK3, or BLINK1
