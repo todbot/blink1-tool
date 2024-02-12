@@ -599,7 +599,7 @@ blink1-tiny-server: $(OBJS) blink1-tiny-server-html server/blink1-tiny-server.c
 	$(CC) $(CFLAGS) $(OBJS) $(EXEFLAGS) ./server/mongoose/mongoose.o $(LIBS) server/blink1-tiny-server-html.o server/blink1-tiny-server.o -o blink1-tiny-server$(EXE) $(LDFLAGS)
 
 $(LIBTARGET): $(OBJS)
-	$(CC) $(LIBFLAGS) $(CFLAGS) $(OBJS) $(LIBS)
+	$(CC) $(LIBFLAGS) $(CFLAGS) $(OBJS) $(LIBS) $(LDFLAGS)
 	$(LIB_EXTRA)
 
 lib: $(LIBTARGET)
