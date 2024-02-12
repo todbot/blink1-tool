@@ -18,20 +18,24 @@
 //   4. Build your app with fs.c:
 //      cc -o my_app my_app.c fs.c
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 static const char *code =
-    "const char *mg_unlist(size_t no);\n"
+    "static int scmp(const char *a, const char *b) {\n"
+    "  while (*a && (*a == *b)) a++, b++;\n"
+    "  return *(const unsigned char *) a - *(const unsigned char *) b;\n"
+    "}\n"
     "const char *mg_unlist(size_t no) {\n"
     "  return packed_files[no].name;\n"
     "}\n"
-    "const char *mg_unpack(const char *name, size_t *size, time_t *mtime);\n"
     "const char *mg_unpack(const char *name, size_t *size, time_t *mtime) {\n"
     "  const struct packed_file *p;\n"
     "  for (p = packed_files; p->name != NULL; p++) {\n"
-    "    if (strcmp(p->name, name) != 0) continue;\n"
+    "    if (scmp(p->name, name) != 0) continue;\n"
     "    if (size != NULL) *size = p->size - 1;\n"
     "    if (mtime != NULL) *mtime = p->mtime;\n"
     "    return (const char *) p->data;\n"
@@ -41,31 +45,46 @@ static const char *code =
 
 int main(int argc, char *argv[]) {
   int i, j, ch;
+  const char *strip_prefix = "";
 
   printf("%s", "#include <stddef.h>\n");
   printf("%s", "#include <string.h>\n");
   printf("%s", "#include <time.h>\n");
   printf("%s", "\n");
+  printf("%s", "#if defined(__cplusplus)\nextern \"C\" {\n#endif\n");
+  printf("%s", "const char *mg_unlist(size_t no);\n");
+  printf("%s", "const char *mg_unpack(const char *, size_t *, time_t *);\n");
+  printf("%s", "#if defined(__cplusplus)\n}\n#endif\n\n");
 
   for (i = 1; i < argc; i++) {
-    char ascii[12];
-    FILE *fp = fopen(argv[i], "rb");
-    if (fp == NULL) printf("Cannot open %s\n", argv[i]), exit(EXIT_FAILURE);
-
-    printf("static const unsigned char v%d[] = {\n", i);
-    for (j = 0; (ch = fgetc(fp)) != EOF; j++) {
-      if (j == (int) sizeof(ascii)) {
-        printf(" // %.*s\n", j, ascii);
-        j = 0;
+    if (strcmp(argv[i], "-s") == 0) {
+      strip_prefix = argv[++i];
+    } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+      fprintf(stderr, "Usage: %s[-s STRIP_PREFIX] files...\n", argv[0]);
+      exit(EXIT_FAILURE);
+    } else {
+      char ascii[12];
+      FILE *fp = fopen(argv[i], "rb");
+      if (fp == NULL) {
+        fprintf(stderr, "Cannot open [%s]: %s\n", argv[i], strerror(errno));
+        exit(EXIT_FAILURE);
       }
-      ascii[j] = (char) ((ch >= ' ' && ch <= '~' && ch != '\\') ? ch : '.');
-      printf(" %3u,", ch);
+
+      printf("static const unsigned char v%d[] = {\n", i);
+      for (j = 0; (ch = fgetc(fp)) != EOF; j++) {
+        if (j == (int) sizeof(ascii)) {
+          printf(" // %.*s\n", j, ascii);
+          j = 0;
+        }
+        ascii[j] = (char) ((ch >= ' ' && ch <= '~' && ch != '\\') ? ch : '.');
+        printf(" %3u,", ch);
+      }
+      // Append zero byte at the end, to make text files appear in memory
+      // as nul-terminated strings.
+      // printf(" 0 // %.*s\n", (int) sizeof(ascii), ascii);
+      printf(" 0 // %.*s\n};\n", j, ascii);
+      fclose(fp);
     }
-    // Append zero byte at the end, to make text files appear in memory
-    // as nul-terminated strings.
-    // printf(" 0 // %.*s\n", (int) sizeof(ascii), ascii);
-    printf(" 0 // %.*s\n};\n", j, ascii);
-    fclose(fp);
   }
 
   printf("%s", "\nstatic const struct packed_file {\n");
@@ -77,8 +96,16 @@ int main(int argc, char *argv[]) {
 
   for (i = 1; i < argc; i++) {
     struct stat st;
+    const char *name = argv[i];
+    size_t n = strlen(strip_prefix);
+    if (strcmp(argv[i], "-s") == 0) {
+      i++;
+      continue;
+    }
     stat(argv[i], &st);
-    printf("  {\"/%s\", v%d, sizeof(v%d), %lu},\n", argv[i], i, i, st.st_mtime);
+    if (strncmp(name, strip_prefix, n) == 0) name += n;
+    printf("  {\"/%s\", v%d, sizeof(v%d), %lu},\n", name, i, i,
+           (unsigned long) st.st_mtime);
   }
   printf("%s", "  {NULL, NULL, 0, 0}\n");
   printf("%s", "};\n\n");
