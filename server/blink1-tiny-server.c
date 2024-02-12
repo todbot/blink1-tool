@@ -231,12 +231,12 @@ static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
     char date_str[100];
     strftime(date_str, sizeof(date_str), "%d/%b/%Y:%H:%M:%S %z", localtime(&rawtime));
     char ip_str[20];
-    mg_ntoa( &(c->rem), ip_str, sizeof(ip_str));
+    mg_snprintf(ip_str, 20, "%d.%d.%d.%d", c->rem.ip[0],c->rem.ip[1],c->rem.ip[2],c->rem.ip[3] );
     printf("%s - [%s] \"%s %s HTTP/1.1\" %d %d\n", ip_str, date_str, "GET", uri_str, resp_code, 0 ); // can't get response length I guess
 }
 
 
-static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
+static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
 {
     if(ev != MG_EV_HTTP_MSG) {
         return;
@@ -255,6 +255,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
     uint8_t count = 0;
+    int resp_code = 404;  // no found by default
 
     DictionaryCallbacks resultsdictc = DictionaryStandardStringCallbacks();
     DictionaryRef resultsdict = DictionaryCreate( 100, &resultsdictc );
@@ -494,9 +495,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
     }
     else {
         if( show_html ) {
-            struct mg_http_serve_opts opts = {0};
-            opts.fs = &mg_fs_packed; // Set packed ds as a file system
-            mg_http_serve_dir(c, ev_data, &opts);
+            if( mg_vcmp( uri, "/") == 0 ) {
+                resp_code = 302;
+                mg_http_reply(c, resp_code, "Location: /index.html\r\n", "");
+            }
+            else {
+                resp_code = 200; // I guess
+                struct mg_http_serve_opts opts = {
+                    .root_dir = "/",
+                    .fs = &mg_fs_packed
+                };
+                mg_http_serve_dir(c, ev_data, &opts);
+            }
         }
         else if ( mg_vcmp( uri, "/") == 0 ) {
             sprintf(status, "Welcome to %s api server. "
@@ -507,8 +517,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data, void *fn_
             } // FIXME: result is fixed length
         }
     }
-
-    int resp_code = 404;  // no found by default
 
     if( status[0] != '\0' ) {
         resp_code = 200;
