@@ -251,7 +251,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     char tmpstr[1000];
     char pattstr[1000];
     char pnamestr[1000];
-    //int rc;
+
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
     uint8_t count = 0;
@@ -265,7 +265,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
 
     mg_snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
-    DictionaryInsert(resultsdict, "uri", uri_str);
+    // echoing uri could potentially be used for XSS attack issue #72
+    // DictionaryInsert(resultsdict, "uri", uri_str); 
     DictionaryInsert(resultsdict, "version", blink1_server_version);
 
     // parse all possible query args (it's just easier this way)
@@ -509,19 +510,22 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             }
         }
         else if ( mg_vcmp( uri, "/") == 0 ) {
-            sprintf(status, "Welcome to %s api server. "
-                    "All URIs start with '/blink1'. \nSupported URIs:\n", blink1_server_name);
-            for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-                sprintf(status+strlen(status), " %s - %s\n",
-                        supported_urls[i].url, supported_urls[i].desc);
-            } // FIXME: result is fixed length
+            sprintf(status, "Welcome to %s api server. All URIs start with '/blink1'.", blink1_server_name);
+            //sprintf(status, "%s. \nSupported URIs:\n", status);
+            //for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+            //    sprintf(status+strlen(status), " %s - %s\n",
+            //            supported_urls[i].url, supported_urls[i].desc);
         }
     }
 
     if( status[0] != '\0' ) {
         resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
-        mg_printf(c, "HTTP/1.1 %d OK\r\nTransfer-Encoding: chunked\r\n\r\n", resp_code);
+        mg_printf(c, "HTTP/1.1 %d OK\r\n", resp_code);
+        mg_printf(c, "Content-type: application/json\r\n");
+        mg_printf(c, "X-Content-Type-Options: nosniff\r\n");
+        mg_printf(c, "Transfer-Encoding: chunked\r\n\r\n");
+        
         mg_http_printf_chunk(c,
                              "{\n");
 
@@ -550,6 +554,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                              );
 
         mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
+    }
+    else {
+        mg_http_reply(c, 404, NULL, "Not found\n");        
     }
 
     // access logging
