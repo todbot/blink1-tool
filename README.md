@@ -115,6 +115,7 @@ you may already have everything you need to compile `blink1-tool`.
 - `cd blink1-tool`
 - `gmake`
 - `sudo ./blink1-tool --red --flash 3`
+- If you'd like `devd` support, see the `devd-51-blink1.conf` file. 
 
 ### MacOS
 
