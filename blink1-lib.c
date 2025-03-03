@@ -180,6 +180,9 @@ int blink1_isMk2( blink1_device* dev )
     return blink1_isMk2ById( blink1_getCacheIndexByDev(dev) );
 }
 
+const int blink1_getPattMax(blink1_device* dev) {
+  return blink1_pattMaxes[blink1_deviceType(dev)];
+}
 
 //
 int blink1_getVersion(blink1_device *dev)

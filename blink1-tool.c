@@ -918,7 +918,7 @@ int main(int argc, char** argv)
         msg("write pattern: %s\n", argbuf);
 
         int repeats = -1;
-        patternline_t pattern[32];
+        patternline_t pattern[32];  // FIXME: patt_max
         int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
         //msg("repeats: %d is ignored for writepattern\n", repeats);
 
@@ -932,8 +932,9 @@ int main(int argc, char** argv)
 
     }
     else if( cmd == CMD_CLEARPATTERN ) {
-        msg("clearing pattern...");
-        for( int i=0; i<16; i++ ) { // FIXME: pattern length
+        int patt_max = blink1_getPattMax(dev);
+        msg("clearing %d length pattern...", patt_max);
+        for( int i=0; i < patt_max; i++ ) { 
           rc = blink1_writePatternLine(dev, 0, 0,0,0, i );
         }
         msg("done\n");
@@ -943,16 +944,16 @@ int main(int argc, char** argv)
         uint8_t r,g,b,n;
         uint16_t msecs;
         int maxstrlen = 2048;
-        int pattlen = 32;
+        int patt_max = blink1_getPattMax(dev);
         char str[maxstrlen];
         str[0] = '\0';
         strcat(str, "{0");
-        char strline[maxstrlen/pattlen];
+        char strline[maxstrlen/patt_max];
         //strcat(str, "{0"); // repeats forever
-        for( int i=0; i<pattlen; i++ ) {
+        for( int i=0; i<patt_max; i++ ) {
             rc = blink1_readPatternLineN(dev, &msecs, &r,&g,&b, &n, i );
             //if( !(msecs==0 && r==0 && g==0 && b==0) ) {
-            snprintf(strline, (maxstrlen/pattlen), ",#%2.2x%2.2x%2.2x,%0.2f,%d", r,g,b, (msecs/1000.0),n);
+            snprintf(strline, (maxstrlen/patt_max), ",#%2.2x%2.2x%2.2x,%0.2f,%d", r,g,b, (msecs/1000.0),n);
             strcat(str,strline);
             //}
         }

@@ -48,6 +48,14 @@ typedef enum  {
     BLINK1_MK3    // 2018 one based on EFM32HG
 } blink1Type_t;
 
+// size of flash pattern space
+static const int blink1_pattMaxes[] = {
+  0,  // BLINK1_UNKNOWN
+  16, // BLINK1MK1
+  16, // BLINK1MK2
+  32, // BLINK1MK3
+};
+
 struct blink1_device_;
 
 #if USE_HIDAPI
@@ -506,6 +514,10 @@ blink1Type_t blink1_deviceType( blink1_device* dev );
  */
 const char* blink1_deviceTypeToStr(blink1Type_t t);
 
+
+const int blink1_getPattMax(blink1_device* dev);
+  
+  
 /**
  *
  */
