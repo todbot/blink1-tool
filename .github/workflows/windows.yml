@@ -40,7 +40,7 @@ jobs:
         run: make package
 
       - name: Upload blink1-tool artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: blink1-tool-artifacts
           path: blink1*.zip
@@ -55,7 +55,7 @@ jobs:
         run: make package-tiny-server
 
       - name: 'Upload blink1-tiny-server artifact'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: blink1-tiny-server-artifacts
           path: blink1*.zip
@@ -70,7 +70,7 @@ jobs:
         run: make package-blink1control-tool
 
       - name: 'Upload blink1control-tool artifact'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: blink1-tool-windows-all-artifacts
           path: blink1*.zip
