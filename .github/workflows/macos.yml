@@ -19,7 +19,7 @@ jobs:
     # Steps represent a sequence of tasks executed as part of the job
     steps:
       # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Check xcode version
         shell: bash
