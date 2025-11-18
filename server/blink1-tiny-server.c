@@ -53,6 +53,8 @@ typedef struct cache_info_ {
 static int64_t idle_atime = 1000 /* milliseconds */;
 static cache_info cache_infos[cache_max];
 
+static rgb_t last_rgb = {0,0,0};
+
 DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
 
@@ -76,6 +78,7 @@ static const url_info supported_urls[]
     {"/blink1/yellow",        "turn blink(1) solid yellow"},
     {"/blink1/magenta",       "turn blink(1) solid magenta"},
     {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color by 'rgb' arg"},
+    {"/blink1/lastColor",     "return the last rgb color sent to blink(1)"},
     {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
     {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
     {"/blink1/random",        "turn the blink(1) a random color"},
@@ -187,6 +190,11 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
     }
+    
+    last_rgb.r = rgb.r; 
+    last_rgb.g = rgb.g; 
+    last_rgb.b = rgb.b;
+    
     blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
     if( millis==0 ) { millis = 200; }
     int rc = blink1_fadeToRGBN( dev, millis, rgb.r,rgb.g,rgb.b, ledn );
@@ -313,6 +321,23 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             }
             cache_return(dev);
         }
+    }
+    else if( mg_vcmp( uri, "/blink1/lastColor") == 0 ||
+             mg_vcmp( uri, "/blink1/lastcolor") == 0 ) {
+        sprintf(status, "blink1 lastColor");
+        
+        blink1_device* dev = cache_getDeviceById(id);
+        if( dev ) {
+           uint16_t msecs;
+           int rc = blink1_readRGB(dev, &msecs, &rgb.r, &rgb.g, &rgb.b, 0 );
+           if( rc==-1 ) {
+               printf("error on readRGB\n");
+           }
+           cache_return(dev);
+        }
+        
+        sprintf(tmpstr, "#%2.2x%2.2x%2.2x", last_rgb.r, last_rgb.g, last_rgb.b );
+        DictionaryInsert(resultsdict, "lastColor", tmpstr);
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
@@ -449,7 +474,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
         cache_return(dev);
     }
-    else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
+    else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ||
+             mg_vcmp( uri, "/blink1/blink1server") == 0 ) {
         sprintf(status, "blink1 blinkserver");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
