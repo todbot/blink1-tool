@@ -476,6 +476,13 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
         cache_return(dev);
     }
+    else if( mg_vcmp(uri, "/blink1/pattern/stop") == 0 ) {
+        sprintf(status, "blink1 pattern stop");
+        
+        blink1_device* dev = cache_getDeviceById(id);
+        blink1_playloop(dev, 0, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
+        cache_return(dev);
+    }
     else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ||
              mg_vcmp( uri, "/blink1/blink1server") == 0 ) {
         sprintf(status, "blink1 blinkserver");
@@ -535,7 +542,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         mg_http_printf_chunk(c,
                              "{\n");
 
-        DictionaryPrintAsJsonMg(c, resultsdict);
+        DictionaryPrintAsJsonMg(c, resultsdict); // the json results 
 
         // these aren't in the resultsdict because storing numbers is annoying
         mg_http_printf_chunk(c,
