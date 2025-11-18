@@ -73,8 +73,9 @@ endif
 ifeq "$(OS)" "windows"
 
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
+
 # this WIN32_WINNT define is to fix curl not finding WinSock headers in curlx_nonblock
-CURL_CFLAGS += "-D_WIN32_WINNT=0x0600"  
+CURL_CFLAGS += "-DHAVE_IOCTLSOCKET=1 -DHAVE_IOCTLSOCKET_FIONBIO=1"
 
 EXE=.exe
 
@@ -114,7 +115,10 @@ CFLAGS += -Wno-pointer-to-int-cast
 CFLAGS +=  -I json-parser
 JSFILES = json-parser/json.c
 
-CURL_DIR=curl-7.78.0
+CURL_VER=curl-7.78.0
+#CURL_VER=curl-8.17.0
+
+CURL_DIR=$(CURL_VER)
 
 #$(OBJS): %.o: %.c
 #	$(CC) $(CFLAGS) -c $< -o $@
