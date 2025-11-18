@@ -68,7 +68,7 @@ typedef struct _url_info
 static const url_info supported_urls[]
 = {
     {"/blink1/",              "simple status page"},
-    {"/blink1/id",            "get blink1 serial number"},
+    {"/blink1/id",            "get blink1 serial number, list all found blink1 serials"},
     {"/blink1/on",            "turn blink(1) full bright white"},
     {"/blink1/off",           "turn blink(1) dark"},
     {"/blink1/red",           "turn blink(1) solid red"},
@@ -185,15 +185,15 @@ void cache_flush(int idle_threshold_millis)
 void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
                     uint8_t ledn, uint8_t bright, char* status)
 {
+    last_rgb.r = rgb.r; 
+    last_rgb.g = rgb.g; 
+    last_rgb.b = rgb.b;
+    
     blink1_device* dev = cache_getDeviceById(id);
     if( !dev ) {
         sprintf(status+strlen(status), ": error: no blink1 found");
         return;
     }
-    
-    last_rgb.r = rgb.r; 
-    last_rgb.g = rgb.g; 
-    last_rgb.b = rgb.b;
     
     blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
     if( millis==0 ) { millis = 200; }
@@ -341,6 +341,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
+             mg_vcmp( uri, "/blink1/list") == 0 ||
+             mg_vcmp( uri, "/blink1/list/") == 0 ||
              mg_vcmp( uri, "/blink1/enumerate") == 0 ) {
         sprintf(status, "blink1 id");
         cache_flush(0);
@@ -520,31 +522,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         }
         cache_return(dev);
     }
-    else {
-        if( show_html ) {
-            if( mg_vcmp( uri, "/") == 0 ) {
-                resp_code = 302;
-                mg_http_reply(c, resp_code, "Location: /index.html\r\n", "");
-            }
-            else {
-                resp_code = 200; // I guess
-                struct mg_http_serve_opts opts = {
-                    .root_dir = "/",
-                    .fs = &mg_fs_packed
-                };
-                mg_http_serve_dir(c, ev_data, &opts);
-            }
-        }
-        else if ( mg_vcmp( uri, "/") == 0 ) {
-            sprintf(status, "Welcome to %s api server. All URIs start with '/blink1'.", blink1_server_name);
-            //sprintf(status, "%s. \nSupported URIs:\n", status);
-            //for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-            //    sprintf(status+strlen(status), " %s - %s\n",
-            //            supported_urls[i].url, supported_urls[i].desc);
-        }
-    }
 
-    if( status[0] != '\0' ) {
+    // check if we've handled json
+    if( status[0] != '\0' ) {  // json handled
         resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
         mg_printf(c, "HTTP/1.1 %d OK\r\n", resp_code);
@@ -582,7 +562,31 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
     }
     else {
-        mg_http_reply(c, 404, NULL, "Not found\n");        
+        if( show_html ) {
+            if( mg_vcmp( uri, "/") == 0 ) {
+                resp_code = 302;
+                mg_http_reply(c, resp_code, "Location: /index.html\r\n", "");
+            }
+            else {
+                resp_code = 200; // I guess
+                struct mg_http_serve_opts opts = {
+                    .root_dir = "/",
+                    .fs = &mg_fs_packed
+                };
+                mg_http_serve_dir(c, ev_data, &opts);
+            }
+        }
+        else if ( mg_vcmp( uri, "/") == 0 ) {
+            sprintf(status, "Welcome to %s api server. All URIs start with '/blink1'.", blink1_server_name);
+            //sprintf(status, "%s. \nSupported URIs:\n", status);
+            //for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+            //    sprintf(status+strlen(status), " %s - %s\n",
+            //            supported_urls[i].url, supported_urls[i].desc);
+        }
+
+        else {
+            mg_http_reply(c, 404, NULL, "Not found\n");        
+        }
     }
 
     // access logging
@@ -675,7 +679,7 @@ int main(int argc, char *argv[]) {
 
     printf("%s version %s: running on http://%s:%d/ (%s)\n",
           blink1_server_name, blink1_server_version, http_listen_host,
-          http_listen_port,  (show_html) ? "html help enabeld": "no html help");
+          http_listen_port,  (show_html) ? "html help enabled": "no html help");
 
     snprintf(http_listen_url, sizeof(http_listen_url), "http://%s:%d/",
            http_listen_host, http_listen_port);
