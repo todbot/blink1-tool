@@ -74,8 +74,8 @@ ifeq "$(OS)" "windows"
 
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
 
-# this WIN32_WINNT define is to fix curl not finding WinSock headers in curlx_nonblock
-CURL_CFLAGS +=-DHAVE_IOCTLSOCKET=1 -DHAVE_IOCTLSOCKET_FIONBIO=1
+# this define is to fix curl not finding WinSock headers in curlx_nonblock
+CURL_CPPFLAGS +=-DHAVE_IOCTLSOCKET=1 -DHAVE_IOCTLSOCKET_FIONBIO=1
 
 EXE=.exe
 
@@ -132,7 +132,7 @@ msg:
 curl-setup:
 	@echo "setting up curl... $(CURL_VER)"
 	tar xzf $(CURL_DIR).tar.gz
-	cd $(CURL_DIR) && CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" \
+	cd $(CURL_DIR) && CPPFLAGS="$(CURL_CPPFLAGS)" CFLAGS="$(CURL_CFLAGS)" ./configure --prefix="`pwd`/../curl-$(OS)" \
 		--disable-shared --disable-ftp --disable-file --disable-ldap \
 		--disable-ldaps --disable-rtsp --disable-telnet --disable-tftp \
 		--disable-pop3 --disable-imap --disable-smb --disable-smtp \
