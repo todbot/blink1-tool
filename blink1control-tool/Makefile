@@ -73,6 +73,8 @@ endif
 ifeq "$(OS)" "windows"
 
 CFLAGS += `curl-$(OS)/bin/curl-config --static-libs` `curl-$(OS)/bin/curl-config --cflags`
+# this WIN32_WINNT define is to fix curl not finding WinSock headers in curlx_nonblock
+CFLAGS += "-D_WIN32_WINNT=0x0600"  
 
 EXE=.exe
 
