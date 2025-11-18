@@ -29,11 +29,15 @@ Desktop.ini
 *.a
 *.def
 *.exp
+*.old
 
 # build products
 blink1-tool
 blink1-tiny-server
 builds
+pack
+curl-macosx
+json-parser
 
 .vscode
 .idea
