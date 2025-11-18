@@ -330,7 +330,9 @@ int main(int argc, char** argv)
         {"readrgb",    no_argument,       &cmd,   CMD_RGBREAD},
         {"savepattline",required_argument,&cmd,   CMD_SETPATTLINE },//backcompat
         {"setpattline",required_argument, &cmd,   CMD_SETPATTLINE },
+        {"setpatternline",required_argument, &cmd,   CMD_SETPATTLINE },
         {"getpattline",required_argument, &cmd,   CMD_GETPATTLINE },
+        {"getpatternline",required_argument, &cmd,   CMD_GETPATTLINE },
         {"savepattern",no_argument,       &cmd,   CMD_SAVEPATTERN },
         {"off",        no_argument,       &cmd,   CMD_OFF },
         {"on",         no_argument,       &cmd,   CMD_ON },
