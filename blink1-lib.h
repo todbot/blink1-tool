@@ -544,7 +544,10 @@ void hsbtorgb( rgb_t* rgb, uint8_t* hsb );
 void parsecolor(rgb_t* color, char* colorstr);
 
 /**
- *
+ * Parse pattern into an array of patternlines
+ * - number repeats
+ * - pattern array (contains {color,millis,ledn})
+ * Returns pattern length or -1 if badly-formatted pattern
  */
 int parsePattern( char* str, int* repeats, patternline_t* pattern );
 

@@ -898,23 +898,28 @@ int main(int argc, char** argv)
         int repeats = -1;
         patternline_t pattern[32];
         int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
-        msg("repeats: %d\n", repeats);
-        if( repeats==0 ) repeats=-1;
-
-        while( repeats==-1 || repeats-- ) {
-            for( int i=0; i<pattlen; i++ ) {
-                patternline_t pat = pattern[i];
-                //msg("%d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
-                //msg("%d:",repeats);
-                uint16_t m = (millis!=-1) ? millis : pat.millis/2;
-                uint8_t r = pat.color.r;
-                uint8_t g = pat.color.g;
-                uint8_t b = pat.color.b;
-                blink1_adjustBrightness( brightness, &r, &g, &b);
-                blink1_fadeToRGBForDevices( m, r,g,b, pat.ledn);
-                blink1_sleep( pat.millis );
-            }
+        if( pattlen == -1 ) {  // bad pattern
+            msg("bad pattern\n");
         }
+        else {  // good pattern
+            msg("repeats: %d\n", repeats);
+            if( repeats==0 ) repeats=-1;
+
+            while( repeats==-1 || repeats-- ) {
+                for( int i=0; i<pattlen; i++ ) {
+                    patternline_t pat = pattern[i];
+                    //msg("%d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
+                    //msg("%d:",repeats);
+                    uint16_t m = (millis!=-1) ? millis : pat.millis/2;
+                    uint8_t r = pat.color.r;
+                    uint8_t g = pat.color.g;
+                    uint8_t b = pat.color.b;
+                    blink1_adjustBrightness( brightness, &r, &g, &b);
+                    blink1_fadeToRGBForDevices( m, r,g,b, pat.ledn);
+                    blink1_sleep( pat.millis );
+                }
+            }
+        } // good pattern
     }
     else if( cmd == CMD_WRITEPATTERN ) {
         msg("write pattern: %s\n", argbuf);
@@ -923,15 +928,18 @@ int main(int argc, char** argv)
         patternline_t pattern[32];  // FIXME: patt_max
         int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
         //msg("repeats: %d is ignored for writepattern\n", repeats);
-
-        for( int i=0; i<pattlen; i++ ) {
-            patternline_t pat = pattern[i];
-
-            msg("writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.g,pat.color.b, pat.millis,pat.ledn );
-            blink1_setLEDN(dev, pat.ledn);
-            rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
+        if( pattlen == -1 ) {  // bad pattern
+            msg("bad pattern\n");
         }
-
+        else {  // good pattern
+            for( int i=0; i<pattlen; i++ ) {
+                patternline_t pat = pattern[i];
+                msg("writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                    i, pat.color.r, pat.color.g, pat.color.b, pat.millis,pat.ledn);
+                blink1_setLEDN(dev, pat.ledn);
+                rc = blink1_writePatternLine(dev, pat.millis/2, pat.color.r, pat.color.g, pat.color.b, i);
+            }
+        } // good pattern
     }
     else if( cmd == CMD_CLEARPATTERN ) {
         int patt_max = blink1_getPattMax(dev);

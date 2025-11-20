@@ -839,11 +839,17 @@ void remove_whitespace(char *str)
     }
 }
 
-// parse a color in form either "#ff00ff" or "FF00FF"
-// or "255,0,255" or "0xff,0x00,0xff"
+/**
+ * Parse an RGB color from a string in one of the forms:
+ * - "#ff00ff"
+ * - "FF00FF"
+ * - "255,0,255"
+ * - "0xff,0x00,0xff"
+ * All not case-sensitive
+ */
 void parsecolor(rgb_t* color, char* colorstr)
 {
-    // parse hex color code like "#FF00FF" or "FF00FF"
+    // parse hex color code like "#FF00FF" or "FF00FF", case-insensitive
     if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) {
         colorstr = (colorstr[0] == '#') ? colorstr+1 : colorstr;
         uint32_t colorint = strtol(colorstr, NULL, 16);
@@ -855,12 +861,54 @@ void parsecolor(rgb_t* color, char* colorstr)
     }
 }
 
-//
-// Parse pattern into an array of patternlines
-// - number repeats
-// - pattern array (contains {color,millis,ledn}
-// - pattern length
+/**
+ * Parse pattern into an array of patternlines
+ * - number repeats
+ * - pattern array (contains {color,millis,ledn})
+ * Returns pattern length or -1 if badly-formatted pattern
+ */
 int parsePattern( char* str, int* repeats, patternline_t* pattern )
+{
+    remove_whitespace(str);
+    char* s;
+    s = strtok( str, ", ");
+    if(  s != NULL ) {
+      *repeats = strtol(s,NULL,0);
+    }
+
+    // pattern strings are:
+    //   "num_repeats,rgbcolor,time,ledn,rgbcolor,time,ledn,..."
+    // e.g. '3,#ff0000,0.5,0,#0000ff,0.5,0'
+    // means: 3 repeats, red over 0.5 seconds on both leds,
+    //        then blue over 0.5 seconds on both leds
+    int i=0;
+    s = strtok(NULL, ","); // prep next parse
+    while( s != NULL ) {
+        parsecolor(&pattern[i].color, s);
+
+        s = strtok(NULL, ",");
+        if( s == NULL ) {
+            msg("bad pattern on line %d: no time\n", i);  return -1;
+        }
+        pattern[i].millis = atof(s) * 1000;
+
+        s = strtok(NULL, ",");
+        if( s == NULL ) {
+            msg("bad pattern on line %d: no ledn\n",i);  return -1;
+        }
+        pattern[i].ledn = strtol(s,NULL,0);
+
+        i++;
+
+        s = strtok(NULL, ",");
+        if( s == NULL ) break;
+
+    }
+    int pattlen = i;
+    return pattlen;
+}
+
+int parsePattern_orig( char* str, int* repeats, patternline_t* pattern )
 {
     remove_whitespace(str);
     char* s;
@@ -876,11 +924,17 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern )
         parsecolor( &pattern[i].color, s );
 
         s = strtok(NULL, ",");
-        if( s == NULL ) { msg("bad pattern: no millis\n"); break; }
+        if( s == NULL ) {
+            msg("bad pattern on line %d: no time\n", i);
+            return -1;
+        }
         pattern[i].millis = atof(s) * 1000;
 
         s = strtok(NULL, ",");
-        if( s == NULL ) { msg("bad pattern: no led\n"); break; }
+        if( s == NULL ) {
+            msg("bad pattern on line %d: no ledn\n",i);
+            return -1;
+        }
         pattern[i].ledn = strtol(s,NULL,0);
 
         i++;
