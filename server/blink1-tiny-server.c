@@ -25,10 +25,12 @@
 #include "mongoose.h"
 
 #include "blink1-lib.h"
+#include "blink1-lib-patterns.h"
 
-//#include "dict.h"
+// uses Dictionary from https://github.com/macmade/Dictionary
 #include "Dictionary.h"
 #include "Dictionary.c"
+//#include "dict.h"
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -55,8 +57,8 @@ static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
 
-DictionaryRef       patterndict;
 DictionaryCallbacks patterndictc;
+DictionaryRef       patterndict; // init'd in main
 
 typedef struct _url_info
 {
@@ -81,6 +83,7 @@ static const url_info supported_urls[]
     {"/blink1/lastColor",     "return the last rgb color sent to blink(1)"},
     {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
     {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
+    {"/blink1/pattern/stop",  "stop color pattern playing"},
     {"/blink1/random",        "turn the blink(1) a random color"},
     {"/blink1/servertickle/on","Enable servertickle, uses 'millis' or 'time' arg"},
     {"/blink1/servertickle/off","Disable servertickle"}
@@ -254,11 +257,11 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
 
     uint32_t id=0;
     uint8_t ledn=0, bright=0;
-    char status[1000];  status[0] = 0;
-    char uri_str[1000];
-    char tmpstr[1000];
-    char pattstr[1000];
-    char pnamestr[1000];
+    char status[1000] = "";
+    char uri_str[1000] = "";
+    char tmpstr[1000] = "";
+    char pattstr[1000] = "";
+    char pnamestr[1000] = "";
 
     uint16_t millis = 0;
     rgb_t rgb = {0,0,0}; // for parsecolor
@@ -431,14 +434,25 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
         cache_return(dev);
     }
-    /*
+    
     else if( mg_vcmp(uri, "/blink1/pattern") == 0 ||
-             mg_vcmp(uri, "/blink1/pattern/") == 0 ) {
-
-        tmpstr
-        DictionaryInsert(statussdict, "patterns", tmpstr);
-
+             mg_vcmp(uri, "/blink1/patterns") == 0 ||
+             mg_vcmp(uri, "/blink1/pattern/") == 0 ||
+             mg_vcmp(uri, "/blink1/patterns/") == 0 ) {
+        //DictionaryInsert(resultsdict, "patterns", bigstr);
+        sprintf(status, "blink1 pattern list");
+        char bigstr[8000];
+        sprintf(bigstr, "[\n");
+        int n = 2;
+        for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
+            int nn = sprintf(bigstr+n, "  {\"name\": \"%s\", \"pattern\": \"%s\"},\n",
+                             blink1_patterns[i].name, blink1_patterns[i].str);
+            n += nn;
+        }
+        sprintf(bigstr+n-2, "\n]");
+        DictionaryInsert(resultsdict, "patterns", bigstr);
     }
+    /*
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
         sprintf(result, "blink1 pattern add");
         DictionaryInsert(patterndict, pnamestr, pattstr);
@@ -451,21 +465,23 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
             DictionaryInsert(patterndict, pnamestr, pattstr);
         }
-        if( pnamestr[0] != 0 ) {
-            DictionaryGetValue(patterndict, pnamestr);
-        }
         */
+        if( pnamestr[0] != 0 ) {
+            const char* pstr = blink1_pattern_find(pnamestr);
+            sprintf("%s", pattstr, pstr);
+        }
+
         if( pattstr[0] == 0 ) { // no pattern
         }
 
         patternline_t pattern[32];
         int repeats = -1;
-        int pattlen = parsePattern( pattstr, &repeats, pattern);
+        int pattlen = parsePattern(pattstr, &repeats, pattern);
         if( !count ) { count = repeats; }
 
         blink1_device* dev = cache_getDeviceById(id);
 
-        msg("pattlen:%d, repeats:%d\n", pattlen,repeats);
+        msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattlen,repeats);
         for( int i=0; i<pattlen; i++ ) {
             patternline_t pat = pattern[i];
             blink1_setLEDN(dev, pat.ledn);
@@ -621,6 +637,28 @@ int main(int argc, char *argv[]) {
     patterndictc = DictionaryStandardStringCallbacks();
     patterndict = DictionaryCreate( 100, &patterndictc );
 
+    char bigstr[8000];
+    sprintf(bigstr, "[\n");
+    int n = 2;
+    for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
+        int nn = sprintf(bigstr+n, "  {\"name\": \"%s\", \"pattern\": \"%s\"},\n",
+                    blink1_patterns[i].name, blink1_patterns[i].str);
+        n += nn;
+    }
+    sprintf(bigstr+n-2, "\n]\n");
+
+    printf("bigstr:\n%s\n", bigstr);
+
+        /*
+    printf("available patterns:\n");
+    for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
+        printf("  %s -- %s\n", blink1_patterns[i].name, blink1_patterns[i].str);
+    }
+
+    const char* pattstr = blink1_pattern_find("red flash");
+    printf("pattstr: %s\n", pattstr==NULL ? "NONE" : pattstr);
+    */
+    
     // parse options
     int option_index = 0, opt;
     char* opt_str = "qvhp:H:U:A:Nl";

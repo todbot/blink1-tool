@@ -534,7 +534,12 @@ int hexread(uint8_t *buffer, char *string, int buflen);
 void hsbtorgb( rgb_t* rgb, uint8_t* hsb );
 
 /**
- *
+ * Parse an RGB color from a string in one of the forms:
+ * - "#ff00ff"
+ * - "FF00FF"
+ * - "255,0,255"
+ * - "0xff,0x00,0xff"
+ * All not case-sensitive
  */
 void parsecolor(rgb_t* color, char* colorstr);
 
