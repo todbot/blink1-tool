@@ -908,43 +908,25 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern )
     return pattlen;
 }
 
-int parsePattern_orig( char* str, int* repeats, patternline_t* pattern )
+/**
+ * Given a list of pattern lines, create the pattern string representation.
+ * The pased in str must be big enough to hold the string rep.
+ * Returns length of string created
+ */
+int toPatternString(patternline_t* pattern, int pattlen, int repeats, char* pattstr)
 {
-    remove_whitespace(str);
-    char* s;
-    s = strtok( str, ", ");
-    if(  s != NULL ) {
-      *repeats = strtol(s,NULL,0);
+    if(pattern == NULL) return 0;
+    int len = sprintf(pattstr, "%d", repeats);
+    for( int i=0; i<pattlen; i++ ) {
+        patternline_t pat = pattern[i];
+        rgb_t rgb = pat.color;
+        float t = pat.millis/1000;
+        int ledn = pat.ledn;
+        len = sprintf(pattstr+len, ",#%2.2x%2.2x%2.2x,%.2f,%d", rgb.r, rgb.g, rgb.b, t, ledn);
     }
-
-    int i=0;
-    s = strtok(NULL, ","); // prep next parse
-    while( s != NULL ) {
-        //printf("s:'%s'\n",s);
-        parsecolor( &pattern[i].color, s );
-
-        s = strtok(NULL, ",");
-        if( s == NULL ) {
-            msg("bad pattern on line %d: no time\n", i);
-            return -1;
-        }
-        pattern[i].millis = atof(s) * 1000;
-
-        s = strtok(NULL, ",");
-        if( s == NULL ) {
-            msg("bad pattern on line %d: no ledn\n",i);
-            return -1;
-        }
-        pattern[i].ledn = strtol(s,NULL,0);
-
-        i++;
-
-        s = strtok(NULL, ",");
-        if( s == NULL ) break;
-    }
-    int pattlen = i;
-    return pattlen;
+    return len;
 }
+
 
 /**
  * printf that can be shut up

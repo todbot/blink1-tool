@@ -56,15 +56,14 @@ static const int blink1_pattMaxes[] = {
   32, // BLINK1MK3
 };
 
-struct blink1_device_;
 
 #if USE_HIDAPI
-typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
+typedef struct hid_device_ blink1_device; /* opaque blink1 structure */
 #elif USE_HIDDATA
-typedef struct usbDevice   blink1_device; /**< opaque blink1 structure */
+typedef struct usbDevice   blink1_device; /* opaque blink1 structure */
 #else
 #warning "USE_HIDAPI or USE_HIDDATA wasn't defined, defaulting to USE_HIDAPI"
-typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
+typedef struct hid_device_ blink1_device; /* opaque blink1 structure */
 #endif
 
 
@@ -72,9 +71,9 @@ typedef struct hid_device_ blink1_device; /**< opaque blink1 structure */
 // -------- BEGIN PUBLIC API ----------
 //
 
-// Set blink1_lib_verbose to "1" to enable low-level debugging
+// Set blink1_lib_verbose to 1 to enable low-level debugging
 extern int blink1_lib_verbose;
-
+    
 typedef struct {
     uint8_t r; uint8_t g; uint8_t b;
 } rgb_t;
@@ -551,6 +550,13 @@ void parsecolor(rgb_t* color, char* colorstr);
  */
 int parsePattern( char* str, int* repeats, patternline_t* pattern );
 
+/**
+ * Given a list of pattern lines, create the pattern string representation.
+ * The pased in str must be big enough to hold the string rep.
+ * Returns length of string created
+ */
+int toPatternString(patternline_t* pattern, int pattlen, int repeats, char* pattstr);
+    
 /**
  * printf that can be shut up
  *
