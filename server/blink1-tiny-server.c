@@ -204,30 +204,6 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
     cache_return(dev);
 }
 
-/* // */
-/* // */
-/* void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d ) */
-/* { */
-/*     size_t                  i; */
-/*     struct DictionaryItem * item; */
-
-/*     if( d == NULL || d->items == NULL ) { return; } */
-
-/*     for( i = 0; i < d->size; i++ ) { */
-/*         item = d->items[ i ]; */
-
-/*         while( item ) { */
-/*             const char* v = item->value; */
-/*             if( v[0] == '[' || v[0] == '{' ) { // hack if value is json array/object */
-/*                 mg_http_printf_chunk(nc,"\"%s\": %s,\n", item->key,item->value); */
-/*             } else { */
-/*                 mg_http_printf_chunk(nc,"\"%s\": \"%s\",\n", item->key,item->value); */
-/*             } */
-/*             item = item->next; */
-/*         } */
-/*     } */
-/* } */
-
 static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
     //CLF format: 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
     time_t rawtime;
@@ -454,15 +430,13 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     /*
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
         sprintf(result, "blink1 pattern add");
-        DictionaryInsert(patterndict, pnamestr, pattstr);
-        DictionaryInsert(resultsdict, "pattern", pattstr);
     }
     */
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
         /*
         if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
-            DictionaryInsert(patterndict, pnamestr, pattstr);
+
         }
         */
         if( pnamestr[0] != 0 ) {
