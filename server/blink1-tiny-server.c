@@ -180,6 +180,7 @@ void cache_flush(int idle_threshold_millis)
         }
     }
 }
+
 void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
                     uint8_t ledn, uint8_t bright, char* status)
 {
@@ -206,6 +207,27 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
     cache_return(dev);
 }
 
+/**
+ * Find a pattern in the JSON obj list of patterns
+ * Simple linear search but list is small so doesn't matter
+ */
+const char* find_pattern(const char* patstr) {
+    printf("find_pattern: %s\n", patstr);
+    int c = json_array_get_count(json_patterns_arr);
+    printf("count: %d\n", c);
+    for(int i=0; i<c; i++) {
+        JSON_Object * json_obj = json_array_get_object(json_patterns_arr, i);
+        const char* name = json_object_get_string(json_obj, "name");
+        const char* pattern = json_object_get_string(json_obj, "pattern");
+        printf("- %d: name:%s pattern:%s\n", i, name, pattern);
+        if( strcmp(name, patstr) == 0) {
+            return pattern;
+        }
+    }
+    return NULL;
+}
+
+// Log HTTP requests in Common Log Format, enabled with "--logging"
 static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
     //CLF format: 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
     time_t rawtime;
@@ -247,7 +269,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
 
     mg_snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
-    // parse all possible query args (it's just easier this way)
+    // handle parsing all possible query args
     if( mg_http_get_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
         millis = strtod(tmpstr,NULL);
         json_object_set_number(json_root_obj, "millis", millis);
@@ -286,7 +308,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         strcpy(pnamestr, tmpstr);
         json_object_set_string(json_root_obj, "pname", pnamestr);
     }
-
+    
+    // handle URI endpoints
     if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
         sprintf(status, "blink1 status");
@@ -425,36 +448,37 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     }
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
-        /*
-        if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
 
+        if( pnamestr[0] != 0 ) {   // look up by name with 'pname' query arg
+            const char* pstr = find_pattern(pnamestr);
+            snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : "");
         }
-        */
-        if( pnamestr[0] != 0 ) {
-            const char* pstr = blink1_pattern_find(pnamestr);
-            sprintf("%s", pattstr, pstr);
+        
+        if( pattstr[0] != 0 ) { // lookup worked or using 'pattern' query arg
+            
+            patternline_t pattern[32];
+            int repeats = -1;
+            int pattlen = parsePattern(pattstr, &repeats, pattern);
+            if( count==0 ) { count = repeats; } // FIXME: unused 
+
+            blink1_device* dev = cache_getDeviceById(id);
+
+            msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattlen,repeats);
+            for( int i=0; i<pattlen; i++ ) {
+                patternline_t pat = pattern[i];
+                rgb = pat.color;
+                blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
+                blink1_setLEDN(dev, pat.ledn);
+                msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
+                blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
+            }
+            blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
+            cache_return(dev);
         }
-
-        if( pattstr[0] == 0 ) { // no pattern
+        else {
+            sprintf(status, "blink1 pattern play error: bad or no 'pname' or 'pattern' query arg");
         }
-
-        patternline_t pattern[32];
-        int repeats = -1;
-        int pattlen = parsePattern(pattstr, &repeats, pattern);
-        if( !count ) { count = repeats; }
-
-        blink1_device* dev = cache_getDeviceById(id);
-
-        msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattlen,repeats);
-        for( int i=0; i<pattlen; i++ ) {
-            patternline_t pat = pattern[i];
-            blink1_setLEDN(dev, pat.ledn);
-            msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
-                  i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
-            blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
-        }
-        blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
-        cache_return(dev);
     }
     else if( mg_vcmp(uri, "/blink1/pattern/stop") == 0 ) {
         sprintf(status, "blink1 pattern stop");

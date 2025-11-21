@@ -364,10 +364,15 @@ int blink1_setStartupParams( blink1_device* dev, uint8_t bootmode,
 
 /**
  * Tell blink(1) to reset into bootloader.
- * mk3 devices only
+ * @note: only for mk3+
  */
 int blink1_bootloaderGo( blink1_device* dev );
 
+/**
+ * Lock the ability to go into bootloader.
+ * (bootloader then only by hardware modification)
+ * @note:  only for mk3+
+ */
 int blink1_bootloaderLock( blink1_device* dev );
 
 /**
@@ -401,6 +406,7 @@ int blink1_degamma(int n);
 
 /**
  * Using a brightness value, update an r,g,b triplet
+ * 'brightness' ranges from 0-255, if 0, no changes occur
  * Modifies r,g,b in place
  */
 void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b);
@@ -416,6 +422,7 @@ void blink1_sleep(uint32_t delayMillis);
  * @return blink1 VID
  */
 int blink1_vid(void);  // return VID for blink(1)
+
 /**
  * Product ID for blink1 devices.
  * @return blink1 PID
@@ -518,12 +525,12 @@ const int blink1_getPattMax(blink1_device* dev);
   
   
 /**
- *
+ * Take an array of bytes and spit them out as a hex string to fp
  */
 void hexdump(FILE* fp, uint8_t *buffer, int len);
 
 /**
- *
+ * Parse a comma-delimited string containing numbers (dec,hex) into a byte array
  */
 int hexread(uint8_t *buffer, char *string, int buflen);
 

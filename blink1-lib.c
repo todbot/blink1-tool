@@ -565,7 +565,10 @@ int blink1_readNote( blink1_device* dev, uint8_t noteid,  uint8_t** notebuf)
     return rc;
 }
 
-// only for mk3
+/**
+ * Tell blink(1) to reset into bootloader.
+ * @note: only for mk3+
+ */
 int blink1_bootloaderGo( blink1_device* dev )
 {
   uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'G', 'o','B','o','o','t',0 };
@@ -583,7 +586,11 @@ int blink1_bootloaderGo( blink1_device* dev )
   return rc;  // >0 on good completion
 }
 
-// only for mk3
+/**
+ * Lock the ability to go into bootloader.
+ * (bootloader then only by hardware modification)
+ * @note:  only for mk3+
+ */
 int blink1_bootloaderLock( blink1_device* dev )
 {
   uint8_t buf[blink1_buf2_size] = { blink1_report2_id, 'L', 'o','c','k','B','o','o','t','l','o','a','d' };
@@ -645,6 +652,7 @@ void blink1_enableDegamma()
 {
     blink1_enable_degamma = 1;
 }
+
 void blink1_disableDegamma()
 {
     blink1_enable_degamma = 0;
@@ -652,6 +660,7 @@ void blink1_disableDegamma()
 
 /**
  * Using a brightness value, update an r,g,b triplet
+ * 'brightness' ranges from 0-255, if 0, no changes occur
  * Modifies r,g,b in place
  */
 void blink1_adjustBrightness( uint8_t brightness, uint8_t* r, uint8_t* g, uint8_t* b)
@@ -758,7 +767,9 @@ void blink1_sleep(uint32_t millis)
 // blink1 utility api
 //
 
-// take an array of bytes and spit them out as a hex string
+/**
+ * Take an array of bytes and spit them out as a hex string to fp
+ */
 void hexdump(FILE* fp, uint8_t *buffer, int len)
 {
     int     i;
@@ -778,7 +789,9 @@ void hexdump(FILE* fp, uint8_t *buffer, int len)
         fprintf(fp, "\n");
 }
 
-// parse a comma-delimited string containing numbers (dec,hex) into a byte arr
+/**
+ * Parse a comma-delimited string containing numbers (dec,hex) into a byte array
+ */
 int hexread(uint8_t *buffer, char *string, int buflen)
 {
     char    *s;
