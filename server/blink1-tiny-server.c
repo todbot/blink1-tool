@@ -89,12 +89,13 @@ void usage()
 "Usage: \n"
 "  %s [options]\n"
 "where [options] can be:\n"
-"  --port port, -p port           port to listen on (default %d)\n"
-"  --host host, -H host           host to listen on ('127.0.0.1' or '0.0.0.0')\n"
-"  --no-html                      do not serve static HTML help\n"
-"  --logging                      log accesses to stdout\n"
-"  --version                      version of this program\n"
-"  --help, -h                     this help page\n"
+"  --port port, -p port       port to listen on (default %d)\n"
+"  --host host, -H host       host to listen on ('127.0.0.1' or '0.0.0.0')\n"
+"  --no-html                  do not serve static HTML help\n"
+"  --logging                  log accesses to stdout\n"
+"  --quiet, -q                quiet non-logging messages (useful with --logging)\n"            
+"  --version                  version of this program\n"
+"  --help, -h                 this help page\n"
 "\n",
         blink1_server_name, http_listen_port);
 
@@ -212,15 +213,12 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
  * Simple linear search but list is small so doesn't matter
  */
 const char* find_pattern(const char* patstr) {
-    printf("find_pattern: %s\n", patstr);
     int c = json_array_get_count(json_patterns_arr);
-    printf("count: %d\n", c);
     for(int i=0; i<c; i++) {
         JSON_Object * json_obj = json_array_get_object(json_patterns_arr, i);
         const char* name = json_object_get_string(json_obj, "name");
         const char* pattern = json_object_get_string(json_obj, "pattern");
-        printf("- %d: name:%s pattern:%s\n", i, name, pattern);
-        if( strcmp(name, patstr) == 0) {
+        if(strcmp(name, patstr) == 0) {
             return pattern;
         }
     }
@@ -455,26 +453,27 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         }
         
         if( pattstr[0] != 0 ) { // lookup worked or using 'pattern' query arg
-            
             patternline_t pattern[32];
             int repeats = -1;
             int pattlen = parsePattern(pattstr, &repeats, pattern);
             if( count==0 ) { count = repeats; } // FIXME: unused 
-
-            blink1_device* dev = cache_getDeviceById(id);
-
-            msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattlen,repeats);
+            
+            //msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattstr, pattlen, repeats);
+            
+            blink1_device* dev = cache_getDeviceById(id);           
             for( int i=0; i<pattlen; i++ ) {
                 patternline_t pat = pattern[i];
                 rgb = pat.color;
                 blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
                 blink1_setLEDN(dev, pat.ledn);
-                msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
-                    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
+                //msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                //    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
                 blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
             }
+            msg("  playing pattern %s on blink1\n",pattstr);
             blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
             cache_return(dev);
+            json_object_set_string(json_root_obj, "pattern", pattstr);
         }
         else {
             sprintf(status, "blink1 pattern play error: bad or no 'pname' or 'pattern' query arg");
@@ -494,7 +493,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         if( millis==0 ) { millis = 200; }
 
         blink1_device* dev = cache_getDeviceById(id);
-        //blink1_adjustBrightness( bright, &r, &g, &b);
+        blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
         //msg("rgb:%d,%d,%d\n",r,g,b);
         for( int i=0; i<count; i++ ) {
             blink1_fadeToRGBN( dev, millis/2, rgb.r,rgb.g,rgb.b, ledn );
@@ -608,7 +607,7 @@ int main(int argc, char *argv[]) {
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand(time(NULL) * getpid());
 
-    // populate the patterns array
+    // populate the patterns array into JSON objects
     int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
     json_patterns_val = json_value_init_array();
     json_patterns_arr = json_array(json_patterns_val);
@@ -625,8 +624,8 @@ int main(int argc, char *argv[]) {
     char* opt_str = "qvhp:H:U:A:Nl";
     static struct option loptions[] = {
       //{"verbose",    optional_argument, 0,      'v'},
-      //{"quiet",      optional_argument, 0,      'q'},
       //{"baseurl",    required_argument, 0,      'U'},
+        {"quiet",      optional_argument, 0,      'q'},
         {"host",       required_argument, 0,      'H'},
         {"port",       required_argument, 0,      'p'},
         {"no-html",    no_argument,       0,      'N'},
@@ -655,6 +654,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'l':
             enable_logging = true;
+            break;
+        case 'q':
+            msg_setquiet(1);
             break;
         case 'H':
             strncpy(http_listen_host, optarg, sizeof(http_listen_host));
@@ -689,13 +691,6 @@ int main(int argc, char *argv[]) {
 
     snprintf(http_listen_url, sizeof(http_listen_url), "http://%s:%d/",
            http_listen_host, http_listen_port);
-
-    // if( s_http_server_opts.document_root ) {
-    // printf("  serving static HTML %s (with%s root index)\n",
-    //            //s_http_server_opts.document_root, serve_index ? "" : "out");
-    //            s_http_server_opts.fs = &mg_fs_packed; // Set packed ds as a file system
-    //            mg_http_serve_dir(c, ev_data, &opts);
-    // // }
 
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
