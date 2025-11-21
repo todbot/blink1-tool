@@ -198,39 +198,52 @@ you may already have everything you need to compile `blink1-tool`.
 ### Linux (Debian-flavored, including Raspberry Pi)
 
 - In a terminal, install pre-reqs and build:
-- `sudo apt-get install libudev-dev pkg-config build-essential`
-- `sudo apt-get install libusb-1.0-0-dev`  (optional, only for libusb variant)
-- `cd blink1-tool`
-- `make`
-- `HIDAPI_TYPE=libusb make` (if you instead you want libusb version)
+
+  ```shell
+  sudo apt install build-essential git pkg-config libudev-dev
+  sudo apt install libusb-1.0-0-dev  # (optional, only for libusb variant)
+  cd blink1-tool
+  make blink1-tool
+  make blink1-tiny-server
+  HIDAPI_TYPE=libusb make blink1-tool # (if you instead you want libusb version)
+  ```
 
 ### FreeBSD
 
 - Install pre-reqs and build:
-- `sudo pkg install gmake gcc git libiconv`
-- `cd blink1-tool`
-- `gmake`
-- `sudo ./blink1-tool --red --flash 3`
-- If you'd like `devd` support, see the `devd-51-blink1.conf` file. 
+
+  ```shell
+  sudo pkg install gmake gcc git libiconv
+  cd blink1-tool
+  gmake`
+  sudo ./blink1-tool --red --flash 3
+  ```
+  
+If you'd like `devd` support, see the `devd-51-blink1.conf` file. 
 
 ### MacOS
 
 - Xcode
 - In Terminal, setup Xcode and build:
-- `xcode-select --install`
-- `cd blink1-tool`
-- `make`
+
+  ```shell
+  xcode-select --install
+  cd blink1-tool
+  make blink1-tool
+  ```
 
 ### Windows
 
 - Install Visual Studio 2017 or 2019
 - Install MSYS2: https://www.msys2.org/
 - In MSYS2 bash shell:
-- `pacman -S base-devel make git zip unzip mingw-w64-x86_64-gcc` 
-- `export PATH=${PATH}:/c/msys64/mingw64/bin`
-- `export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"`
-- `export PATH=${PATH}:'/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64'"`
-- `make`
+  ```
+  pacman -S base-devel make git zip unzip mingw-w64-x86_64-gcc
+  export PATH=${PATH}:/c/msys64/mingw64/bin
+  export PATH=${PATH}:"/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
+  export PATH=${PATH}:'/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64'"
+  make
+  ```
 
 ### Other OSes
 
