@@ -53,9 +53,11 @@ static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
 
+JSON_Value* json_patterns_val;
+JSON_Array * json_patterns_arr;
+
 typedef struct _url_info {
-    char url[100];
-    char desc[100];
+    char url[100];  char desc[100];
 } url_info;
 
 static const url_info supported_urls[]
@@ -413,25 +415,14 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
              mg_vcmp(uri, "/blink1/pattern/") == 0 ||
              mg_vcmp(uri, "/blink1/patterns/") == 0 ) {       
         sprintf(status, "blink1 pattern list");
-        int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
-        
-        JSON_Value* json_patterns_val = json_value_init_array();
-        JSON_Array * json_patterns_arr = json_array(json_patterns_val);
-        for( int i=0; i< cnt; i++ ) {
-            JSON_Value* patt_entry_val = json_value_init_object();
-            JSON_Object* patt_entry_obj = json_object(patt_entry_val);
-            json_object_set_string(patt_entry_obj, "name", blink1_patterns[i].name);
-            json_object_set_string(patt_entry_obj, "pattern", blink1_patterns[i].str);
-            json_array_append_value(json_patterns_arr, patt_entry_val);
-        }
+       
         json_object_set_value(json_root_obj, "patterns", json_patterns_val);
 
     }
-    /*
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
-        sprintf(result, "blink1 pattern add");
+        sprintf(status, "blink1 pattern add");
+        
     }
-    */
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
         /*
@@ -529,7 +520,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
 
     
     // check if we've handled json        
-    if( status[0] != '\0' ) {  // json handled
+    if( status[0] != '\0' ) {  // status set, json was handled
         resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
         mg_printf(c, "HTTP/1.1 %d OK\r\n", resp_code);
@@ -560,14 +551,12 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                 mg_http_serve_dir(c, ev_data, &opts);
             }
         }
-        else if ( mg_vcmp( uri, "/") == 0 ) {
-            sprintf(status, "Welcome to %s api server. All URIs start with '/blink1'.", blink1_server_name);
-            //sprintf(status, "%s. \nSupported URIs:\n", status);
-            //for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
-            //    sprintf(status+strlen(status), " %s - %s\n",
-            //            supported_urls[i].url, supported_urls[i].desc);
+        else if ( mg_vcmp( uri, "/") == 0 ) { // non-html request for homepage
+            resp_code = 200;
+            mg_http_reply(c, resp_code, "",
+                          "Welcome to %s api server. All endpointss start with '/blink1'.\r\n",
+                          blink1_server_name);
         }
-
         else {
             mg_http_reply(c, 404, NULL, "Not found\n");        
         }
@@ -593,7 +582,19 @@ int main(int argc, char *argv[]) {
     int port;
     
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
-    srand( time(NULL) * getpid() );
+    srand(time(NULL) * getpid());
+
+    // populate the patterns array
+    int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
+    json_patterns_val = json_value_init_array();
+    json_patterns_arr = json_array(json_patterns_val);
+    for( int i=0; i< cnt; i++ ) {
+        JSON_Value* patt_entry_val = json_value_init_object();
+        JSON_Object* patt_entry_obj = json_object(patt_entry_val);
+        json_object_set_string(patt_entry_obj, "name", blink1_patterns[i].name);
+        json_object_set_string(patt_entry_obj, "pattern", blink1_patterns[i].str);
+        json_array_append_value(json_patterns_arr, patt_entry_val);
+    }
     
     // parse options
     int option_index = 0, opt;

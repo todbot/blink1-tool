@@ -452,6 +452,7 @@ int blink1_readPatternLine(blink1_device *dev, uint16_t* fadeMillis,
     return blink1_readPatternLineN( dev, fadeMillis, r,g,b, &ledn, pos);
 }
 
+//
 int blink1_readPatternLineN(blink1_device *dev, uint16_t* fadeMillis,
                             uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* ledn,
                             uint8_t pos)
