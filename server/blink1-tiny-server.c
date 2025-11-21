@@ -7,13 +7,13 @@
  *
  * Example supported URLs:
  *
- *  localhost:8000/blink1/on
- *  localhost:8000/blink1/off
- *  localhost:8000/blink1/red
- *  localhost:8000/blink1/green
- *  localhost:8000/blink1/blue
- *  localhost:8000/blink1/blink?rgb=%23ff0ff&time=1.0&count=3
- *  localhost:8000/blink1/fadeToRGB?rgb=%23ff00ff&time=1.0
+ *  localhost:8934/blink1/on
+ *  localhost:8934/blink1/off
+ *  localhost:8934/blink1/red
+ *  localhost:8934/blink1/green
+ *  localhost:8934/blink1/blue
+ *  localhost:8934/blink1/blink?rgb=%23ff0ff&time=1.0&count=3
+ *  localhost:8934/blink1/fadeToRGB?rgb=%23ff00ff&time=1.0
  *
  *
  */
@@ -39,9 +39,9 @@ const char* blink1_server_version = BLINK1_VERSION;
 static bool show_html = true;
 static bool enable_logging = false;
 
-static char http_listen_host[120] = "localhost"; // or 0.0.0.0 for any
-static int http_listen_port = 8934;  // was 8000
-static char http_listen_url[100]; // will be "http://localhost:8000"
+static char http_listen_host[120] = "localhost";  // or 0.0.0.0 for any
+static int http_listen_port = 8934;               // was 8000
+static char http_listen_url[100];             // will be "http://localhost:8934"
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
@@ -53,32 +53,29 @@ static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
 
-//DictionaryCallbacks patterndictc;
-//DictionaryRef       patterndict; // init'd in main
-
 typedef struct _url_info {
     char url[100];
     char desc[100];
 } url_info;
 
-// FIXME: how to make Emacs format these better?
 static const url_info supported_urls[]
 = {
-    {"/blink1/",              "simple status page"},
-    {"/blink1/id",            "get blink1 serial number, list all found blink1 serials"},
-    {"/blink1/on",            "turn blink(1) full bright white"},
-    {"/blink1/off",           "turn blink(1) dark"},
-    {"/blink1/red",           "turn blink(1) solid red"},
-    {"/blink1/green",         "turn blink(1) solid green"},
-    {"/blink1/blue",          "turn blink(1) solid blue"},
-    {"/blink1/cyan",          "turn blink(1) solid cyan"},
-    {"/blink1/yellow",        "turn blink(1) solid yellow"},
-    {"/blink1/magenta",       "turn blink(1) solid magenta"},
-    {"/blink1/fadeToRGB",     "turn blink(1) specified RGB color by 'rgb' arg"},
-    {"/blink1/lastColor",     "return the last rgb color sent to blink(1)"},
-    {"/blink1/blink",         "blink the blink(1) the specified RGB color"},
-    {"/blink1/pattern/play",  "play color pattern specified by 'pattern' arg"},
-    {"/blink1/pattern/stop",  "stop color pattern playing"},
+    {"/blink1/",              "Simple status page"},
+    {"/blink1/id",            "Get blink1 serial number, list all found blink1 serials"},
+    {"/blink1/on",            "Turn blink(1) full bright white"},
+    {"/blink1/off",           "Turn blink(1) dark"},
+    {"/blink1/red",           "Turn blink(1) solid red"},
+    {"/blink1/green",         "Turn blink(1) solid green"},
+    {"/blink1/blue",          "Turn blink(1) solid blue"},
+    {"/blink1/cyan",          "Turn blink(1) solid cyan"},
+    {"/blink1/yellow",        "Turn blink(1) solid yellow"},
+    {"/blink1/magenta",       "Turn blink(1) solid magenta"},
+    {"/blink1/fadeToRGB",     "Turn blink(1) specified RGB color by 'rgb' arg"},
+    {"/blink1/lastColor",     "Return the last rgb color sent to blink(1)"},
+    {"/blink1/blink",         "Blink the blink(1) a specified 'rgb' color"},
+    {"/blink1/patterns",      "List available patterns"},
+    {"/blink1/pattern/play",  "Play color pattern specified by 'pname' or 'pattern' arg"},
+    {"/blink1/pattern/stop",  "Stop color pattern playing"},
     {"/blink1/random",        "turn the blink(1) a random color"},
     {"/blink1/servertickle/on","Enable servertickle, uses 'millis' or 'time' arg"},
     {"/blink1/servertickle/off","Disable servertickle"}
@@ -114,6 +111,7 @@ void usage()
 "  'millis' -- milliseconds to fade, or blink, e.g. 'millis=500'\n"
 "  'count'  -- number of times to blink, for /blink1/blink, e.g. 'count=3'\n"
 "  'pattern'-- color pattern string (e.g. '3,00ffff,0.2,0,000000,0.2,0')\n"
+"  'pname'  -- color pattern name from pattern list (e.g. 'red flash') \n"
 "\n"
 "Examples: \n"
 "  /blink1/blue?bright=127 -- set blink1 blue, at half-intensity \n"
