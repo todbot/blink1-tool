@@ -22,15 +22,11 @@
 #include <sys/time.h>
 #include <signal.h>
 
-#include "mongoose.h"
+#include "mongoose.h"  // HTTP server
+#include "parson.h"    // JSON build and parse
 
 #include "blink1-lib.h"
 #include "blink1-lib-patterns.h"
-
-// uses Dictionary from https://github.com/macmade/Dictionary
-#include "Dictionary.h"
-#include "Dictionary.c"
-//#include "dict.h"
 
 // normally this is obtained from git tags and filled out by the Makefile
 #ifndef BLINK1_VERSION
@@ -57,11 +53,10 @@ static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
 
-DictionaryCallbacks patterndictc;
-DictionaryRef       patterndict; // init'd in main
+//DictionaryCallbacks patterndictc;
+//DictionaryRef       patterndict; // init'd in main
 
-typedef struct _url_info
-{
+typedef struct _url_info {
     char url[100];
     char desc[100];
 } url_info;
@@ -211,29 +206,29 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
     cache_return(dev);
 }
 
-//
-//
-void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d )
-{
-    size_t                  i;
-    struct DictionaryItem * item;
+/* // */
+/* // */
+/* void DictionaryPrintAsJsonMg(struct mg_connection *nc, DictionaryRef d ) */
+/* { */
+/*     size_t                  i; */
+/*     struct DictionaryItem * item; */
 
-    if( d == NULL || d->items == NULL ) { return; }
+/*     if( d == NULL || d->items == NULL ) { return; } */
 
-    for( i = 0; i < d->size; i++ ) {
-        item = d->items[ i ];
+/*     for( i = 0; i < d->size; i++ ) { */
+/*         item = d->items[ i ]; */
 
-        while( item ) {
-            const char* v = item->value;
-            if( v[0] == '[' || v[0] == '{' ) { // hack if value is json array/object
-                mg_http_printf_chunk(nc,"\"%s\": %s,\n", item->key,item->value);
-            } else {
-                mg_http_printf_chunk(nc,"\"%s\": \"%s\",\n", item->key,item->value);
-            }
-            item = item->next;
-        }
-    }
-}
+/*         while( item ) { */
+/*             const char* v = item->value; */
+/*             if( v[0] == '[' || v[0] == '{' ) { // hack if value is json array/object */
+/*                 mg_http_printf_chunk(nc,"\"%s\": %s,\n", item->key,item->value); */
+/*             } else { */
+/*                 mg_http_printf_chunk(nc,"\"%s\": \"%s\",\n", item->key,item->value); */
+/*             } */
+/*             item = item->next; */
+/*         } */
+/*     } */
+/* } */
 
 static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
     //CLF format: 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
@@ -268,30 +263,30 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     uint8_t count = 0;
     int resp_code = 404;  // no found by default
 
-    DictionaryCallbacks resultsdictc = DictionaryStandardStringCallbacks();
-    DictionaryRef resultsdict = DictionaryCreate( 100, &resultsdictc );
+    JSON_Value *json_root_val = json_value_init_object();
+    JSON_Object *json_root_obj = json_value_get_object(json_root_val);
 
     struct mg_str* uri = &hm->uri;
     struct mg_str* querystr = &hm->query;
 
     mg_snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
 
-    // echoing uri could potentially be used for XSS attack issue #72
-    // DictionaryInsert(resultsdict, "uri", uri_str); 
-    DictionaryInsert(resultsdict, "version", blink1_server_version);
-
     // parse all possible query args (it's just easier this way)
     if( mg_http_get_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
         millis = strtod(tmpstr,NULL);
+        json_object_set_number(json_root_obj, "millis", millis);
     }
     if( mg_http_get_var(querystr, "time", tmpstr, sizeof(tmpstr)) > 0 ) {
         millis = 1000 * strtof(tmpstr,NULL);
+        json_object_set_number(json_root_obj, "millis", millis);
     }
     if( mg_http_get_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
         parsecolor( &rgb, tmpstr);
+        json_object_set_string(json_root_obj, "rgb", tmpstr);
     }
     if( mg_http_get_var(querystr, "count", tmpstr, sizeof(tmpstr)) > 0 ) {
         count = strtod(tmpstr,NULL);
+        json_object_set_number(json_root_obj, "count", count);
     }
     if( mg_http_get_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
         char* pch;
@@ -301,24 +296,28 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     }
     if( mg_http_get_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
         ledn = strtod(tmpstr,NULL);
+        json_object_set_number(json_root_obj, "ledn", ledn);
     }
     if( mg_http_get_var(querystr, "bright", tmpstr, sizeof(tmpstr)) > 0 ) {
         bright = strtod(tmpstr,NULL);
+        json_object_set_number(json_root_obj, "bright", bright);
     }
     if( mg_http_get_var(querystr, "pattern", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pattstr, tmpstr);
+        json_object_set_string(json_root_obj, "pattern", pattstr);
     }
     if( mg_http_get_var(querystr, "pname", tmpstr, sizeof(tmpstr)) > 0 ) {
         strcpy(pnamestr, tmpstr);
+        json_object_set_string(json_root_obj, "pname", pnamestr);
     }
 
     if( mg_vcmp( uri, "/blink1") == 0 ||
              mg_vcmp( uri, "/blink1/") == 0  ) {
         sprintf(status, "blink1 status");
+        uint16_t msecs = 0;
         blink1_device* dev = cache_getDeviceById(id);
         if( dev ) {
-            uint16_t msecs;
-            int rc = blink1_readRGB(dev, &msecs, &rgb.r,&rgb.g,&rgb.b, 0 );
+            int rc = blink1_readRGB(dev, &msecs, &rgb.r,&rgb.g,&rgb.b, 0);
             if( rc==-1 ) {
                 printf("error on readRGB\n");
             }
@@ -329,18 +328,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
              mg_vcmp( uri, "/blink1/lastcolor") == 0 ) {
         sprintf(status, "blink1 lastColor");
         
+        uint16_t msecs = 0;
         blink1_device* dev = cache_getDeviceById(id);
         if( dev ) {
-           uint16_t msecs;
-           int rc = blink1_readRGB(dev, &msecs, &rgb.r, &rgb.g, &rgb.b, 0 );
+           int rc = blink1_readRGB(dev, &msecs, &rgb.r, &rgb.g, &rgb.b, 0);
            if( rc==-1 ) {
                printf("error on readRGB\n");
            }
            cache_return(dev);
         }
         
-        sprintf(tmpstr, "#%2.2x%2.2x%2.2x", last_rgb.r, last_rgb.g, last_rgb.b );
-        DictionaryInsert(resultsdict, "lastColor", tmpstr);
+        sprintf(tmpstr, "#%2.2x%2.2x%2.2x", last_rgb.r, last_rgb.g, last_rgb.b);
+        json_object_set_string(json_root_obj, "lastColor", tmpstr);
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
              mg_vcmp( uri, "/blink1/id/") == 0 ||
@@ -351,18 +350,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         cache_flush(0);
         int c = blink1_enumerate();
 
-        sprintf(tmpstr,"[");
+        JSON_Value* json_serials_val = json_value_init_array();
+        JSON_Array * json_serials_arr = json_array(json_serials_val);
         for( int i=0; i< c; i++ ) {
-            sprintf(tmpstr+strlen(tmpstr), "\"%s\"", blink1_getCachedSerial(i));
-            if( i!=c-1 ) { sprintf(tmpstr+strlen(tmpstr), ","); } // ugh
+            sprintf(tmpstr, "%s", blink1_getCachedSerial(i));
+            json_array_append_string(json_serials_arr, tmpstr);
         }
-        sprintf(tmpstr+strlen(tmpstr), "]");
-        DictionaryInsert(resultsdict, "blink1_serialnums", tmpstr);
+        json_object_set_value(json_root_obj, "blink1_serialnums", json_serials_val);
 
         const char* blink1_serialnum = blink1_getCachedSerial(0);
         if( blink1_serialnum ) {
             sprintf(tmpstr, "%s00000000", blink1_serialnum);
-            DictionaryInsert(resultsdict, "blink1_id", tmpstr);
+            json_object_set_string(json_root_obj, "blink1_id", tmpstr);
         }
     }
     else if( mg_vcmp( uri, "/blink1/off") == 0 ) {
@@ -411,17 +410,17 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     }
     else if( mg_vcmp(uri, "/blink1/blink") == 0 ) {
         sprintf(status, "blink1 blink");
-        if( rgb.r==0 && rgb.g==0 && rgb.b==0 ) { rgb.r=255;rgb.g=255;rgb.b=255; }
+        if( rgb.r==0 && rgb.g==0 && rgb.b==0 ) { rgb.r=255; rgb.g=255; rgb.b=255; }
         if( count==0 ) { count = 3; }
         if( millis==0 ) { millis = 300; }
         int repeats = -1;
         patternline_t pattern[32];
-        blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
+        blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
         sprintf(tmpstr, "%d,#%2.2x%2.2x%2.2x,%f,%d,#000000,%f,0",
                 count, rgb.r,rgb.g,rgb.b, (float)millis/1000.0, ledn,
                 (float)millis/1000.0);
         msg("pattstr:%s\n", tmpstr);
-        int pattlen = parsePattern( tmpstr, &repeats, pattern);
+        int pattlen = parsePattern(tmpstr, &repeats, pattern);
 
         blink1_device* dev = cache_getDeviceById(id);
         for( int i=0; i<pattlen; i++ ) {
@@ -438,19 +437,21 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     else if( mg_vcmp(uri, "/blink1/pattern") == 0 ||
              mg_vcmp(uri, "/blink1/patterns") == 0 ||
              mg_vcmp(uri, "/blink1/pattern/") == 0 ||
-             mg_vcmp(uri, "/blink1/patterns/") == 0 ) {
-        //DictionaryInsert(resultsdict, "patterns", bigstr);
+             mg_vcmp(uri, "/blink1/patterns/") == 0 ) {       
         sprintf(status, "blink1 pattern list");
-        char bigstr[8000];
-        sprintf(bigstr, "[\n");
-        int n = 2;
-        for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
-            int nn = sprintf(bigstr+n, "  {\"name\": \"%s\", \"pattern\": \"%s\"},\n",
-                             blink1_patterns[i].name, blink1_patterns[i].str);
-            n += nn;
+        int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
+        
+        JSON_Value* json_patterns_val = json_value_init_array();
+        JSON_Array * json_patterns_arr = json_array(json_patterns_val);
+        for( int i=0; i< cnt; i++ ) {
+            JSON_Value* patt_entry_val = json_value_init_object();
+            JSON_Object* patt_entry_obj = json_object(patt_entry_val);
+            json_object_set_string(patt_entry_obj, "name", blink1_patterns[i].name);
+            json_object_set_string(patt_entry_obj, "pattern", blink1_patterns[i].str);
+            json_array_append_value(json_patterns_arr, patt_entry_val);
         }
-        sprintf(bigstr+n-2, "\n]");
-        DictionaryInsert(resultsdict, "patterns", bigstr);
+        json_object_set_value(json_root_obj, "patterns", json_patterns_val);
+
     }
     /*
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
@@ -489,7 +490,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                   i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
             blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
         }
-        blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
+        blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
         cache_return(dev);
     }
     else if( mg_vcmp(uri, "/blink1/pattern/stop") == 0 ) {
@@ -499,8 +500,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         blink1_playloop(dev, 0, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
         cache_return(dev);
     }
-    else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ||
-             mg_vcmp( uri, "/blink1/blink1server") == 0 ) {
+    // like "/blink1/blink" but does it on the server
+    else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
         sprintf(status, "blink1 blinkserver");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
@@ -528,7 +529,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         blink1_device* dev = cache_getDeviceById(id);
         blink1_serverdown( dev, st_on, millis, st_off_state, start_pos, end_pos );
         cache_return(dev);
-        DictionaryInsert(resultsdict, "on", st_on? "1":"0");
+
+        json_object_set_string(json_root_obj, "on", st_on? "1":"0");
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
         sprintf(status, "blink1 random");
@@ -546,7 +548,15 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         cache_return(dev);
     }
 
-    // check if we've handled json
+    // set JSON values that exist for all requests
+    json_object_set_string(json_root_obj, "status", status);
+    json_object_set_string(json_root_obj, "version", blink1_server_version);
+    sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r, rgb.g, rgb.b);
+    json_object_set_string(json_root_obj, "rgb", tmpstr);
+    json_object_set_number(json_root_obj, "millis", millis);
+
+    
+    // check if we've handled json        
     if( status[0] != '\0' ) {  // json handled
         resp_code = 200;
         sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
@@ -555,33 +565,12 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         mg_printf(c, "X-Content-Type-Options: nosniff\r\n");
         mg_printf(c, "Transfer-Encoding: chunked\r\n\r\n");
         
-        mg_http_printf_chunk(c,
-                             "{\n");
+        char* json_string = json_serialize_to_string_pretty(json_root_val);
+        mg_http_printf_chunk(c, json_string);
 
-        DictionaryPrintAsJsonMg(c, resultsdict); // the json results 
-
-        // these aren't in the resultsdict because storing numbers is annoying
-        mg_http_printf_chunk(c,
-                             "\"millis\": %d,\n"
-                             "\"time\": %g,\n"
-                             "\"rgb\": \"%s\",\n"
-                             "\"ledn\": %d,\n"
-                             "\"bright\": %d,\n"
-                             "\"count\": %d,\n"
-                             "\"status\":  \"%s\"\n",
-                             millis,
-                            (millis/1000.0),
-                             tmpstr,
-                             ledn,
-                             bright,
-                             count,
-                             status
-                             );
-
-        mg_http_printf_chunk(c,
-                             "}\n"
-                             );
-
+        json_free_serialized_string(json_string);
+        json_value_free(json_root_val);
+    
         mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
     }
     else {
@@ -633,31 +622,6 @@ int main(int argc, char *argv[]) {
     
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand( time(NULL) * getpid() );
-
-    patterndictc = DictionaryStandardStringCallbacks();
-    patterndict = DictionaryCreate( 100, &patterndictc );
-
-    char bigstr[8000];
-    sprintf(bigstr, "[\n");
-    int n = 2;
-    for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
-        int nn = sprintf(bigstr+n, "  {\"name\": \"%s\", \"pattern\": \"%s\"},\n",
-                    blink1_patterns[i].name, blink1_patterns[i].str);
-        n += nn;
-    }
-    sprintf(bigstr+n-2, "\n]\n");
-
-    printf("bigstr:\n%s\n", bigstr);
-
-        /*
-    printf("available patterns:\n");
-    for( int i=0; i< sizeof(blink1_patterns)/sizeof(blink1_pattern_info); i++ ) {
-        printf("  %s -- %s\n", blink1_patterns[i].name, blink1_patterns[i].str);
-    }
-
-    const char* pattstr = blink1_pattern_find("red flash");
-    printf("pattstr: %s\n", pattstr==NULL ? "NONE" : pattstr);
-    */
     
     // parse options
     int option_index = 0, opt;
