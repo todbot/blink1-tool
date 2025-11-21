@@ -243,15 +243,15 @@ See Makefile for your platform
 
 
 ## Docker and blink(1)
-[this may be out of date after the repo move]
 
-To build the image from the `Dockerfile`
+To build the image from the `Dockerfile-ubuntu`
 
-- `docker build -t robtec/blink1 .`
+- `docker build -f Dockerfile-ubuntu -t todbot/blink1 .`
 
 Running the container
 
-- `docker run -d --privileged robtec/blink1`
+- `docker run --rm -it --privileged todbot/blink1 blink1-tool --on`
+- `docker run --rm -it --device /dev/bus/usb:/dev/bus/usb todbot/blink1 blink1-tool --on`
 
 Note the `--privileged` tag, docker needs this to access the hosts USB controllers
 

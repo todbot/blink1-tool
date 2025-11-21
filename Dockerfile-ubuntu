@@ -1,26 +1,41 @@
-FROM ubuntu
-MAINTAINER Rob Powell <rob.p.tec@gmail.com>
+FROM ubuntu:22.04 AS builder
 
-ENV DEBIAN_FRONTEND noninteractive
+LABEL maintainer="Tod Kurt <tod@todbot.com>"
+LABEL description="Build stage for blink1-tool"
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 
 RUN apt-get install -y \
         build-essential \
+        git \
         pkg-config \
-        libudev-dev
+        libudev-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/blink1
+
+# Copy local source code into container
+COPY . .
+
+RUN make clean && make
 
 
-RUN mkdir /home/blinkdev
+# --- Stage 2: Minimal runtime ---
+FROM ubuntu
 
-ENV HOME /home/blinkdev
+LABEL maintainer="Tod Kurt <tod@todbot.com>"
+LABEL description="Minimal runtime image for blink1-tool"
 
-COPY . ${HOME}/commandline
+# Copy the compiled binary from builder
+COPY --from=builder /opt/blink1/blink1-tool /usr/local/bin/blink1-tool
 
-WORKDIR ${HOME}/commandline
+# Install runtime dependencies (libusb)
+RUN apt-get update && apt-get install -y libusb-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN make
+# Default command
+CMD ["blink1-tool"]
 
-ENV PATH ${HOME}/commandline:${PATH}
 
-CMD ["blink1-tool", "-t 1000", "--random=100"]
