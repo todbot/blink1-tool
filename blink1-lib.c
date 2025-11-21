@@ -881,8 +881,11 @@ void parsecolor(rgb_t* color, char* colorstr)
  * - pattern array (contains {color,millis,ledn})
  * Returns pattern length or -1 if badly-formatted pattern
  */
-int parsePattern( char* str, int* repeats, patternline_t* pattern )
+int parsePattern(char* pattstr, int* repeats, patternline_t* pattern)
 {
+    char str[1000];
+    sprintf(str, "%s", pattstr);  // FIXME: check size
+    
     remove_whitespace(str);
     char* s;
     s = strtok( str, ", ");
