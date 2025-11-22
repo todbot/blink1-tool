@@ -451,27 +451,46 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             sprintf(status, "blink1 pattern add: error must specifiy both 'pname' and 'pattern' query args");
         }        
     }
+    else if( mg_vcmp(uri, "/blink1/pattern/del") == 0 ) {
+        sprintf(status, "blink1 pattern del");
+        if( pnamestr[0] != 0 ) { 
+            JSON_Status s = json_object_remove(json_patterns_obj, pnamestr);
+        }
+        else {
+            sprintf(status, "blink1 pattern del: error must specifiy 'pname' query arg");
+        }
+    }
+        
     // play a pattern on the blink1, from blink(1)'s RAM buffer
     // note: this behavior is different than Blink1Control, where the
     // app is playing the pattern, leaving the blink(1)'s RAM pattern alone
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
 
-        // look up by name with 'pname' query arg
-        if( pnamestr[0] != 0 ) {
+        // neither 'pname' or 'pattern' is specified
+        if( pnamestr[0] == 0 && pattstr[0] == 0 ) {
+            sprintf(status, "blink1 pattern play error: 'pname' or 'pattern' query args not specified");
+        }
+        // 'pname' specified
+        else if( pnamestr[0] != 0 ) { 
+            // look up by name with 'pname' query arg
             const char* pstr = json_object_get_string(json_patterns_obj, pnamestr);
-            snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : ""); 
+            snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : "");
+            // no pattern with that pname
+            if( pattstr[0] == 0 ) { 
+                sprintf(status, "blink1 pattern play error: no pattern for pname '%s'",pnamestr);
+            }
         }
         
-        // lookup worked or using 'pattern' query arg, so parse the pattern str
-        if( pattstr[0] != 0 ) {
+        if( pattstr[0] != 0 ) { 
+            // lookup worked or using 'pattern' query arg, so parse the pattern str
             patternline_t pattern[32];
             int repeats = -1;
             int pattlen = parsePattern(pattstr, &repeats, pattern);
             if( count==0 ) { count = repeats; } // FIXME: unused 
-            
+        
             //msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattstr, pattlen, repeats);
-            
+        
             blink1_device* dev = cache_getDeviceById(id);           
             for( int i=0; i<pattlen; i++ ) {
                 patternline_t pat = pattern[i];
@@ -486,9 +505,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
             cache_return(dev);
             json_object_set_string(json_root_obj, "pattern", pattstr);
-        }
-        else {
-            sprintf(status, "blink1 pattern play error: bad or no 'pname' or 'pattern' query arg");
         }
     }
     // since patterns play on the blink1, just stop any pattern playing
