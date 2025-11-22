@@ -443,8 +443,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         sprintf(status, "blink1 pattern add");
         if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
             // add entry to the global patterns list
-            // ... tbd
-            
+            json_object_set_string(json_patterns_obj, pnamestr, pattstr);            
             // add the resulting pattern to the JSON response
             json_object_set_string(json_root_obj, "pattern", pattstr);
         }
@@ -629,21 +628,7 @@ int main(int argc, char *argv[]) {
                                blink1_patterns[i].name,
                                blink1_patterns[i].str);
     }
-    
-    /*
-    // populate the patterns array into JSON objects
-    int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
-    json_patterns_val = json_value_init_array();
-    json_patterns_arr = json_array(json_patterns_val);
-    for( int i=0; i< cnt; i++ ) {
-        JSON_Value* patt_entry_val = json_value_init_object();
-        JSON_Object* patt_entry_obj = json_object(patt_entry_val);
-        json_object_set_string(patt_entry_obj, "name", blink1_patterns[i].name);
-        json_object_set_string(patt_entry_obj, "pattern", blink1_patterns[i].str);
-        json_array_append_value(json_patterns_arr, patt_entry_val);
-    }
-    */
-    
+
     // parse options
     int option_index = 0, opt;
     char* opt_str = "qvhp:H:U:A:Nl";
