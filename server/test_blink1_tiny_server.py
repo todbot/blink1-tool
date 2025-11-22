@@ -10,7 +10,7 @@ import json
 import sys
 import signal
 
-SERVER_CMD = ["./blink1-tiny-server", "--port", "8000"]
+SERVER_CMD = ["./blink1-tiny-server", "--port", "8000", "--quiet"]
 BASE_URL   = "http://localhost:8000"
 
 #
@@ -40,12 +40,10 @@ def run_test(name, func):
 def curl_get(path):
     """Return (exitcode, stdout) from curl GET."""
     url = BASE_URL + path
-    p = subprocess.run(
-        ["curl", "-s", "-f", url],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
+    p = subprocess.run( ["curl", "-s", "-f", url],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True)
     return p.returncode, p.stdout.strip()
 
 def curl_json(path):
@@ -71,7 +69,7 @@ def assert_json_field(data, path, expected):
     for p in path:
         cur = cur[p]
     if cur != expected:
-        raise AssertionError(f"JSON field {path} was {cur}, expected {expected}")
+        raise AssertionError(f"JSON field {path} was '{cur}', expected '{expected}'")
 
 
 def assert_any_matches(items, expected_pairs):
@@ -106,8 +104,10 @@ def test_server_alive():
 @test
 def test_blink1_id_json_valid():
     js = curl_json("/blink1/id")
-    if "blink1_id" not in js:
-        raise AssertionError("JSON missing 'blink1_id'")
+    assert_json_field(js, ["status"], "blink1 id")
+    # only if blink1 is plugged in
+    #if "blink1_id" not in js:
+    #    raise AssertionError("JSON missing 'blink1_id'")
 
 @test
 def test_patterns_contains_red_flash():
@@ -126,15 +126,22 @@ def test_patterns_contains_policecar():
                                         "pattern": "6,#ff0000,0.3,1,#0000ff,0.3,2,#000000,0.1,0,#ff0000,0.3,2,#0000ff,0.3,1,#000000,0.1,0"})
 
 @test
+def test_pattern_play():
+    js = curl_json("/blink1/pattern/play?pname=red+flash&count=3")
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    assert_json_field(js, ["pname"], "red flash")
+    assert_json_field(js, ["count"], 3)
+    assert_json_field(js, ["pattern"], "9,#ff0000,0.50,,#000000,0.50,0")  # note 2 sig figs on time
+
+@test
 def test_add_pattern():
     js = curl_json("/blink1/pattern/add?pname=todtest&pattern=3,%23FF00FF,0.5,0,%23000000,0.5,0")
-    if js["status"] != "blink1 pattern add":
-        raise AssertionError("Field 'status' incorrect in JSON")
-    if js["pname"] != "todtest":
-        raise AssertionError("Field 'pname' incorrect in JSON")
-    if js["pattern"] != "3,#FF00FF,0.5,0,#000000,0.5,0":
-        raise AssertionError("Field 'pattern' incorrect in JSON")
-    
+    assert_json_field(js, ["status"], "blink1 pattern add")
+    assert_json_field(js, ["pname"], "todtest")
+    assert_json_field(js, ["pattern"], "3,#FF00FF,0.5,0,#000000,0.5,0")
+    #if js["pname"] != "todtest":
+    #    raise AssertionError("Field 'pname' incorrect in JSON")
+
 @test
 def test_patterns_contain_test():
     js = curl_json("/blink1/pattern")
@@ -146,13 +153,11 @@ def test_patterns_contain_test():
 @test
 def test_patterns_del():
     js = curl_json("/blink1/pattern/del?pname=todtest")
-    if js["status"] != "blink1 pattern del":
-        raise AssertionError("Field 'status' incorrect in JSON")
-    if js["pname"] != "todtest":
-        raise AssertionError("Field 'pname' incorrect in JSON")
+    assert_json_field(js, ["status"], "blink1 pattern del")
+    assert_json_field(js, ["pname"], "todtest")
+    # fetch pattern list again and look for deleted entry
     js = curl_json("/blink1/patterns")
     assert_none_matches(js["patterns"], {"name": "todtest"})
-
     
 
 #
@@ -183,9 +188,10 @@ def main():
         server.kill()
 
     if failed:
+        print("Some tests FAILED.")
         sys.exit(1)
     else:
-        print("All tests passed.")
+        print("All tests PASSED.")
         sys.exit(0)
 
 if __name__ == "__main__":

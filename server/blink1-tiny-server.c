@@ -78,6 +78,8 @@ static const url_info supported_urls[]
     {"/blink1/patterns",      "List available patterns"},
     {"/blink1/pattern/play",  "Play color pattern specified by 'pname' or 'pattern' arg"},
     {"/blink1/pattern/stop",  "Stop color pattern playing"},
+    {"/blink1/pattern/add",   "Add a color pattern to the server in-memory list"},
+    {"/blink1/pattern/del",   "Delete a color pattern from the server in-memory list"},
     {"/blink1/random",        "turn the blink(1) a random color"},
     {"/blink1/servertickle/on","Enable servertickle, uses 'millis' or 'time' arg"},
     {"/blink1/servertickle/off","Disable servertickle"}
@@ -108,11 +110,11 @@ void usage()
     fprintf(stderr,
 "Supported query arguments: (not all urls support all args)\n"
 "  'rgb'    -- hex RGB color code. e.g. 'rgb=FF9900' or 'rgb=%%23FF9900\n"
-"  'time'   -- time in seconds. e.g. 'time=0.5' \n"
+"  'time'   -- time in seconds to fade or blink, e.g. 'time=0.5' \n"
+"  'millis' -- milliseconds to fade or blink, e.g. 'millis=500'\n"
 "  'bright' -- brightness, 1-255, 0=full e.g. half-bright 'bright=127'\n"
 "  'ledn'   -- which LED to set. 0=all/1=top/2=bot, e.g. 'ledn=0'\n"
-"  'millis' -- milliseconds to fade, or blink, e.g. 'millis=500'\n"
-"  'count'  -- number of times to blink, for /blink1/blink, e.g. 'count=3'\n"
+"  'count'  -- number of times to blink or repeat, for /blink1/blink, e.g. 'count=3'\n"
 "  'pattern'-- color pattern string (e.g. '3,00ffff,0.2,0,000000,0.2,0')\n"
 "  'pname'  -- color pattern name from pattern list (e.g. 'red flash') \n"
 "\n"
@@ -487,9 +489,13 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             patternline_t pattern[32];
             int repeats = -1;
             int pattlen = parsePattern(pattstr, &repeats, pattern);
-            if( count==0 ) { count = repeats; } // FIXME: unused 
+            char pattstr_verify[1000];   // hack
+            // verify we get back the same pattern string we put in
+            toPatternString(pattern, pattlen, repeats, pattstr_verify);
+            if( count==0 ) { count = repeats; }
         
-            //msg("pname:%s pattstr:%s pattlen:%d, repeats:%d\n", pnamestr, pattstr, pattlen, repeats);
+            //msg("pname:%s pattstr:%s pattstr_verify:%s pattlen:%d, repeats:%d\n",
+            //    pnamestr, pattstr, pattstr_verify, pattlen, repeats);
         
             blink1_device* dev = cache_getDeviceById(id);           
             for( int i=0; i<pattlen; i++ ) {
@@ -501,10 +507,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                 //    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
                 blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
             }
-            msg("  playing pattern %s on blink1\n",pattstr);
+            msg("  playing pattern '%s' %d times on blink1\n",pattstr_verify,count);
             blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
             cache_return(dev);
-            json_object_set_string(json_root_obj, "pattern", pattstr);
+            json_object_set_string(json_root_obj, "pattern", pattstr_verify);
         }
     }
     // since patterns play on the blink1, just stop any pattern playing
