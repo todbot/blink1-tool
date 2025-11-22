@@ -53,8 +53,8 @@ static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
 
-JSON_Value* json_patterns_val;
-JSON_Array * json_patterns_arr;
+JSON_Value* json_patterns_obj_val;
+JSON_Object* json_patterns_obj;
 
 typedef struct _url_info {
     char url[100];  char desc[100];
@@ -208,22 +208,6 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
     cache_return(dev);
 }
 
-/**
- * Find a pattern in the JSON obj list of patterns
- * Simple linear search but list is small so doesn't matter
- */
-const char* find_pattern(const char* patstr) {
-    int c = json_array_get_count(json_patterns_arr);
-    for(int i=0; i<c; i++) {
-        JSON_Object * json_obj = json_array_get_object(json_patterns_arr, i);
-        const char* name = json_object_get_string(json_obj, "name");
-        const char* pattern = json_object_get_string(json_obj, "pattern");
-        if(strcmp(name, patstr) == 0) {
-            return pattern;
-        }
-    }
-    return NULL;
-}
 
 // Log HTTP requests in Common Log Format, enabled with "--logging"
 static void log_access(struct mg_connection *c, char* uri_str, int resp_code) {
@@ -436,23 +420,52 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
              mg_vcmp(uri, "/blink1/pattern/") == 0 ||
              mg_vcmp(uri, "/blink1/patterns/") == 0 ) {       
         sprintf(status, "blink1 pattern list");
-       
-        json_object_set_value(json_root_obj, "patterns", json_patterns_val);
 
+        // convert JSON_Object pattern dict to a JSON_Array for output
+        JSON_Value* array_val = json_value_init_array();
+        JSON_Array * array = json_value_get_array(array_val);
+        int n = json_object_get_count(json_patterns_obj);
+        for (size_t i = 0; i < n; i++) {
+            const char *key = json_object_get_name(json_patterns_obj, i);
+            const char *val = json_object_get_string(json_patterns_obj, key);
+            // Create a new object with key/value
+            JSON_Value *elem_val = json_value_init_object();
+            JSON_Object *elem_obj = json_value_get_object(elem_val);
+            json_object_set_string(elem_obj, "name", key);
+            json_object_set_string(elem_obj, "pattern", val);
+            json_array_append_value(array, elem_val);  // Add to array
+        }
+
+        json_object_set_value(json_root_obj, "patterns", array_val);
     }
+    // add a pattern to the server's in-memory pattern list
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
         sprintf(status, "blink1 pattern add");
-        
+        if( pnamestr[0] != 0 && pattstr[0] != 0 ) {
+            // add entry to the global patterns list
+            // ... tbd
+            
+            // add the resulting pattern to the JSON response
+            json_object_set_string(json_root_obj, "pattern", pattstr);
+        }
+        else {
+            sprintf(status, "blink1 pattern add: error must specifiy both 'pname' and 'pattern' query args");
+        }        
     }
+    // play a pattern on the blink1, from blink(1)'s RAM buffer
+    // note: this behavior is different than Blink1Control, where the
+    // app is playing the pattern, leaving the blink(1)'s RAM pattern alone
     else if( mg_vcmp(uri, "/blink1/pattern/play") == 0 ) {
         sprintf(status, "blink1 pattern play");
 
-        if( pnamestr[0] != 0 ) {   // look up by name with 'pname' query arg
-            const char* pstr = find_pattern(pnamestr);
-            snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : "");
+        // look up by name with 'pname' query arg
+        if( pnamestr[0] != 0 ) {
+            const char* pstr = json_object_get_string(json_patterns_obj, pnamestr);
+            snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : ""); 
         }
         
-        if( pattstr[0] != 0 ) { // lookup worked or using 'pattern' query arg
+        // lookup worked or using 'pattern' query arg, so parse the pattern str
+        if( pattstr[0] != 0 ) {
             patternline_t pattern[32];
             int repeats = -1;
             int pattlen = parsePattern(pattstr, &repeats, pattern);
@@ -479,11 +492,11 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             sprintf(status, "blink1 pattern play error: bad or no 'pname' or 'pattern' query arg");
         }
     }
+    // since patterns play on the blink1, just stop any pattern playing
     else if( mg_vcmp(uri, "/blink1/pattern/stop") == 0 ) {
         sprintf(status, "blink1 pattern stop");
-        
         blink1_device* dev = cache_getDeviceById(id);
-        blink1_playloop(dev, 0, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
+        blink1_playloop(dev, 0 /*play/pause*/, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
         cache_return(dev);
     }
     // like "/blink1/blink" but does it on the server
@@ -607,6 +620,17 @@ int main(int argc, char *argv[]) {
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand(time(NULL) * getpid());
 
+    // populate the system patterns array into a JSON dict object
+    int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
+    json_patterns_obj_val = json_value_init_object();
+    json_patterns_obj = json_object(json_patterns_obj_val);
+    for(int i=0; i<cnt; i++) { 
+        json_object_set_string(json_patterns_obj,
+                               blink1_patterns[i].name,
+                               blink1_patterns[i].str);
+    }
+    
+    /*
     // populate the patterns array into JSON objects
     int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
     json_patterns_val = json_value_init_array();
@@ -618,6 +642,7 @@ int main(int argc, char *argv[]) {
         json_object_set_string(patt_entry_obj, "pattern", blink1_patterns[i].str);
         json_array_append_value(json_patterns_arr, patt_entry_val);
     }
+    */
     
     // parse options
     int option_index = 0, opt;
