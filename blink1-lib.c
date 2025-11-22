@@ -937,7 +937,7 @@ int toPatternString(patternline_t* pattern, int pattlen, int repeats, char* patt
     for( int i=0; i<pattlen; i++ ) {
         patternline_t pat = pattern[i];
         rgb_t rgb = pat.color;
-        float t = pat.millis/1000;
+        float t = pat.millis / 1000.0;
         int ledn = pat.ledn;
         len = sprintf(pattstr+len, ",#%2.2x%2.2x%2.2x,%.2f,%d", rgb.r, rgb.g, rgb.b, t, ledn);
     }
