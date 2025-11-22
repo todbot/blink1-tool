@@ -454,7 +454,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     else if( mg_vcmp(uri, "/blink1/pattern/del") == 0 ) {
         sprintf(status, "blink1 pattern del");
         if( pnamestr[0] != 0 ) { 
-            JSON_Status s = json_object_remove(json_patterns_obj, pnamestr);
+            json_object_remove(json_patterns_obj, pnamestr);
         }
         else {
             sprintf(status, "blink1 pattern del: error must specifiy 'pname' query arg");
