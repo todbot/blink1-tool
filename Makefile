@@ -720,3 +720,10 @@ makepkgconfig:
 	@echo "Version: $(shell echo $(GIT_TAG) | cut -c 2- )" >> $(PKG_CONFIG_FILE_NAME)
 	@echo "Cflags: -I$(DESTDIR)$(INCLOCATION)" >> $(PKG_CONFIG_FILE_NAME)
 	@echo "Libs: -L$(DESTDIR)$(LIBLOCATION) -lBlink1" >> $(PKG_CONFIG_FILE_NAME)
+
+test-blink1-tiny-server: blink1-tiny-server
+	@echo "Testing blink1-tiny-server"
+	python3 ./server/test_blink1_tiny_server.py 
+
+test: test-blink1-tiny-server
+
