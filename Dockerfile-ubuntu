@@ -19,7 +19,7 @@ WORKDIR /opt/blink1
 # Copy local source code into container
 COPY . .
 
-RUN make clean && make
+RUN make clean && make blink1-tool && make blink1-tiny-server
 
 
 # --- Stage 2: Minimal runtime ---

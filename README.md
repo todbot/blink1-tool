@@ -257,11 +257,11 @@ See Makefile for your platform
 
 ## Docker and blink(1)
 
-To build the image from the `Dockerfile-ubuntu`
+To build a image from `Dockerfile-ubuntu`:
 
 - `docker build -f Dockerfile-ubuntu -t todbot/blink1 .`
 
-Running the container
+Running the container:
 
 - `docker run --rm -it --privileged todbot/blink1 blink1-tool --on`
 - `docker run --rm -it --device /dev/bus/usb:/dev/bus/usb todbot/blink1 blink1-tool --on`
