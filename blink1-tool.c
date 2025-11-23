@@ -85,14 +85,14 @@ static void usage(char *myName)
 "  --cyan                      Turn blink(1) cyan (green + blue) \n"
 "  --magenta                   Turn blink(1) magenta (red + blue) \n"
 "  --yellow                    Turn blink(1) yellow (red + green) \n"
-"  --rgbread                   Read last RGB color sent (post gamma-correction)\n"
+"  --lastcolor, --rgbread      Read last RGB color sent (post gamma-correction)\n"
 "  --setpattline <pos>         Write pattern RGB val at pos (--rgb/hsb to set)\n"
 "  --getpattline <pos>         Read pattern RGB value at pos\n"
-"  --savepattern               Save RAM color pattern to flash (mk2)\n"
+"  --savepattern               Save RAM color pattern to flash (mk2+)\n"
 "  --clearpattern              Erase color pattern completely \n"
 "  --play <1/0,pos>            Start playing color pattern (at pos)\n"
-"  --play <1/0,start,end,cnt>  Playing color pattern sub-loop (mk2)\n"
-"  --playstate                 Return current status of pattern playing (mk2)\n"
+"  --play <1/0,start,end,cnt>  Play color pattern sub-loop (mk2+)\n"
+"  --playstate                 Return current status of pattern playing (mk2+)\n"
 "  --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool\n"
 "  --writepattern <patternstr> Write Blink1Control pattern string to blink(1)\n"
 "  --readpattern               Download full blink(1) patt as Blink1Control str\n"
@@ -213,6 +213,7 @@ enum {
     CMD_LOCKBOOTLOAD,
     CMD_GET_ID,
     CMD_SETRGB,
+    CMD_LASTCOLOR,
 #if __linux__
     CMD_ADD_UDEV,
 #endif
@@ -328,6 +329,7 @@ int main(int argc, char** argv)
         {"hsb",        required_argument, &cmd,   CMD_HSB },
         {"rgbread",    no_argument,       &cmd,   CMD_RGBREAD},
         {"readrgb",    no_argument,       &cmd,   CMD_RGBREAD},
+        {"lastcolor",  no_argument,       &cmd,   CMD_RGBREAD },
         {"savepattline",required_argument,&cmd,   CMD_SETPATTLINE },//backcompat
         {"setpattline",required_argument, &cmd,   CMD_SETPATTLINE },
         {"setpatternline",required_argument, &cmd,   CMD_SETPATTLINE },
