@@ -15,10 +15,10 @@ For pre-built binaries, see the [Releases page](https://github.com/todbot/blink1
 The current tools are:
 
 - `blink1-tool` -- command-line tool for controlling blink(1)
+- [`blink1-tiny-server`](server/README.md) -- Simple HTTP JSON API server to control blink(1) ([README](server/README.md))
 - `blink1control-tool` -- blink1-tool for use with Blink1Control (uses HTTP REST API)
-- `blink1-tiny-server` -- ([README](server/README.md)) Simple HTTP JSON API server to control blink1, uses blink1-lib
 - `blink1-lib` -- C library for controlling blink(1)
-- `blink1-mini-tool` -- commandline tool using libusb-0.1 and minimal deps
+- `blink1-mini-tool` -- commandline tool using libusb-0.1 and minimal deps, for older systems
 - `blink1raw` -- small example commandline tool using Linux hidraw
 
 Type `make help` for a full list.
@@ -30,17 +30,18 @@ Also see in this directory:
 
 Supported platforms for `blink1-tool` and `blink1-lib`:
 
-- Mac OS X 10.6.8, 10.7+
-- Windows XP+ (built with MinGW & MSYS)
+- Mac OS X 10.7+
+- Windows XP+,10,11 (built with MinGW & MSYS)
 - Linux (most all, primary development on Ubuntu)
 - FreeBSD 8.2+
-- Raspberry Pi (Raspian)
+- Raspberry Pi OS / Raspian 
 - BeagleBone (Ubuntu)
 - OpenWRT / DD-WRT
 - ... just about anything else with Gnu Make & a C-compiler
 
-In general, the `blink1-tool` builds as a static binary where possible,
-eliminating the need for shared library dependencies on the target.
+In general, `blink1-tool` and `blink1-tiny-server` build as a static binaries as much 
+as possible, requiring only basic system libraries.
+This eliminates the need for shared library dependencies on the target.
 However, static builds can be problematic for some systems with different
 libusb implementations, so doing `make EXEFLAGS=` will generally build a non-static version.
 
