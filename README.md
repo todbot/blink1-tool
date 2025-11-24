@@ -263,10 +263,15 @@ To build a image from `Dockerfile-ubuntu`:
 
 Running the container:
 
-- `docker run --rm -it --privileged todbot/blink1 blink1-tool --on`
-- `docker run --rm -it --device /dev/bus/usb:/dev/bus/usb todbot/blink1 blink1-tool --on`
+- blink1-tool:
+  - `docker run --rm -it --privileged todbot/blink1 blink1-tool --on`
+  - `docker run --rm -it --device /dev/bus/usb:/dev/bus/usb todbot/blink1 blink1-tool --on`
 
-Note the `--privileged` tag, docker needs this to access the hosts USB controllers
+- blink1-tiny-server:
+  - `docker run --rm -d -p 8934:8934 --privileged todbot/blink1 blink1-tiny-server --host 0.0.0.0 -p 8934`
+
+Note the `--privileged` tag, docker needs this to access the hosts USB controllers.
+You can also specify a specific USB device with something like `--device=/dev/bus/usb/003/003`
 
 Docker resources
 - [Install Guide](https://docs.docker.com/installation/)

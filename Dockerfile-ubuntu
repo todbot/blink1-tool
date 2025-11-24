@@ -30,10 +30,13 @@ LABEL description="Minimal runtime image for blink1-tool"
 
 # Copy the compiled binary from builder
 COPY --from=builder /opt/blink1/blink1-tool /usr/local/bin/blink1-tool
+COPY --from=builder /opt/blink1/blink1-tiny-server /usr/local/bin/blink1-tiny-server
 
 # Install runtime dependencies (libusb)
 RUN apt-get update && apt-get install -y libusb-1.0-0 \
     && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8934
 
 # Default command
 CMD ["blink1-tool"]

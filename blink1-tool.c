@@ -89,7 +89,7 @@ static void usage(char *myName)
 "  --setpattline <pos>         Write pattern RGB val at pos (--rgb/hsb to set)\n"
 "  --getpattline <pos>         Read pattern RGB value at pos\n"
 "  --savepattern               Save RAM color pattern to flash (mk2+)\n"
-"  --clearpattern              Erase color pattern completely \n"
+"  --clearpattern              Erase RAM color pattern \n"
 "  --play <1/0,pos>            Start playing color pattern (at pos)\n"
 "  --play <1/0,start,end,cnt>  Play color pattern sub-loop (mk2+)\n"
 "  --playstate                 Return current status of pattern playing (mk2+)\n"
