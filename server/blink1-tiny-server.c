@@ -114,6 +114,7 @@ void usage()
 "  'millis' -- milliseconds to fade or blink, e.g. 'millis=500'\n"
 "  'bright' -- brightness, 1-255, 0=full e.g. half-bright 'bright=127'\n"
 "  'ledn'   -- which LED to set. 0=all/1=top/2=bot, e.g. 'ledn=0'\n"
+"  'id' or 'blink1_id' -- which blink(1) to set, can be index or blink1 serialnum\n"
 "  'count'  -- number of times to blink or repeat, for /blink1/blink, e.g. 'count=3'\n"
 "  'pattern'-- color pattern string (e.g. '3,00ffff,0.2,0,000000,0.2,0')\n"
 "  'pname'  -- color pattern name from pattern list (e.g. 'red flash') \n"
@@ -123,6 +124,7 @@ void usage()
 "  /blink1/fadeToRGB?rgb=FF00FF&millis=500 -- fade to purple over 500ms\n"
 "  /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink cyan 3 times\n"
 "  /blink1/servertickle?on=1&millis=5000 -- turn servertickle on with 5 sec timer\n"
+"  /blink1/green?id=1 -- turn 2nd blink(1) green\n"
 "\n"
         );
 }
@@ -271,6 +273,12 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         json_object_set_number(json_root_obj, "count", count);
     }
     if( mg_http_get_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
+        char* pch;
+        pch = strtok(tmpstr, " ,");
+        int base = (strlen(pch)==8) ? 16:0;
+        id = strtol(pch,NULL,base);
+    }
+    if( mg_http_get_var(querystr, "blink1_id", tmpstr, sizeof(tmpstr)) > 0 ) {
         char* pch;
         pch = strtok(tmpstr, " ,");
         int base = (strlen(pch)==8) ? 16:0;

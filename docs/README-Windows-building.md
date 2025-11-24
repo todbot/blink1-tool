@@ -1,6 +1,6 @@
 ## Building blink1-tool binaries on Windows
 
-blink1-tool and its friends are built in POSIX way,
+blink1-tool and its friends are built in a POSIX way,
 but using native Windows compilers to produce stand-alone binaries
 dependant only on standard Windows shared libraries.
 

@@ -37,6 +37,13 @@ see [Docker and blink(1)](https://github.com/todbot/blink1-tool/#docker-and-blin
 the main README.
 
 
+## API Differences compared to Blink1Control2 app
+
+
+
+
+## Usage
+
 Usage:
 ```
 % ./blink1-tiny-server --help
