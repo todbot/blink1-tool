@@ -56,11 +56,15 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
+      - name: Package blink1-tiny-server
+        shell: bash
+        run: make package-tiny-server
+        
       - name: Upload blink1-tiny-server artifacts
         uses: actions/upload-artifact@v4
         with:
           name: blink1-tiny-server-artifacts
-          path: blink1*.zip
+          path: blink1-tiny-server*.zip
           # retention-days: 5
 
       - name: Compile blink1control-tool
