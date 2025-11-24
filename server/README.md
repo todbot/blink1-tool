@@ -1,25 +1,29 @@
 
-## blink1-tiny-server
+# blink1-tiny-server
 
 A simple HTTP to blink(1) gateway
 
 - Uses blink1-lib to talk to blink(1)
-- Uses [Mongoose](https://github.com/cesanta/mongoose), included
+- Works on Linux, RaspberryPi OS, MacOS, Windows
+- Uses [Mongoose](https://github.com/cesanta/mongoose)
 
-Supports most of the URIs / endpoints of the Blink1Control API server,
+Supports most of the URIs / endpoints of the Blink1Control JSON REST API server,
 as described in [app-url-api-examples.md](https://github.com/todbot/blink1/blob/main/docs/app-url-api-examples.md) and [app-url-api.md](https://github.com/todbot/blink1/blob/main/docs/app-url-api.md),
 but implemented as a tiny portable C webserver.
 
-To build:
-```
-cd blink1-tool
-make blink1-tiny-server
-```
+The JSON API can be used in webpages hosted on the same server. 
+Several HTML examples showing this functionality are embedded in 
+`blink1-tiny-server`.
 
-Use:
+
+## Use:
+
+To start up the server:
+
 ```
 ./blink1-tiny-server -p 8934
 ```
+
 By default the HTML API examples are built-in and served. To try them out,
 open a browser to: http://localhost:8934/
 
@@ -27,6 +31,11 @@ To disable the HTML examples, use:
 ```
 ./blink1-tiny-server -p 8000 -no-html
 ```
+
+On Linux, `blink1-tiny-server` can run in a Docker container. For details,
+see [Docker and blink(1)](https://github.com/todbot/blink1-tool/#docker-and-blink1) in 
+the main README.
+
 
 Usage:
 ```
@@ -78,4 +87,14 @@ Examples:
   /blink1/pattern/play?pattern=3,00ffff,0.2,0,000000,0.2,0 -- blink cyan 3 times
   /blink1/servertickle?on=1&millis=5000 -- turn servertickle on with 5 sec timer  
  
+```
+
+## Building
+
+The Mongoose HTTP server library is included, so `blink1-tiny-server` has 
+same dependencies as `blink1-tool`.  Thus to build:
+
+```
+cd blink1-tool
+make blink1-tiny-server
 ```
