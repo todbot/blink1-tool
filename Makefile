@@ -215,9 +215,9 @@ INCLOCATION ?= $(PREFIX)/include
 CODESIGN_CMD=codesign --force --sign '$(CODESIGN_ID)' ./blink1-tool
 CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1-tiny-server
 CODESIGN_CMD+=&& codesign --force --sign '$(CODESIGN_ID)' ./blink1control-tool
-CODESIGN_CHECK_CMD=codesign -v -d ./blink1-tool
-CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1-tiny-server
-CODESIGN_CHECK_CMD+=&& codesign -v -d ./blink1control-tool
+CODESIGN_CHECK_CMD=codesign -vv -d ./blink1-tool
+CODESIGN_CHECK_CMD+=&& codesign -vv -d ./blink1-tiny-server
+CODESIGN_CHECK_CMD+=&& codesign -vv -d ./blink1control-tool
 
 endif
 
@@ -612,26 +612,26 @@ blink1control-tool:
 build-all: lib blink1-tool blink1-tiny-server blink1control-tool
 
 # codesign all binaries, must be done before zips
-codesign: build-all
+codesign:
 	$(CODESIGN_CMD)
 
 codesign-check:
 	$(CODESIGN_CHECK_CMD)
 
 # TODO: how to package up both LIBUSB and HIDRAW flavors for Linux?
-package: lib blink1-tool
+package: lib blink1-tool codesign
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
 	zip blink1-tool-$(PKGOS).zip blink1-tool$(EXE)
 	zip blink1-lib-$(PKGOS).zip $(LIBTARGET) blink1-lib.h
 
-package-tiny-server: blink1-tiny-server
+package-tiny-server: blink1-tiny-server codesign
 	zip blink1-tiny-server-$(PKGOS).zip blink1-tiny-server$(EXE)
 
-package-blink1control-tool: blink1control-tool
+package-blink1control-tool: blink1control-tool codesign
 	zip -j blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
 
 # package up all binaries
-package-all: package package-tiny-server package-blink1control-tool codesign
+package-all: package package-tiny-server package-blink1control-tool
 	@echo "packaged all"
 
 cpbuilds:
