@@ -65,14 +65,14 @@ where <cmd> is one of:
   --cyan                      Turn blink(1) cyan (green + blue) 
   --magenta                   Turn blink(1) magenta (red + blue) 
   --yellow                    Turn blink(1) yellow (red + green) 
-  --rgbread                   Read last RGB color sent (post gamma-correction)
+  --lastcolor, --rgbread      Read last RGB color sent (post gamma-correction)
   --setpattline <pos>         Write pattern RGB val at pos (--rgb/hsb to set)
   --getpattline <pos>         Read pattern RGB value at pos
-  --savepattern               Save RAM color pattern to flash (mk2)
+  --savepattern               Save RAM color pattern to flash (mk2+)
   --clearpattern              Erase color pattern completely 
   --play <1/0,pos>            Start playing color pattern (at pos)
-  --play <1/0,start,end,cnt>  Playing color pattern sub-loop (mk2)
-  --playstate                 Return current status of pattern playing (mk2)
+  --play <1/0,start,end,cnt>  Play color pattern sub-loop (mk2+)
+  --playstate                 Return current status of pattern playing (mk2+)
   --playpattern <patternstr>  Play Blink1Control pattern string in blink1-tool
   --writepattern <patternstr> Write Blink1Control pattern string to blink(1)
   --readpattern               Download full blink(1) patt as Blink1Control str
@@ -268,7 +268,7 @@ Running the container:
   - `docker run --rm -it --device /dev/bus/usb:/dev/bus/usb todbot/blink1 blink1-tool --on`
 
 - blink1-tiny-server:
-  - `docker run --rm -d -p 8934:8934 --privileged todbot/blink1 blink1-tiny-server --host 0.0.0.0 -p 8934`
+  - `docker run -d -p 8934:8934 --privileged todbot/blink1 blink1-tiny-server --host 0.0.0.0 -p 8934`
 
 Note the `--privileged` tag, docker needs this to access the hosts USB controllers.
 You can also specify a specific USB device with something like `--device=/dev/bus/usb/003/003`

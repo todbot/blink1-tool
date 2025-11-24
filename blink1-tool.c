@@ -1005,6 +1005,7 @@ int main(int argc, char** argv)
           uint8_t noteid = arg;
           uint8_t* notebuf = (uint8_t*)argbuf;
           blink1_writeNote( dev, noteid, notebuf);
+          msg(" wrote note %d\n", noteid);
       }
     }
     else if( cmd == CMD_READNOTE ) {
@@ -1019,7 +1020,7 @@ int main(int argc, char** argv)
 
           blink1_readNote( dev, noteid, &notebufp);
 
-          printf("note %d: %s\n", noteid, notebuf);
+          printf(" note %d: %s\n", noteid, notebuf);
       }
     }
     else if( cmd == CMD_READNOTES_ALL ) {
