@@ -23,6 +23,7 @@ Assumptions
 
 General Process
 ---------------
+[most of this is superceded by CI now]
 
 1. `cd  blink1-tool`
 2. git tag release w/ `git tag -a v2.0.2 -m 'some update msg' && git push --tags`
