@@ -27,20 +27,35 @@ jobs:
         shell: bash
         run: xcodebuild -version
 
-      # # xcode 12.5 does not have Arm support?
-      # - name: Update to xcode w/ arm
-      #   shell: bash
-      #   run: |
-      #     sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-      #     sudo xcode-select --switch "/Applications/Xcode_12.5.app"
-
       - name: Compile blink1-tool
         shell: bash
         run: make
 
+      - name: Compile blink1-tiny-server
+        shell: bash
+        run: make blink1-tiny-server
+
+      - name: Compile blink1control-tool
+        shell: bash
+        run: make blink1control-tool
+
+#      - name: Codesign tools
+#        shell: bash
+#        run: make codesign
+
+
       - name: Package blink1-tool
         shell: bash
         run: make package
+
+      - name: Package blink1-tiny-server
+        shell: bash
+        run: make package-tiny-server
+
+      - name: Package blink1control-tool
+        shell: bash
+        run: make package-blink1control-tool
+
 
       - name: Upload blink1-tool artifact
         uses: actions/upload-artifact@v4
@@ -49,32 +64,16 @@ jobs:
           path: blink1*.zip
           #retention-days: 5
 
-      - name: Compile blink1-tiny-server
-        shell: bash
-        run: make blink1-tiny-server
-
-      - name: Package blink1-tiny-server
-        shell: bash
-        run: make package-tiny-server
-
       - name: Upload blink1-tiny-server artifact
         uses: actions/upload-artifact@v4
         with:
           name: blink1-tiny-server-artifacts
-          path: blink1*.zip
+          path: blink1-tiny-server*.zip
           #retention-days: 5
-
-      - name: Compile blink1control-tool
-        shell: bash
-        run: make blink1control-tool
-
-      - name: Package blink1control-tool
-        shell: bash
-        run: make package-blink1control-tool
 
       - name: Upload blink1control-tool artifact
         uses: actions/upload-artifact@v4
         with:
-          name: blink1-tool-macos-all-artifacts
-          path: blink1*.zip
+          name: blink1control-tool-artifacts
+          path: blink1control-tool*.zip
           #retention-days: 5
