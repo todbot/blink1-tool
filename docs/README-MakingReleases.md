@@ -27,13 +27,13 @@ General Process
 
 1. `cd  blink1-tool`
 2. git tag release w/ `git tag -a v2.0.2 -m 'some update msg' && git push --tags`
-3. Build code with `make clean && make`
-3a. Don't forget about `make blink1control-tool` & `make blink1-tiny-server`
-3b. Verify no extra shared libs in MacOS build: `otool -L blink1-tool blink1control-tool/blink1control-tool`
-3c. Verify no MSYS shared libs in Windows build: `ldd blink1-tool`
-4. Package up zipfiles with `make package-all`
-5. Copy zip packages to and test on separate test systems
-6. Publish zip packages to github release
+3. Build code with `make clean && make blink1-tool blink1-tiny-server blink1control-tool`
+4a. Verify no non-system shared libs in MacOS build: `otool -L blink1-tool blink1control-tool/blink1control-tool`
+4b. Verify no MSYS shared libs in Windows build: `ldd blink1-tool`
+5. Codesign: `make codesign`  (be sure to set needed environment vars)
+6. Package up zipfiles with `make package-all` and `make cpbuilds` 
+7. Copy zip packages to and test on separate test systems
+8. Publish zip packages to github release
 
 
 Example
@@ -41,40 +41,17 @@ Example
 ```
 % cd blink1-tool
 % make clean
-% make
-% make blink1control-tool && make blink1-tiny-server
+% make blink1-tool
+% make blink1-tiny-server blink1control-tool
+% make codesign
+% make codesign-check
 % make package-all
+% make cpbuilds
 ```
+
 
 Platform Specifics (for Tod mostly)
 -----------------------------------
-
-### Mac
-
-Environment: Build on 11.5 on MacBookPro Retina x64, test on 10.13.6 Mac Mini x64, 11.5 MacBookPro M1
-
-Command: `make distclean && make package-all`
-
-
-### Windows
-
-Build on Win7-64bit, test on Win7-32 bit, Win8-64bit (all in VMs)
-
-Command: `make distclean && make && make package-all`
-
-### Linux - Ubuntu
-
-Build on Ubuntu 20 VM, test on Ubuntu 18 VM
-
-Command: `make distclean && make && make package-all`
-
-### Linux - Raspberry Pi
-
-Environemt: Build on Raspberry Pi 4 running Raspbian latest.
-
-Command: `make distclean && make && make package-all`
-
-Rename zip packages from "armv6l" to "raspi".
 
 ### OpenWrt - Yun / ar71xx
 

@@ -45,6 +45,7 @@ jobs:
         shell: bash
         run: make blink1control-tool
 
+
 #      - name: Codesign tools
 #        shell: bash
 #        run: make codesign
@@ -62,25 +63,9 @@ jobs:
         shell: bash
         run: make package-blink1control-tool
 
-
-      - name: Upload blink1-tool artifact
+         
+      - name: Upload blink1 all artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: blink1-tool-artifacts
+          name: blink1 all artifacts
           path: blink1*.zip
-          #retention-days: 5
-
-      - name: Upload blink1-tiny-server artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: blink1-tiny-server-artifacts
-          path: blink1-tiny-server*.zip
-          #retention-days: 5
-
-      - name: Upload blink1control-tool artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: blink1control-tool-artifacts
-          path: blink1control-tool*.zip
-          #retention-days: 5
-
