@@ -67,5 +67,5 @@ jobs:
       - name: Upload blink1 all artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: blink1 all artifacts
+          name: blink1-tool-all-artifacts-windows
           path: blink1*.zip
