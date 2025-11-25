@@ -543,7 +543,7 @@ debug: all
 help:
 	@echo "This Makefile works on multiple archs. Use one of the following:"
 	@echo "make            ... autodetect platform and build appropriately"
-	@echo "make prep       ... prepare for compilation (submodules, patches"
+	@echo "make prep       ... prepare for compilation (submodules, patches)"
 	@echo "make OS=windows ... build Windows  blink1-lib and blink1-tool"
 	@echo "make OS=linux   ... build Linux    blink1-lib and blink1-tool"
 	@echo "make OS=freebsd ... build FreeBSD    blink1-lib and blink1-tool"
@@ -562,7 +562,7 @@ help:
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
 	@echo "make package-tiny-server ... zip up tiny HTTP REST server"
 	@echo "make package-blink1control-tool ... zip up blink1control-tool"
-	@echo "make package-all... package all builds (building them first)"
+	@echo "make package-all... package all builds (you must build them first)"
 	@echo "make cpbuilds   ... put all builds in 'builds' dir"
 	@echo "make clean      ... delete build products, leave binaries & libs"
 	@echo "make distclean  ... delete binaries and libs too"
@@ -619,15 +619,15 @@ codesign-check:
 	$(CODESIGN_CHECK_CMD)
 
 # TODO: how to package up both LIBUSB and HIDRAW flavors for Linux?
-package: lib blink1-tool codesign
+package:
 	@echo "Packaging up blink1-tool and blink1-lib for '$(PKGOS)'"
 	zip blink1-tool-$(PKGOS).zip blink1-tool$(EXE)
 	zip blink1-lib-$(PKGOS).zip $(LIBTARGET) blink1-lib.h
 
-package-tiny-server: blink1-tiny-server codesign
+package-tiny-server:
 	zip blink1-tiny-server-$(PKGOS).zip blink1-tiny-server$(EXE)
 
-package-blink1control-tool: blink1control-tool codesign
+package-blink1control-tool:
 	zip -j blink1control-tool-$(PKGOS).zip blink1control-tool/blink1control-tool$(EXE)
 
 # package up all binaries

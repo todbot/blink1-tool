@@ -29,73 +29,53 @@ jobs:
           sudo apt update
           sudo apt install build-essential pkg-config libudev-dev libusb-1.0-0-dev
 
-      - name: Compile blink1-tool (libusb test)
+      - name: Compile blink1-tool
         shell: bash
-        run: make HIDAPI_TYPE=LIBUSB
+        run: make
 
-      - name: Compile blink1-tool (hidraw)
+      - name: Compile blink1-tiny-server
         shell: bash
-        run: make clean && make
+        run: make blink1-tiny-server
+
+      - name: Compile blink1control-tool
+        shell: bash
+        run: make blink1control-tool
+
+#      - name: Codesign tools
+#        shell: bash
+#        run: make codesign
+
 
       - name: Package blink1-tool
         shell: bash
         run: make package
 
-      - name: Look at dir
+      - name: Package blink1-tiny-server
         shell: bash
-        run: ls -al
+        run: make package-tiny-server
+
+      - name: Package blink1control-tool
+        shell: bash
+        run: make package-blink1control-tool
+
 
       - name: Upload blink1-tool artifact
         uses: actions/upload-artifact@v4
         with:
           name: blink1-tool-artifacts
           path: blink1*.zip
-          # retention-days: 5
+          #retention-days: 5
 
-      - name: Compile blink1-tiny-server
-        shell: bash
-        run: make blink1-tiny-server
-
-      - name: Package blink1-tiny-server
-        shell: bash
-        run: make package-tiny-server
-        
-      - name: Upload blink1-tiny-server artifacts
+      - name: Upload blink1-tiny-server artifact
         uses: actions/upload-artifact@v4
         with:
           name: blink1-tiny-server-artifacts
           path: blink1-tiny-server*.zip
-          # retention-days: 5
-
-      - name: Compile blink1control-tool
-        shell: bash
-        run: make blink1control-tool
-
-      - name: Package blink1control-tool
-        shell: bash
-        run: make package-blink1control-tool
+          #retention-days: 5
 
       - name: Upload blink1control-tool artifact
         uses: actions/upload-artifact@v4
         with:
-          name: blink1-tool-linux-all-artifacts
-          path: blink1*.zip
-          # retention-days: 5
-
-      # # do 'package-all' by hand so we can exclude blink1control on Mac/Win
-      # - name: package up
-      #   shell: bash
-      #   run: |
-      #     make dist
-      #     make package
-      #     make package-tiny-server
-      #     make package-blink1control-tool
-      #     make cpbuilds
-
-      # - name: Upload a Build Artifact
-      #   uses: actions/upload-artifact@v2.2.2
-      #   with:
-      #     name: blink1-tools
-      #     path: |
-      #       builds/*
-      #       srcdist/*
+          name: blink1control-tool-artifacts
+          path: blink1control-tool*.zip
+          #retention-days: 5
