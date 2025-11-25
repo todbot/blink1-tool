@@ -29,6 +29,11 @@ jobs:
           sudo apt update
           sudo apt install build-essential pkg-config libudev-dev libusb-1.0-0-dev
 
+
+      - name: Test git tag weirdness
+        shell: bash
+        run: git tag | tail 
+
       - name: Compile blink1-tool
         shell: bash
         run: make
