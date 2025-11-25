@@ -23,6 +23,10 @@ jobs:
       # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Get git tags
+        shell: bash
+        run:  git fetch --tags
+
       - name: Check xcode version
         shell: bash
         run: xcodebuild -version

@@ -23,19 +23,15 @@ jobs:
       # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Get git tags
+        shell: bash
+        run:  git fetch --tags
+
       - name: setup prerequisites (linux)
         shell: bash
         run: |
           sudo apt update
           sudo apt install build-essential pkg-config libudev-dev libusb-1.0-0-dev
-
-      - name: Get git tags
-        shell: bash
-        run:  git fetch --tags
-
-      - name: Test git tag weirdness
-        shell: bash
-        run: git tag | tail 
 
       - name: Compile blink1-tool
         shell: bash
