@@ -23,6 +23,7 @@
 #include <getopt.h>    // for getopt_long_only()
 #include <sys/time.h>
 #include <signal.h>
+#include <stdio.h>
 
 #include "mongoose.h"  // HTTP server
 #include "parson.h"    // JSON build and parse
@@ -412,24 +413,27 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         int repeats = -1;
         patternline_t pattern[32];
         blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
-        sprintf(tmpstr, "%d,#%2.2x%2.2x%2.2x,%f,%d,#000000,%f,0",
+        sprintf(tmpstr, "%d,#%2.2x%2.2x%2.2x,%.3f,%d,#000000,%.3f,0",
                 count, rgb.r,rgb.g,rgb.b, (float)millis/1000.0, ledn,
                 (float)millis/1000.0);
-        msg("pattstr:%s\n", tmpstr);
+        msg("blink pattstr:%s\n", tmpstr);
         int pattlen = parsePattern(tmpstr, &repeats, pattern);
 
         blink1_device* dev = cache_getDeviceById(id);
-        for( int i=0; i<pattlen; i++ ) {
-            patternline_t pat = pattern[i];
-            blink1_setLEDN(dev, pat.ledn);
-            msg("  writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
-                  i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
-            blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
+        if( dev ) {
+            for( int i=0; i<pattlen; i++ ) {
+                patternline_t pat = pattern[i];
+                blink1_setLEDN(dev, pat.ledn);
+                msg("  writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                      i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
+                blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
+            }
+            blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
+            cache_return(dev);
         }
-        blink1_playloop(dev, 1, 0/*startpos*/, pattlen-1/*endpos*/, count/*count*/);
-        cache_return(dev);
+        else { sprintf(status+strlen(status), ": no blink1 found"); }
     }
-    
+
     else if( mg_vcmp(uri, "/blink1/pattern") == 0 ||
              mg_vcmp(uri, "/blink1/patterns") == 0 ||
              mg_vcmp(uri, "/blink1/pattern/") == 0 ||
@@ -452,6 +456,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         }
 
         json_object_set_value(json_root_obj, "patterns", array_val);
+    }
+    else if( mg_vcmp(uri, "/blink1/pattern/dump") == 0 ) {
+        sprintf(status, "blink1 patterns dump");
+        json_object_set_value(json_root_obj, "pattern_dump", json_value_deep_copy(json_patterns_obj_val));
     }
     // add a pattern to the server's in-memory pattern list
     else if( mg_vcmp(uri, "/blink1/pattern/add") == 0 ) {
@@ -510,28 +518,34 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             //msg("pname:%s pattstr:%s pattstr_verify:%s pattlen:%d, repeats:%d\n",
             //    pnamestr, pattstr, pattstr_verify, pattlen, repeats);
         
-            blink1_device* dev = cache_getDeviceById(id);           
-            for( int i=0; i<pattlen; i++ ) {
-                patternline_t pat = pattern[i];
-                rgb = pat.color;
-                blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
-                blink1_setLEDN(dev, pat.ledn);
-                //msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
-                //    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
-                blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
+            blink1_device* dev = cache_getDeviceById(id);
+            if( dev ) {
+                for( int i=0; i<pattlen; i++ ) {
+                    patternline_t pat = pattern[i];
+                    rgb = pat.color;
+                    blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
+                    blink1_setLEDN(dev, pat.ledn);
+                    //msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                    //    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
+                    blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
+                }
+                msg("  playing pattern '%s' %d times on blink1\n",pattstr_verify,count);
+                blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
+                cache_return(dev);
+                json_object_set_string(json_root_obj, "pattern", pattstr_verify);
             }
-            msg("  playing pattern '%s' %d times on blink1\n",pattstr_verify,count);
-            blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
-            cache_return(dev);
-            json_object_set_string(json_root_obj, "pattern", pattstr_verify);
+            else { sprintf(status+strlen(status), ": no blink1 found"); }
         }
     }
     // since patterns play on the blink1, just stop any pattern playing
     else if( mg_vcmp(uri, "/blink1/pattern/stop") == 0 ) {
         sprintf(status, "blink1 pattern stop");
         blink1_device* dev = cache_getDeviceById(id);
-        blink1_playloop(dev, 0 /*play/pause*/, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
-        cache_return(dev);
+        if( dev ) {
+            blink1_playloop(dev, 0 /*play/pause*/, 0/*startpos*/, 0/*endpos*/, 0/*count*/);
+            cache_return(dev);
+        }
+        else { sprintf(status+strlen(status), ": no blink1 found"); }
     }
     // like "/blink1/blink" but does it on the server
     else if( mg_vcmp( uri, "/blink1/blinkserver") == 0 ) {
@@ -540,15 +554,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         if( millis==0 ) { millis = 200; }
 
         blink1_device* dev = cache_getDeviceById(id);
-        blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
-        //msg("rgb:%d,%d,%d\n",r,g,b);
-        for( int i=0; i<count; i++ ) {
-            blink1_fadeToRGBN( dev, millis/2, rgb.r,rgb.g,rgb.b, ledn );
-            blink1_sleep( millis/2 ); // fixme
-            blink1_fadeToRGBN( dev, millis/2, 0,0,0, ledn );
-            blink1_sleep( millis/2 ); // fixme
+        if( dev ) {
+            blink1_adjustBrightness( bright, &rgb.r, &rgb.g, &rgb.b);
+            //msg("rgb:%d,%d,%d\n",r,g,b);
+            for( int i=0; i<count; i++ ) {
+                blink1_fadeToRGBN( dev, millis/2, rgb.r,rgb.g,rgb.b, ledn );
+                blink1_sleep( millis/2 ); // fixme
+                blink1_fadeToRGBN( dev, millis/2, 0,0,0, ledn );
+                blink1_sleep( millis/2 ); // fixme
+            }
+            cache_return(dev);
         }
-        cache_return(dev);
+        else { sprintf(status+strlen(status), ": no blink1 found"); }
     }
     //else if( mg_http_match_uri(hm, "/blink1/servertickle/*")) { 
     else if( mg_vcmp( uri, "/blink1/servertickle/on") == 0 ||
@@ -560,9 +577,11 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         uint8_t end_pos = 0;
         uint8_t st_off_state = 0;
         blink1_device* dev = cache_getDeviceById(id);
-        blink1_serverdown( dev, st_on, millis, st_off_state, start_pos, end_pos );
-        cache_return(dev);
-
+        if( dev ) {
+            blink1_serverdown( dev, st_on, millis, st_off_state, start_pos, end_pos );
+            cache_return(dev);
+        }
+        else { sprintf(status+strlen(status), ": no blink1 found"); }
         json_object_set_string(json_root_obj, "on", st_on? "1":"0");
     }
     else if( mg_vcmp( uri, "/blink1/random") == 0 ) {
@@ -570,15 +589,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
         blink1_device* dev = cache_getDeviceById(id);
-        for( int i=0; i<count; i++ ) {
-            uint8_t r = rand() % 255;
-            uint8_t g = rand() % 255;
-            uint8_t b = rand() % 255 ;
-            blink1_adjustBrightness( bright, &r, &g, &b);
-            blink1_fadeToRGBN( dev, millis/2, r,g,b, ledn );
-            blink1_sleep( millis/2 ); // fixme
+        if( dev ) {
+            for( int i=0; i<count; i++ ) {
+                uint8_t r = rand() % 255;
+                uint8_t g = rand() % 255;
+                uint8_t b = rand() % 255 ;
+                blink1_adjustBrightness( bright, &r, &g, &b);
+                blink1_fadeToRGBN( dev, millis/2, r,g,b, ledn );
+                blink1_sleep( millis/2 ); // fixme
+            }
+            cache_return(dev);
         }
-        cache_return(dev);
+        else { sprintf(status+strlen(status), ": no blink1 found"); }
     }
 
     // set JSON values that exist for all requests
@@ -607,6 +629,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         mg_http_write_chunk(c, "", 0); /* Send empty chunk, the end of response */
     }
     else {
+        json_value_free(json_root_val);
         if( show_html ) {
             if( mg_vcmp( uri, "/") == 0 ) {
                 resp_code = 302;
@@ -728,7 +751,7 @@ int main(int argc, char *argv[]) {
     char pattern_status[128];
     if( patterns_json_fname[0] != 0 && access(patterns_json_fname, R_OK|W_OK) != 0) {
         fprintf(stderr, "cannot access patterns file %s\n", patterns_json_fname);
-        snprintf(pattern_status, strlen(pattern_status), "bad patterns file");
+        snprintf(pattern_status, sizeof(pattern_status), "bad patterns file");
     }
     json_patterns_obj_val = json_parse_file(patterns_json_fname);
     json_patterns_obj     = json_value_get_object(json_patterns_obj_val);
@@ -778,8 +801,9 @@ int main(int argc, char *argv[]) {
 
     if(patterns_json_fname[0] !=0 ) {
         printf("Saving patterns to %s\n", patterns_json_fname);
-        json_serialize_to_file_pretty(json_patterns_obj_val, patterns_json_fname); 
+        json_serialize_to_file_pretty(json_patterns_obj_val, patterns_json_fname);
     }
-    
+    json_value_free(json_patterns_obj_val);
+
     return 0;
 }

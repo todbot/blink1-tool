@@ -21,7 +21,6 @@ Desktop.ini
 *.dylib
 *.dll
 
-
 # misc
 *.pro
 *.sav
@@ -34,10 +33,14 @@ Desktop.ini
 # build products
 blink1-tool
 blink1-tiny-server
+blink1-control-tool
+blink1-tiny-server-html.c
+curl-7.78.0
 builds
 pack
 curl-macosx
 json-parser
+*.tar.gz
 
 .vscode
 .idea
