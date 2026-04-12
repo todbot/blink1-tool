@@ -3,7 +3,7 @@
  * blink1-tiny-server -- a small cross-platform REST/JSON server for
  *                       controlling a blink(1) device
  *
- * 2012-2022, Tod Kurt, http://todbot.com/blog/ , http://thingm.com/
+ * 2012-2026, Tod Kurt, https://todbot.com/blog/ , https://thingm.com/
  *
  * Example supported URLs:
  *
@@ -14,7 +14,9 @@
  *  localhost:8934/blink1/blue
  *  localhost:8934/blink1/blink?rgb=%23ff0ff&time=1.0&count=3
  *  localhost:8934/blink1/fadeToRGB?rgb=%23ff00ff&time=1.0
- *
+ *  localhost:8934/blink1/patterns
+ *  localhost:8934/blink1/pattern/add?pname=todtest&pattern=3,%23FF00FF,0.5,0,%23000000,0.5,0
+ *  localhost:8934/blink1/pattern/del?pname=todtest
  *
  */
 
@@ -41,17 +43,19 @@ static bool enable_logging = false;
 
 static char http_listen_host[120] = "localhost";  // or 0.0.0.0 for any
 static int http_listen_port = 8934;               // was 8000
-static char http_listen_url[100];             // will be "http://localhost:8934"
+static char http_listen_url[100];                 // will be "http://localhost:8934"
 
 typedef struct cache_info_ {
     blink1_device* dev;  // device, if opened, NULL otherwise
     int64_t atime;  // time last used
 } cache_info;
 
-static int64_t idle_atime = 1000 /* milliseconds */;
+static int64_t idle_atime = 1000  /* milliseconds */;
 static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
+
+static char patterns_json_fname[120]; // file of color patterns, like "patterns-example.json"
 
 JSON_Value* json_patterns_obj_val;
 JSON_Object* json_patterns_obj;
@@ -95,6 +99,7 @@ void usage()
 "  --host host, -H host       host to listen on ('127.0.0.1' or '0.0.0.0')\n"
 "  --no-html                  do not serve static HTML help\n"
 "  --logging                  log accesses to stdout\n"
+"  --patternsjson <fn>, -j <fn>  filepath to JSON color pattern list, see patterns-example.json\n"
 "  --quiet, -q                quiet non-logging messages (useful with --logging)\n"            
 "  --version                  version of this program\n"
 "  --help, -h                 this help page\n"
@@ -649,30 +654,21 @@ int main(int argc, char *argv[]) {
     setbuf(stdout,NULL);  // turn off stdout buffering for Windows
     srand(time(NULL) * getpid());
 
-    // populate the system patterns array into a JSON dict object
-    int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
-    json_patterns_obj_val = json_value_init_object();
-    json_patterns_obj = json_object(json_patterns_obj_val);
-    for(int i=0; i<cnt; i++) { 
-        json_object_set_string(json_patterns_obj,
-                               blink1_patterns[i].name,
-                               blink1_patterns[i].str);
-    }
-
     // parse options
     int option_index = 0, opt;
-    char* opt_str = "qvhp:H:U:A:Nl";
+    char* opt_str = "qvhp:H:U:A:Nlj:";
     static struct option loptions[] = {
-      //{"verbose",    optional_argument, 0,      'v'},
-      //{"baseurl",    required_argument, 0,      'U'},
-        {"quiet",      optional_argument, 0,      'q'},
-        {"host",       required_argument, 0,      'H'},
-        {"port",       required_argument, 0,      'p'},
-        {"no-html",    no_argument,       0,      'N'},
-        {"logging",    no_argument,       0,      'l'},
-        {"help",       no_argument, 0,            'h'},
-        {"version",    no_argument, 0,            'V'},
-        {NULL,         0,           0,             0 },
+      //{"verbose",      optional_argument, 0,      'v'},
+      //{"baseurl",      required_argument, 0,      'U'},
+        {"quiet",        optional_argument, 0,      'q'},
+        {"host",         required_argument, 0,      'H'},
+        {"port",         required_argument, 0,      'p'},
+        {"patternsjson", required_argument, 0,      'j'},
+        {"no-html",      no_argument,       0,      'N'},
+        {"logging",      no_argument,       0,      'l'},
+        {"help",         no_argument, 0,            'h'},
+        {"version",      no_argument, 0,            'V'},
+        {NULL,           0,           0,             0 },
     };
 
     while(1) {
@@ -710,6 +706,9 @@ int main(int argc, char *argv[]) {
                 printf("bad port specified: %s\n", optarg);
             }
             break;
+        case 'j':
+            strncpy(patterns_json_fname, optarg, sizeof(patterns_json_fname));
+            break;
         case 'd':
             // s_http_server_opts.document_root = optarg;
             // char path[MAX_PATH_SIZE];
@@ -725,9 +724,38 @@ int main(int argc, char *argv[]) {
         }
     } //while(1) arg parsing
 
-    printf("%s version %s: running on http://%s:%d/ (%s)\n",
-          blink1_server_name, blink1_server_version, http_listen_host,
-          http_listen_port,  (show_html) ? "html help enabled": "no html help");
+    // JSON pattern loading or built-in
+    char pattern_status[128];
+    if( patterns_json_fname[0] != 0 && access(patterns_json_fname, R_OK|W_OK) != 0) {
+        fprintf(stderr, "cannot access patterns file %s\n", patterns_json_fname);
+        snprintf(pattern_status, strlen(pattern_status), "bad patterns file");
+    }
+    json_patterns_obj_val = json_parse_file(patterns_json_fname);
+    json_patterns_obj     = json_value_get_object(json_patterns_obj_val);
+    //printf("JSON:%s\n", json_serialize_to_string(json_patterns_obj_val));
+           
+    if( json_patterns_obj_val == NULL ) {  // error or no file
+        // populate the system patterns array into a JSON dict object
+        int cnt = sizeof(blink1_patterns)/sizeof(blink1_pattern_info);
+        json_patterns_obj_val = json_value_init_object();
+        json_patterns_obj = json_object(json_patterns_obj_val);
+        for(int i=0; i<cnt; i++) { 
+            json_object_set_string(json_patterns_obj,
+                                   blink1_patterns[i].name,
+                                   blink1_patterns[i].str);
+        }
+        snprintf(pattern_status, sizeof(pattern_status), "built-in-patterns");
+    }
+    else {
+        snprintf(pattern_status, sizeof(pattern_status), "patterns:%s", patterns_json_fname);
+    }
+
+    
+    printf("%s version %s: running on http://%s:%d/ (%s, %s)\n",
+           blink1_server_name, blink1_server_version,
+           http_listen_host,  http_listen_port,
+           (show_html) ? "html help enabled": "no html help",
+           pattern_status);
 
     snprintf(http_listen_url, sizeof(http_listen_url), "http://%s:%d/",
            http_listen_host, http_listen_port);
@@ -738,8 +766,8 @@ int main(int argc, char *argv[]) {
     mg_mgr_init(&mgr);
 
     if ((c = mg_http_listen(&mgr, http_listen_url, ev_handler, &mgr)) == NULL) {
-      MG_LOG(MG_LL_ERROR, ("Cannot listen on %s.", http_listen_url));
-      exit(EXIT_FAILURE);
+        MG_LOG(MG_LL_ERROR, ("Cannot listen on %s.", http_listen_url));
+        exit(EXIT_FAILURE);
     }
 
     while (s_signo == 0) {
@@ -748,5 +776,10 @@ int main(int argc, char *argv[]) {
     }
     mg_mgr_free(&mgr);
 
+    if(patterns_json_fname[0] !=0 ) {
+        printf("Saving patterns to %s\n", patterns_json_fname);
+        json_serialize_to_file_pretty(json_patterns_obj_val, patterns_json_fname); 
+    }
+    
     return 0;
 }
