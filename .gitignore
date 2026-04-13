@@ -41,10 +41,12 @@ pack
 curl-macosx
 json-parser
 *.tar.gz
+ThingMCertificate.p12
 
 .vscode
 .idea
 cmake-build-debug
+test-Makefile
 
 # src archives
 srcdist
