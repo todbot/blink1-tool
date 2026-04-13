@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get git tags
         shell: bash
@@ -45,7 +45,7 @@ jobs:
 
       - name: Cache curl build (windows)
         id: cache-curl
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: blink1control-tool/curl-windows
           key: curl-7.78.0-windows-${{ hashFiles('blink1control-tool/Makefile') }}
@@ -86,7 +86,7 @@ jobs:
         run: make package-blink1control-tool
 
       - name: Upload blink1 all artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: blink1-tool-all-artifacts-windows
           path: blink1*.zip
