@@ -66,9 +66,9 @@ jobs:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
           azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          endpoint: https://eus.codesigning.azure.net/
-          trusted-signing-account-name: YOUR_ACCOUNT_NAME
-          certificate-profile-name: YOUR_PROFILE_NAME
+          endpoint: https://wus2.codesigning.azure.net/
+          trusted-signing-account-name: thingm-signing
+          certificate-profile-name: ThingMProfile
           files-folder: .
           files-folder-filter: exe
           files-folder-recurse: false
