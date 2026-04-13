@@ -1,9 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: macos
 
-# Controls when the action will run. Triggers the workflow
-# on push or pull request events but only for the master branch
 on:
   push:
     branches: [ main]
@@ -11,16 +7,18 @@ on:
     branches: [ main ]
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: 'Sign and notarize binaries'
+        type: boolean
+        default: false
 
-# A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
     runs-on: macos-latest
 
-    # Steps represent a sequence of tasks executed as part of the job
     steps:
-      # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
       - name: Get git tags
@@ -43,11 +41,48 @@ jobs:
         shell: bash
         run: make blink1control-tool
 
+      - name: Import signing certificate
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.notarize)
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFCATE_PWD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          rm certificate.p12
 
-#      - name: Codesign tools
-#        shell: bash
-#        run: make codesign
+      - name: Sign binaries
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.notarize)
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          codesign --force --options runtime \
+            --sign "Developer ID Application: $APPLE_TEAM_ID" \
+            --entitlements entitlements.plist \
+            blink1-tool blink1-tiny-server blink1control-tool/blink1control-tool
+          codesign --verify --verbose \
+            blink1-tool blink1-tiny-server blink1control-tool/blink1control-tool
 
+      - name: Notarize binaries
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.notarize)
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          zip blink1-tools-notarize.zip \
+            blink1-tool blink1-tiny-server blink1control-tool/blink1control-tool
+          xcrun notarytool submit blink1-tools-notarize.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          rm blink1-tools-notarize.zip
 
       - name: Package blink1-tool
         shell: bash
@@ -60,7 +95,6 @@ jobs:
       - name: Package blink1control-tool
         shell: bash
         run: make package-blink1control-tool
-
 
       - name: Upload blink1 all artifacts
         uses: actions/upload-artifact@v4

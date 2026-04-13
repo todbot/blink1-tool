@@ -1,9 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: windows
 
-# Controls when the action will run. Triggers the workflow
-# on push or pull request events but only for the master branch
 on:
   push:
     branches: [ main ]
@@ -11,16 +7,18 @@ on:
     branches: [ main ]
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: 'Sign binaries (Azure Trusted Signing)'
+        type: boolean
+        default: false
 
-# A workflow run is made of jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
     runs-on: windows-2022
 
-    # Steps represent a sequence of tasks executed as part of the job
     steps:
-      # Checks-out your repo under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
       - name: Get git tags
@@ -49,11 +47,19 @@ jobs:
         shell: bash
         run: make blink1control-tool
 
-
-#      - name: Codesign tools
-#        shell: bash
-#        run: make codesign
-
+      - name: Sign binaries (Azure Trusted Signing)
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.notarize)
+        uses: azure/trusted-signing-action@v0.4.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: https://eus.codesigning.azure.net/
+          trusted-signing-account-name: YOUR_ACCOUNT_NAME
+          certificate-profile-name: YOUR_PROFILE_NAME
+          files-folder: .
+          files-folder-filter: exe
+          files-folder-recurse: false
 
       - name: Package blink1-tool
         shell: bash
@@ -67,7 +73,6 @@ jobs:
         shell: bash
         run: make package-blink1control-tool
 
-         
       - name: Upload blink1 all artifacts
         uses: actions/upload-artifact@v4
         with:
