@@ -76,7 +76,7 @@ jobs:
           echo "Signing with identity: $SIGNING_IDENTITY"
           codesign --force --options runtime \
             --sign "$SIGNING_IDENTITY" \
-            --entitlements entitlements.plist \
+            --entitlements entitlements.mac.plist \
             blink1-tool blink1-tiny-server blink1control-tool/blink1control-tool
           codesign --verify --verbose \
             blink1-tool blink1-tiny-server blink1control-tool/blink1control-tool
