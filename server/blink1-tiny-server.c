@@ -99,7 +99,7 @@ void usage()
 "  --port port, -p port       port to listen on (default %d)\n"
 "  --host host, -H host       host to listen on ('127.0.0.1' or '0.0.0.0')\n"
 "  --no-html                  do not serve static HTML help\n"
-"  --logging                  log accesses to stdout\n"
+"  --logging, -l              log accesses to stdout\n"
 "  --patternsjson <fn>, -j <fn>  filepath to JSON color pattern list, see patterns-example.json\n"
 "  --quiet, -q                quiet non-logging messages (useful with --logging)\n"            
 "  --version                  version of this program\n"
@@ -186,7 +186,8 @@ void cache_flush(int idle_threshold_millis)
     for( int i=0; i< count; i++ ) {
         if( cache_infos[i].dev && cache_infos[i].atime < deadline ) {
             // printf("DEBUG cache_flush: id=%d handle=%p atime=%lld\n", i, cache_infos[i].dev, cache_infos[i].atime);
-            blink1_close(cache_infos[i].dev)
+            blink1_close(cache_infos[i].dev);
+            cache_infos[i].dev = NULL;
             cache_infos[i].atime = 0;
         }
     }
@@ -501,7 +502,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             snprintf(pattstr, sizeof(pattstr), "%s", pstr ? pstr : "");
             // no pattern with that pname
             if( pattstr[0] == 0 ) { 
-                sprintf(status, "blink1 pattern play error: no pattern for pname '%s'",pnamestr);
+                snprintf(status, sizeof(status), "blink1 pattern play error: no pattern for pname '%s'", pnamestr);
             }
         }
         
@@ -636,7 +637,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                 mg_http_reply(c, resp_code, "Location: /index.html\r\n", "");
             }
             else {
-                resp_code = 200; // I guess
                 struct mg_http_serve_opts opts = {
                     .root_dir = "/",
                     .fs = &mg_fs_packed
@@ -748,14 +748,13 @@ int main(int argc, char *argv[]) {
     } //while(1) arg parsing
 
     // JSON pattern loading or built-in
-    char pattern_status[128];
+    char pattern_status[128] = {0};
     if( patterns_json_fname[0] != 0 && access(patterns_json_fname, R_OK|W_OK) != 0) {
         fprintf(stderr, "cannot access patterns file %s\n", patterns_json_fname);
         snprintf(pattern_status, sizeof(pattern_status), "bad patterns file");
     }
     json_patterns_obj_val = json_parse_file(patterns_json_fname);
     json_patterns_obj     = json_value_get_object(json_patterns_obj_val);
-    //printf("JSON:%s\n", json_serialize_to_string(json_patterns_obj_val));
            
     if( json_patterns_obj_val == NULL ) {  // error or no file
         // populate the system patterns array into a JSON dict object
