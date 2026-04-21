@@ -573,8 +573,8 @@ int main(int argc, char** argv)
         printf("deviceId[0] = %X\n", deviceIds[0]);
         printf("cached list:\n");
         for( int i=0; i< count; i++ ) {
-            printf("%d: serial: '%s' '%s'\n",
-                   i, blink1_getCachedSerial(i), blink1_getCachedPath(i) );
+            printf("%d: serial: '%s' '%s' type:%d\n",
+                   i, blink1_getCachedSerial(i), blink1_getCachedPath(i), blink1_deviceTypeById(i) );
         }
     }
 
