@@ -61,7 +61,7 @@ void blink1_sortCache(void);
 const char * const deviceTypeStrings[] =
     {
      "unknown",
-     "mk1", "mk2", "mk3"
+     "mk1", "mk2", "mk3", "mk4",
     };
 
 //----------------------------------------------------------------------------
@@ -342,7 +342,6 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
         return blink1_readRGB_mk1( dev, fadeMillis, r,g,b);
     }
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'r', 0,0,0, 0,0,ledn };
-
     int rc = blink1_read(dev, buf, sizeof(buf) );
     if( rc != -1 ) {
         *r = buf[2];

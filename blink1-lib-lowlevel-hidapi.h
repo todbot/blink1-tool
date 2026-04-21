@@ -27,8 +27,14 @@ int blink1_enumerateByVidPid(int vid, int pid)
                 //wcscpy( blink1_infos[p].serial, cur_dev->serial_number );
                 //uint32_t sn = wcstol( cur_dev->serial_number, NULL, 16);
                 uint32_t serialnum = strtol( blink1_infos[p].serial, NULL, 16);
+                // this is a very dumb way to do this.
+                // blink1-lib should have a function that gets the info
+                // and then populates blink1_infos list
                 blink1_infos[p].type = BLINK1_MK1;
-                if(      serialnum >= blink1mk3_serialstart ) {
+                if(      serialnum >= blink1mk4_serialstart ) {
+                    blink1_infos[p].type = BLINK1_MK4;
+                }
+                else if(      serialnum >= blink1mk3_serialstart ) {
                     blink1_infos[p].type = BLINK1_MK3;
                 }
                 else if( serialnum >= blink1mk2_serialstart ) {
@@ -180,7 +186,6 @@ int blink1_read( blink1_device* dev, void* buf, int len)
         return -1; // BLINK1_ERR_NOTOPEN;
     }
     int rc = hid_send_feature_report(dev, buf, len); // FIXME: check rc
-
     if( (rc = hid_get_feature_report(dev, buf, len) == -1) ) {
       LOG("error reading data: %s\n",blink1_error_msg(rc));
     }

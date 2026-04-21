@@ -28,6 +28,7 @@ extern "C" {
 
 #define blink1mk2_serialstart 0x20000000
 #define blink1mk3_serialstart 0x30000000
+#define blink1mk4_serialstart 0x40000000
 
 #define  BLINK1_VENDOR_ID       0x27B8 /* = 0x27B8 = 10168 = thingm */
 #define  BLINK1_DEVICE_ID       0x01ED /* = 0x01ED */
@@ -45,7 +46,8 @@ typedef enum  {
     BLINK1_UNKNOWN = 0,
     BLINK1_MK1,   // the original one from the kickstarter
     BLINK1_MK2,   // the updated one with 2 LEDs
-    BLINK1_MK3    // 2018 one based on EFM32HG
+    BLINK1_MK3,   // 2018 one based on EFM32HG
+    BLINK1_MK4    // 2026 one based on STM32
 } blink1Type_t;
 
 // size of flash pattern space
@@ -54,6 +56,7 @@ static const int blink1_pattMaxes[] = {
   16, // BLINK1MK1
   16, // BLINK1MK2
   32, // BLINK1MK3
+  32, // BLINK1MK4
 };
 
 
