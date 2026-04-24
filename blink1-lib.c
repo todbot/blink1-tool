@@ -856,12 +856,17 @@ void remove_whitespace(char *str)
  * Parse an RGB color from a string in one of the forms:
  * - "#ff00ff"
  * - "FF00FF"
+ # - 0xFF00FF
  * - "255,0,255"
  * - "0xff,0x00,0xff"
  * All not case-sensitive
  */
 void parsecolor(rgb_t* color, char* colorstr)
 {
+    // parse #0xff00ff by first remove first two chars
+    if(strlen(colorstr) == 8 && colorstr[0]=='0' && tolower(colorstr[1])=='x') {
+        colorstr +=2;
+    }
     // parse hex color code like "#FF00FF" or "FF00FF", case-insensitive
     if( strchr(colorstr,',')==NULL && (colorstr[0] == '#' || strlen(colorstr)==6) ) {
         colorstr = (colorstr[0] == '#') ? colorstr+1 : colorstr;
