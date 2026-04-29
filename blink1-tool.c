@@ -232,8 +232,8 @@ int blink1_fadeToRGBForDevices( uint16_t mils, uint8_t rr,uint8_t gg, uint8_t bb
     for( int i=0; i< numDevicesToUse; i++ ) {
         d = blink1_openById( deviceIds[i] );
         if( d == NULL ) continue;
-        msg("set dev:%X:%d to rgb:0x%2.2x,0x%2.2x,0x%2.2x over %d msec\n",
-            deviceIds[i], nn, rr,gg,bb, mils, nn);
+        msg("set dev:%X:%d to rgb:0x%02x,0x%02x,0x%02x over %d msec\n",
+            deviceIds[i], nn, rr,gg,bb, mils);
         if( nn==0 ) {
             rc = blink1_fadeToRGB(d, mils, rr,gg,bb);
         } else {
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
     int brightness = 0;
 
     int16_t arg = 0;  // generic int arg for cmds that take an arg
-    char*  argbuf[150]; // generic str arg for cmds that take an arg
+    char   argbuf[150]; // generic str arg for cmds that take an arg
     uint8_t chasebuf[3]; // could use other buf
     int vid = 0;
     int pid = 0;
@@ -656,7 +656,7 @@ int main(int argc, char** argv)
     else if( cmd == CMD_FWVERSION ) {
         blink1_close(dev);
         for( int i=0; i<count; i++ ) {
-            dev = blink1_openById( deviceIds[i] );
+            dev = blink1_openBySerial( blink1_getCachedSerial(i) );
             if( dev == NULL ) continue;
             rc = blink1_getVersion(dev);
             printf("id:%d - firmware:%d serialnum:%s %s\n", i, rc,
@@ -839,7 +839,7 @@ int main(int argc, char** argv)
                 blink1_sleep(delayMillis/chase_length);
             }
             first = 0;
-        } while( loopcnt-- );
+        } while( loopcnt == -1 || loopcnt-- );
     }
     else if( cmd == CMD_BLINK ) {
         int16_t n = arg;
@@ -912,7 +912,7 @@ int main(int argc, char** argv)
                     patternline_t pat = pattern[i];
                     //msg("%d: %2.2x,%2.2x,%2.2x : %d : %d\n", i, pat.color.r,pat.color.r,pat.color.b, pat.millis,pat.ledn );
                     //msg("%d:",repeats);
-                    uint16_t m = (millis!=-1) ? millis : pat.millis/2;
+                    uint16_t m = millis;
                     uint8_t r = pat.color.r;
                     uint8_t g = pat.color.g;
                     uint8_t b = pat.color.b;
