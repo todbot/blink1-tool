@@ -214,7 +214,7 @@ void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
         sprintf(status+strlen(status), ": error, couldn't fadeToRGB on blink1");
     }
     else {
-        sprintf(status, "blink1 set color #%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b);
+        sprintf(status, "blink1 set color #%02x%02x%02x", rgb.r,rgb.g,rgb.b);
     }
     cache_return(dev);
 }
@@ -340,7 +340,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
            cache_return(dev);
         }
         
-        sprintf(tmpstr, "#%2.2x%2.2x%2.2x", last_rgb.r, last_rgb.g, last_rgb.b);
+        sprintf(tmpstr, "#%02x%02x%02x", last_rgb.r, last_rgb.g, last_rgb.b);
         json_object_set_string(json_root_obj, "lastColor", tmpstr);
     }
     else if( mg_vcmp( uri, "/blink1/id") == 0 ||
@@ -418,7 +418,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         int repeats = -1;
         patternline_t pattern[32];
         blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
-        sprintf(tmpstr, "%d,#%2.2x%2.2x%2.2x,%.3f,%d,#000000,%.3f,0",
+        sprintf(tmpstr, "%d,#%02x%02x%02x,%.3f,%d,#000000,%.3f,0",
                 count, rgb.r,rgb.g,rgb.b, (float)millis/1000.0, ledn,
                 (float)millis/1000.0);
         msg("blink pattstr:%s\n", tmpstr);
@@ -429,7 +429,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             for( int i=0; i<pattlen; i++ ) {
                 patternline_t pat = pattern[i];
                 blink1_setLEDN(dev, pat.ledn);
-                msg("  writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                msg("  writing line %d: %02x,%02x,%02x : %d : %d\n",
                       i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
                 blink1_writePatternLine(dev, pat.millis, pat.color.r, pat.color.g, pat.color.b, i);
             }
@@ -531,7 +531,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                     rgb = pat.color;
                     blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
                     blink1_setLEDN(dev, pat.ledn);
-                    //msg("    writing line %d: %2.2x,%2.2x,%2.2x : %d : %d\n",
+                    //msg("    writing line %d: %02x,%02x,%02x : %d : %d\n",
                     //    i, pat.color.r,pat.color.g,pat.color.b, pat.millis, pat.ledn );
                     blink1_writePatternLine(dev, pat.millis, rgb.r, rgb.g, rgb.b, i);
                 }
@@ -610,7 +610,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     // set JSON values that exist for all requests
     json_object_set_string(json_root_obj, "status", status);
     json_object_set_string(json_root_obj, "version", blink1_server_version);
-    sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r, rgb.g, rgb.b);
+    sprintf(tmpstr, "#%02x%02x%02x", rgb.r, rgb.g, rgb.b);
     json_object_set_string(json_root_obj, "rgb", tmpstr);
     json_object_set_number(json_root_obj, "millis", millis);
 
@@ -618,7 +618,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     // check if we've handled json        
     if( status[0] != '\0' ) {  // status set, json was handled
         resp_code = 200;
-        sprintf(tmpstr, "#%2.2x%2.2x%2.2x", rgb.r,rgb.g,rgb.b );
+        sprintf(tmpstr, "#%02x%02x%02x", rgb.r,rgb.g,rgb.b );
         mg_printf(c, "HTTP/1.1 %d OK\r\n", resp_code);
         mg_printf(c, "Content-type: application/json\r\n");
         mg_printf(c, "X-Content-Type-Options: nosniff\r\n");
