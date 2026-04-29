@@ -218,6 +218,10 @@ def test_malformed_id_no_crash():
     if code != 200:
         raise AssertionError("Server stopped responding after malformed id= arg")
     
+@test
+def test_fadeToRGB_rgb_off():
+    js = http_get_json("/blink1/off")
+    assert_json_field(js, ["rgb"], "#000000")
 
 #
 # --- Main runner -------------------------------------------------------------

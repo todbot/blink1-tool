@@ -725,7 +725,7 @@ makepkgconfig:
 
 test-blink1-tiny-server: blink1-tiny-server
 	@echo "Testing blink1-tiny-server"
-	python3 ./server/test_blink1_tiny_server.py
+	python3 ./tests/test_blink1_tiny_server.py
 
 test-blink1-lib: $(OBJS)
 	@echo "Testing blink1-lib"
