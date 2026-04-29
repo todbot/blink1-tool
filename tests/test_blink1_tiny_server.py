@@ -223,6 +223,29 @@ def test_fadeToRGB_rgb_off():
     js = http_get_json("/blink1/off")
     assert_json_field(js, ["rgb"], "#000000")
 
+@test
+def test_pattern_play_inline_pattern():
+    js = http_get_json("/blink1/pattern/play?pattern=3,%23ff00ff,0.5,0,%23000000,0.5,0")
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    assert_json_field(js, ["pattern"], "3,#ff00ff,0.50,0,#000000,0.50,0")
+
+@test
+def test_patterns_count_stable_after_add_del():
+    js = http_get_json("/blink1/patterns")
+    count_before = len(js["patterns"])
+    http_get_json("/blink1/pattern/add?pname=counttest&pattern=1,%23ff0000,0.5,0")
+    http_get_json("/blink1/pattern/del?pname=counttest")
+    js = http_get_json("/blink1/patterns")
+    count_after = len(js["patterns"])
+    if count_before != count_after:
+        raise AssertionError(f"Pattern count changed: {count_before} → {count_after}")
+
+@test
+def test_lastColor_tracks_off():
+    http_get_json("/blink1/off")
+    js = http_get_json("/blink1/lastColor")
+    assert_json_field(js, ["lastColor"], "#000000")
+
 #
 # --- Main runner -------------------------------------------------------------
 #

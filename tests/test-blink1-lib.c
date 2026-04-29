@@ -65,6 +65,19 @@ static void test_parsecolor(void)
     CHECK("parsecolor 0xff,0x00,0xff g=0",   c.g == 0);
     CHECK("parsecolor 0xff,0x00,0xff b=255", c.b == 255);
 
+    // mixed-case hex
+    char s_mixed[] = "#FF00ff";
+    parsecolor(&c, s_mixed);
+    CHECK("parsecolor #FF00ff r=255", c.r == 255);
+    CHECK("parsecolor #FF00ff g=0",   c.g == 0);
+    CHECK("parsecolor #FF00ff b=255", c.b == 255);
+
+    char s_mixed2[] = "fF00fF";
+    parsecolor(&c, s_mixed2);
+    CHECK("parsecolor fF00fF r=255",  c.r == 255);
+    CHECK("parsecolor fF00fF g=0",    c.g == 0);
+    CHECK("parsecolor fF00fF b=255",  c.b == 255);
+
     char s_black[] = "#000000";
     parsecolor(&c, s_black);
     CHECK("parsecolor #000000 r=0", c.r == 0);
@@ -240,6 +253,12 @@ static void test_toPatternString(void)
     parsePattern(s2, &repeats, pattern);
     toPatternString(pattern, 2, repeats, out);
     CHECK("toPatternString 2-line", strcmp(out, "3,#ff0000,0.50,0,#0000ff,0.50,0") == 0);
+
+    // 3-line round-trip — validates the len+= accumulation fix
+    char s3[] = "2,#ff0000,0.5,0,#00ff00,0.5,1,#0000ff,0.5,2";
+    parsePattern(s3, &repeats, pattern);
+    toPatternString(pattern, 3, repeats, out);
+    CHECK("toPatternString 3-line", strcmp(out, "2,#ff0000,0.50,0,#00ff00,0.50,1,#0000ff,0.50,2") == 0);
 }
 
 // ---------------------------------------------------------------------------
