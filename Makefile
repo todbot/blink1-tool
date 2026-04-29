@@ -558,6 +558,7 @@ help:
 	@echo "make blink1-tool... build blink1-tool program"
 	@echo "make blink1-tiny-server ... build tiny REST server"
 	@echo "make blink1control-tool ... build blink1control-tool (use w/Blink1Control)"
+	@echo "make test-blink1-tiny-server ... test blink1-tiny-server"
 	@echo "make codesign   ... sign binaries (MacOS/Windows)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
 	@echo "make package-tiny-server ... zip up tiny HTTP REST server"

@@ -9,6 +9,8 @@ import time
 import json
 import sys
 import signal
+import urllib.request
+import urllib.error
 
 SERVER_CMD = ["./blink1-tiny-server", "--port", "8000", "--quiet"]
 BASE_URL   = "http://localhost:8000"
@@ -34,23 +36,25 @@ def run_test(name, func):
         raise
 
 #
-# --- curl helpers ------------------------------------------------------------
+# --- http get helpers ------------------------------------------------------------
 #
 
-def curl_get(path):
-    """Return (exitcode, stdout) from curl GET."""
+def http_get(path):
+    """Return (status_code, body) from a GET request."""
     url = BASE_URL + path
-    p = subprocess.run( ["curl", "-s", "-f", url],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True)
-    return p.returncode, p.stdout.strip()
+    try:
+        with urllib.request.urlopen(url) as resp:
+            return resp.status, resp.read().decode().strip()
+    except urllib.error.HTTPError as e:
+        return e.code, ""
+    except urllib.error.URLError:
+        return 1, ""
 
-def curl_json(path):
-    """GET JSON and parse it. Raises on curl errors or invalid JSON."""
-    code, out = curl_get(path)
-    if code != 0:
-        raise RuntimeError(f"curl failed ({code}) for {path}")
+def http_get_json(path):
+    """GET JSON and parse it. Raises on HTTP errors or invalid JSON."""
+    code, out = http_get(path)
+    if code != 200:
+        raise RuntimeError(f"request failed ({code}) for {path}")
     try:
         return json.loads(out)
     except json.JSONDecodeError as e:
@@ -97,13 +101,13 @@ def assert_none_matches(items, forbidden_pairs):
 
 @test
 def test_server_alive():
-    code, out = curl_get("/blink1/id")
-    if code != 0:
+    code, out = http_get("/blink1/id")
+    if code != 200:
         raise AssertionError("Server did not respond to /blink1/id")
 
 @test
 def test_blink1_id_json_valid():
-    js = curl_json("/blink1/id")
+    js = http_get_json("/blink1/id")
     assert_json_field(js, ["status"], "blink1 id")
     # only if blink1 is plugged in
     #if "blink1_id" not in js:
@@ -111,7 +115,7 @@ def test_blink1_id_json_valid():
 
 @test
 def test_patterns_contains_red_flash():
-    js = curl_json("/blink1/patterns")
+    js = http_get_json("/blink1/patterns")
     if "patterns" not in js:
         raise AssertionError("Missing 'patterns' in JSON")
     assert_any_matches(js["patterns"], {"name": "red flash",
@@ -119,7 +123,7 @@ def test_patterns_contains_red_flash():
 
 @test
 def test_patterns_contains_policecar():
-    js = curl_json("/blink1/pattern")
+    js = http_get_json("/blink1/pattern")
     if "patterns" not in js:
         raise AssertionError("Missing 'patterns' in JSON")
     assert_any_matches(js["patterns"], {"name": "policecar",
@@ -127,7 +131,7 @@ def test_patterns_contains_policecar():
 
 @test
 def test_pattern_play():
-    js = curl_json("/blink1/pattern/play?pname=red+flash&count=3")
+    js = http_get_json("/blink1/pattern/play?pname=red+flash&count=3")
     assert_json_field(js, ["status"], "blink1 pattern play")
     assert_json_field(js, ["pname"], "red flash")
     assert_json_field(js, ["count"], 3)
@@ -135,7 +139,7 @@ def test_pattern_play():
 
 @test
 def test_add_pattern():
-    js = curl_json("/blink1/pattern/add?pname=todtest&pattern=3,%23FF00FF,0.5,0,%23000000,0.5,0")
+    js = http_get_json("/blink1/pattern/add?pname=todtest&pattern=3,%23FF00FF,0.5,0,%23000000,0.5,0")
     assert_json_field(js, ["status"], "blink1 pattern add")
     assert_json_field(js, ["pname"], "todtest")
     assert_json_field(js, ["pattern"], "3,#FF00FF,0.5,0,#000000,0.5,0")
@@ -144,7 +148,7 @@ def test_add_pattern():
 
 @test
 def test_patterns_contain_test():
-    js = curl_json("/blink1/pattern")
+    js = http_get_json("/blink1/pattern")
     if "patterns" not in js:
         raise AssertionError("Missing 'patterns' in JSON")
     assert_any_matches(js["patterns"], {"name": "todtest",
@@ -152,12 +156,70 @@ def test_patterns_contain_test():
 
 @test
 def test_patterns_del():
-    js = curl_json("/blink1/pattern/del?pname=todtest")
+    js = http_get_json("/blink1/pattern/del?pname=todtest")
     assert_json_field(js, ["status"], "blink1 pattern del")
     assert_json_field(js, ["pname"], "todtest")
     # fetch pattern list again and look for deleted entry
-    js = curl_json("/blink1/patterns")
+    js = http_get_json("/blink1/patterns")
     assert_none_matches(js["patterns"], {"name": "todtest"})
+
+@test
+def test_common_response_shape():
+    for path in ["/blink1/", "/blink1/red", "/blink1/off"]:
+        js = http_get_json(path)
+        for key in ("status", "version", "rgb", "millis"):
+            if key not in js:
+                raise AssertionError(f"Response from {path} missing field '{key}'")
+
+@test
+def test_fadeToRGB_rgb_echoed():
+    js = http_get_json("/blink1/fadeToRGB?rgb=FF00FF")
+    status = js.get("status", "")
+    if not status.startswith("blink1 fadeToRGB"):
+        raise AssertionError(f"Unexpected status '{status}'")
+    assert_json_field(js, ["rgb"], "#ff00ff")
+
+@test
+def test_lastColor_tracks_red():
+    http_get_json("/blink1/red")
+    js = http_get_json("/blink1/lastColor")
+    assert_json_field(js, ["status"], "blink1 lastColor")
+    assert_json_field(js, ["lastColor"], "#ff0000")
+
+@test
+def test_pattern_play_unknown_pname():
+    js = http_get_json("/blink1/pattern/play?pname=doesnotexist")
+    status = js.get("status", "")
+    if "error" not in status:
+        raise AssertionError(f"Expected error in status for unknown pname, got '{status}'")
+
+@test
+def test_pattern_add_missing_pattern_arg():
+    js = http_get_json("/blink1/pattern/add?pname=onlyname")
+    status = js.get("status", "")
+    if "error" not in status:
+        raise AssertionError(f"Expected error in status when pattern arg missing, got '{status}'")
+
+@test
+def test_pattern_del_missing_pname():
+    js = http_get_json("/blink1/pattern/del")
+    status = js.get("status", "")
+    if "error" not in status:
+        raise AssertionError(f"Expected error in status when pname arg missing, got '{status}'")
+
+@test
+def test_unknown_endpoint_404():
+    code, _ = http_get("/blink1/doesnotexist")
+    if code != 404:
+        raise AssertionError(f"Expected 404, got {code}")
+
+@test
+def test_malformed_id_no_crash():
+    http_get("/blink1/on?id=,")
+    # server should still respond after malformed id
+    code, _ = http_get("/blink1/id")
+    if code != 200:
+        raise AssertionError("Server stopped responding after malformed id= arg")
     
 
 #
