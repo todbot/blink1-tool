@@ -253,8 +253,27 @@ See the blink1-tool/Makefile for details
 
 ## Using blink1-lib in your C/C++ project
 
-See Makefile for your platform
+See Makefile for your platform. It's divided into sections for each platform.
 
+
+## Tests
+
+Tests live in the `tests/` directory. Both suites run without a blink(1) device attached.
+
+**Unit tests for blink1-lib pure functions** (color parsing, pattern parsing, math):
+```sh
+make test-blink1-lib
+```
+
+**Integration tests for blink1-tiny-server** (HTTP endpoints, JSON responses):
+```sh
+make test-blink1-tiny-server
+```
+
+Run both at once:
+```sh
+make test
+```
 
 ## Docker and blink(1)
 

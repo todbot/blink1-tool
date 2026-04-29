@@ -732,5 +732,5 @@ test-blink1-lib: $(OBJS)
 	$(CC) $(CFLAGS) -I. tests/test-blink1-lib.c $(OBJS) $(LIBS) -o tests/test-blink1-lib
 	./tests/test-blink1-lib
 
-test: test-blink1-tiny-server test-blink1-lib
+test: test-blink1-lib test-blink1-tiny-server
 
