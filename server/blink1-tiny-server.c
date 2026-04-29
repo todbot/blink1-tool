@@ -260,7 +260,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     struct mg_str* uri = &hm->uri;
     struct mg_str* querystr = &hm->query;
 
-    mg_snprintf(uri_str, uri->len+1, "%s", uri->ptr); // uri->ptr gives us char ptr
+    mg_snprintf(uri_str, sizeof(uri_str), "%s", uri->ptr); // uri->ptr gives us char ptr
 
     // handle parsing all possible query args
     if( mg_http_get_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
@@ -282,14 +282,18 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     if( mg_http_get_var(querystr, "id", tmpstr, sizeof(tmpstr)) > 0 ) {
         char* pch;
         pch = strtok(tmpstr, " ,");
-        int base = (strlen(pch)==8) ? 16:0;
-        id = strtol(pch,NULL,base);
+        if( pch != NULL ) {
+            int base = (strlen(pch)==8) ? 16:0;
+            id = strtol(pch,NULL,base);
+        }
     }
     if( mg_http_get_var(querystr, "blink1_id", tmpstr, sizeof(tmpstr)) > 0 ) {
         char* pch;
         pch = strtok(tmpstr, " ,");
-        int base = (strlen(pch)==8) ? 16:0;
-        id = strtol(pch,NULL,base);
+        if( pch != NULL ) {
+            int base = (strlen(pch)==8) ? 16:0;
+            id = strtol(pch,NULL,base);
+        }
     }
     if( mg_http_get_var(querystr, "ledn", tmpstr, sizeof(tmpstr)) > 0 ) {
         ledn = strtod(tmpstr,NULL);
@@ -519,6 +523,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             //msg("pname:%s pattstr:%s pattstr_verify:%s pattlen:%d, repeats:%d\n",
             //    pnamestr, pattstr, pattstr_verify, pattlen, repeats);
         
+            json_object_set_string(json_root_obj, "pattern", pattstr_verify);
             blink1_device* dev = cache_getDeviceById(id);
             if( dev ) {
                 for( int i=0; i<pattlen; i++ ) {
@@ -533,9 +538,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
                 msg("  playing pattern '%s' %d times on blink1\n",pattstr_verify,count);
                 blink1_playloop(dev, 1 /*play/pause*/, 0 /*startpos*/, pattlen-1 /*endpos*/, count /*count*/);
                 cache_return(dev);
-                json_object_set_string(json_root_obj, "pattern", pattstr_verify);
             }
-            else { sprintf(status+strlen(status), ": no blink1 found"); }
         }
     }
     // since patterns play on the blink1, just stop any pattern playing
@@ -647,7 +650,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         else if ( mg_vcmp( uri, "/") == 0 ) { // non-html request for homepage
             resp_code = 200;
             mg_http_reply(c, resp_code, "",
-                          "Welcome to %s api server. All endpointss start with '/blink1'.\r\n",
+                          "Welcome to %s api server. All endpoints start with '/blink1'.\r\n",
                           blink1_server_name);
         }
         else {
@@ -752,6 +755,7 @@ int main(int argc, char *argv[]) {
     if( patterns_json_fname[0] != 0 && access(patterns_json_fname, R_OK|W_OK) != 0) {
         fprintf(stderr, "cannot access patterns file %s\n", patterns_json_fname);
         snprintf(pattern_status, sizeof(pattern_status), "bad patterns file");
+        patterns_json_fname[0] = 0;  // fall through to built-in patterns
     }
     json_patterns_obj_val = json_parse_file(patterns_json_fname);
     json_patterns_obj     = json_value_get_object(json_patterns_obj_val);
