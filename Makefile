@@ -668,6 +668,7 @@ clean:
 	rm -f server/mongoose/mongoose.o
 	rm -f server/blink1-tiny-server-html.{c,o}
 	rm -f blink1-tool$(EXE) blink1-tiny-server$(EXE)
+	rm -f tests/test-blink1-lib
 	$(MAKE) -C blink1control-tool clean
 
 distclean: clean
@@ -724,7 +725,12 @@ makepkgconfig:
 
 test-blink1-tiny-server: blink1-tiny-server
 	@echo "Testing blink1-tiny-server"
-	python3 ./server/test_blink1_tiny_server.py 
+	python3 ./server/test_blink1_tiny_server.py
 
-test: test-blink1-tiny-server
+test-blink1-lib: $(OBJS)
+	@echo "Testing blink1-lib"
+	$(CC) $(CFLAGS) -I. tests/test-blink1-lib.c $(OBJS) $(LIBS) -o tests/test-blink1-lib
+	./tests/test-blink1-lib
+
+test: test-blink1-tiny-server test-blink1-lib
 

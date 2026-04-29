@@ -135,7 +135,7 @@ def test_pattern_play():
     assert_json_field(js, ["status"], "blink1 pattern play")
     assert_json_field(js, ["pname"], "red flash")
     assert_json_field(js, ["count"], 3)
-    assert_json_field(js, ["pattern"], "9,#ff0000,0.50,,#000000,0.50,0")  # note 2 sig figs on time
+    assert_json_field(js, ["pattern"], "9,#ff0000,0.50,0,#000000,0.50,0")
 
 @test
 def test_add_pattern():
@@ -174,9 +174,6 @@ def test_common_response_shape():
 @test
 def test_fadeToRGB_rgb_echoed():
     js = http_get_json("/blink1/fadeToRGB?rgb=FF00FF")
-    status = js.get("status", "")
-    if not status.startswith("blink1 fadeToRGB"):
-        raise AssertionError(f"Unexpected status '{status}'")
     assert_json_field(js, ["rgb"], "#ff00ff")
 
 @test

@@ -816,7 +816,7 @@ void hsbtorgb( rgb_t* rgb, uint8_t* hsb )
     uint8_t r,g,b;
 
     if(s == 0) {          // color is grayscale
-        r = g = b = v;
+        rgb->r = rgb->g = rgb->b = v;
         return;
     }
 
@@ -943,7 +943,7 @@ int toPatternString(patternline_t* pattern, int pattlen, int repeats, char* patt
         rgb_t rgb = pat.color;
         float t = pat.millis / 1000.0;
         int ledn = pat.ledn;
-        len = sprintf(pattstr+len, ",#%2.2x%2.2x%2.2x,%.2f,%d", rgb.r, rgb.g, rgb.b, t, ledn);
+        len += sprintf(pattstr+len, ",#%02x%02x%02x,%.2f,%d", rgb.r, rgb.g, rgb.b, t, ledn);
     }
     return len;
 }

@@ -31,6 +31,7 @@ Desktop.ini
 *.old
 
 # build products
+tests/test-blink1-lib
 blink1-tool
 blink1-tiny-server
 blink1-control-tool
