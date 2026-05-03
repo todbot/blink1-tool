@@ -493,20 +493,33 @@ int          blink1_getCachedCount(void);
 /**
  * Returns version of device at cache index i is a mk2
  *
- * @return mk2=1, mk1=0
+ * @return 1 if mk2, 0 if not mk2
  */
 int          blink1_isMk2ById(int i);
 
 /**
  * Returns if given blink1_device is a mk2 or not
  * @param dev blink1 device to check
- * @return mk2=1, mk1=0
+ * @return 1 if mk2, 0 if not mk2
  */
 int          blink1_isMk2(blink1_device* dev);
 
 /**
+ * Returns version of device at cache index i is a mk1
+ * @return 1 if mk1, 0 if not mk1
+ */
+int          blink1_isMk1ById(int i);
+
+/**
+ * Returns if given blink1_device is a mk1 or not
+ * @param dev blink1 device to check
+ * @return 1 if mk1, 0 if not mk1
+ */
+int          blink1_isMk1(blink1_device* dev);
+
+/**
  * Returns device "mk" type at cache index i
- * @return blink1Type_t (BLINK1_MK2, BLINK1_MK2, BLINK1_MK1)
+ * @return blink1Type_t (e.g. BLINK1_MK3, BLINK1_MK2, BLINK1_MK1)
  */
 blink1Type_t blink1_deviceTypeById( int i );
 

@@ -157,7 +157,7 @@ blink1Type_t blink1_deviceTypeById( int i )
     return blink1_infos[i].type;
 }
 
-// returns BLINK1_MK2, BLINK1_MK3, or BLINK1
+// returns BLINK1_MK1, BLINK1_MK2, BLINK1_MK3, or BLINK1_MK4 
 blink1Type_t blink1_deviceType( blink1_device* dev )
 {
   return blink1_deviceTypeById( blink1_getCacheIndexByDev(dev) );
@@ -168,11 +168,21 @@ const char* blink1_deviceTypeToStr(blink1Type_t t)
     return deviceTypeStrings[t];
 }
 
+int blink1_isMk1ById( int i )
+{
+    if( i>=0  && blink1_infos[i].type == BLINK1_MK1 ) return 1;
+    return 0;
+}
 
 int blink1_isMk2ById( int i )
 {
     if( i>=0  && blink1_infos[i].type == BLINK1_MK2 ) return 1;
     return 0;
+}
+
+int blink1_isMk1( blink1_device* dev )
+{
+    return blink1_isMk1ById( blink1_getCacheIndexByDev(dev) );
 }
 
 int blink1_isMk2( blink1_device* dev )
@@ -338,7 +348,7 @@ int blink1_readRGB(blink1_device *dev, uint16_t* fadeMillis,
                    uint8_t* r, uint8_t* g, uint8_t* b,
                    uint8_t ledn)
 {
-    if( ! blink1_isMk2(dev) ) {
+    if( blink1_isMk1(dev) ) {
         return blink1_readRGB_mk1( dev, fadeMillis, r,g,b);
     }
     uint8_t buf[blink1_buf_size] = { blink1_report_id, 'r', 0,0,0, 0,0,ledn };
