@@ -356,8 +356,6 @@ int main(int argc, char** argv)
         {"running",    optional_argument, &cmd,   CMD_CHASE },
         {"version",    no_argument,       &cmd,   CMD_VERSION },
         {"fwversion",  no_argument,       &cmd,   CMD_FWVERSION },
-        //{"serialnumread", no_argument,    &cmd,   CMD_SERIALNUMREAD },
-        //{"serialnumwrite",required_argument, &cmd,CMD_SERIALNUMWRITE },
         {"servertickle", required_argument, &cmd, CMD_SERVERDOWN },
         {"playpattern",  required_argument, &cmd, CMD_PLAYPATTERN },
         {"writepattern", required_argument, &cmd, CMD_WRITEPATTERN },

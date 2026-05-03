@@ -233,53 +233,8 @@ int blink1_eewrite(blink1_device *dev, uint16_t addr, uint8_t val)
     return rc;
 }
 
-// FIXME: this doesn't work, use hidapi info instead
-int blink1_serialnumread(blink1_device *dev, uint8_t** serialnum)
-{
-    int rc = -1;
-    for( int i=0; i<blink1_serialnum_len; i++ ) { // serial num is 8 chars long
-        //blink1_eeread( dev, blink1_eeaddr_serialnum+i, (serialnum+i) );
-    }
-    return rc;
-}
 
 //
-static uint8_t parseHex(char c)
-{
-    c = toupper(c);
-    if (c >= '0' && c <= '9')  return (c - '0');
-    if (c >= 'A' && c <= 'F')  return (c - 'A')+10;
-    return 0;
-}
-
-// serialnum comes in as an ascii set of 8 characters representing
-// 4-bytes
-int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr)
-{
-    uint8_t serialnum[4];
-    serialnum[0] = parseHex( serialnumstr[0] )*16 + parseHex( serialnumstr[1] );
-    serialnum[1] = parseHex( serialnumstr[2] )*16 + parseHex( serialnumstr[3] );
-    serialnum[2] = parseHex( serialnumstr[4] )*16 + parseHex( serialnumstr[5] );
-    serialnum[3] = parseHex( serialnumstr[6] )*16 + parseHex( serialnumstr[7] );
-
-    int rc = 0;
-    for( int i=0; i<blink1_serialnum_len; i++ ) { // serialnum is 4 chars long
-        blink1_sleep(50); //FIXME:
-        uint8_t v = serialnum[i];
-        int rc = blink1_eewrite( dev, blink1_eeaddr_serialnum+i, v);
-        if( rc == -1 ) { // try again
-            LOG("blink1_serialwrite: oops, trying again on char %d\n",i);
-            rc = blink1_eewrite(dev,blink1_eeaddr_serialnum+i, v);
-            if( rc == -1 ) {
-                LOG("blink1_serialwrite: error on try again\n");
-                break;
-            }
-        }
-
-    }
-    return rc;
-}
-
 int blink1_fadeToRGBN(blink1_device *dev,  uint16_t fadeMillis,
                       uint8_t r, uint8_t g, uint8_t b, uint8_t n)
 {

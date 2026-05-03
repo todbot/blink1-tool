@@ -239,20 +239,6 @@ int blink1_eeread(blink1_device *dev, uint16_t addr, uint8_t* val);
 int blink1_eewrite(blink1_device *dev, uint16_t addr, uint8_t val);
 
 /**
- * Read serial number from mk1 device. Does not work.
- * @note Use USB descriptor serial number instead.
- * @note for mk1 devices only.
- * @note does not work.
- */
-int blink1_serialnumread(blink1_device *dev, uint8_t** serialnumstr);
-/**
- * Write serial number to mk1 device. Does not work.
- * @note for mk1 devices only.
- * @note does not work.
- */
-int blink1_serialnumwrite(blink1_device *dev, uint8_t* serialnumstr);
-
-/**
  * Tickle blink1 serverdown functionality.
  * @note 'st' param for mk2 firmware only
  * @param on  enable or disable: enable=1, disable=0
