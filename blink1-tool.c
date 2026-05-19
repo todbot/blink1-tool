@@ -34,6 +34,7 @@ extern int blink1_lib_verbose;
 #endif
 
 #ifdef _WIN32
+#include <process.h>   // _getpid()
 #define getpid _getpid
 #endif
 
