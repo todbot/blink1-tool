@@ -37,6 +37,12 @@ jobs:
         shell: bash
         run: make blink1-tiny-server
 
+      - name: CMake build (universal x86_64+arm64)
+        shell: bash
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+
       - name: Cache curl build (macos)
         id: cache-curl
         uses: actions/cache@v5
