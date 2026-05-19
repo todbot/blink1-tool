@@ -74,7 +74,9 @@ target_compile_definitions(blink1-lib
             $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
-target_compile_options(blink1-lib PRIVATE $<IF:$<C_COMPILER_ID:MSVC>,/W3,-Wall>)
+target_compile_options(blink1-lib PRIVATE
+    $<IF:$<C_COMPILER_ID:MSVC>,/W3 /wd4244,-Wall>
+)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_compile_options(blink1-lib PRIVATE
         -fPIC
@@ -101,7 +103,9 @@ target_compile_definitions(blink1-tool PRIVATE
     $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
-target_compile_options(blink1-tool PRIVATE $<IF:$<C_COMPILER_ID:MSVC>,/W3,-Wall>)
+target_compile_options(blink1-tool PRIVATE
+    $<IF:$<C_COMPILER_ID:MSVC>,/W3 /wd4244,-Wall>
+)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_compile_options(blink1-tool PRIVATE -Wno-format -Wno-pointer-to-int-cast)
 endif()
