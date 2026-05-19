@@ -13,13 +13,12 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>  // for toupper()
-#include <unistd.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #define   swprintf   _snwprintf
 #else
-//#include <unistd.h>    // for usleep()
+#include <unistd.h>
 #endif
 
 #include "blink1-lib.h"
