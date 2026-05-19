@@ -191,6 +191,47 @@ To compile for a particular `USBLIB_TYPE` or `HIDAPI_TYPE`, specify them when bu
 HIDAPI_TYPE=LIBUSB make
 ```
 
+### Building with CMake
+
+CMake is an alternative to `make` that produces universal binaries on macOS and integrates
+well with IDEs. The original `Makefile` is still fully supported.
+
+Prerequisites: CMake 3.15+ and the hidapi submodule:
+```sh
+git submodule update --init
+```
+
+**macOS** (builds a universal x86_64 + arm64 fat binary by default):
+```sh
+cmake -B build
+cmake --build build
+# binaries: build/blink1-tool  build/blink1-tiny-server
+```
+
+**Linux** (hidraw backend by default; requires `libudev-dev`):
+```sh
+cmake -B build
+cmake --build build
+```
+
+To use the libusb backend instead (requires `libusb-1.0-0-dev`):
+```sh
+cmake -B build -DBLINK1_HIDAPI_LIBUSB=ON
+cmake --build build
+```
+
+For a fully static binary (requires a musl-based toolchain; glibc static is broken on Ubuntu 13+):
+```sh
+cmake -B build -DBLINK1_STATIC_LINK=ON
+cmake --build build
+```
+
+**Windows** (MinGW via MSYS2):
+```sh
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+```
+
 ## OS-specific prerequisites for compiling
 
 If you have the ability to compile programs on your system,
