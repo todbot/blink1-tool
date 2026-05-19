@@ -265,7 +265,7 @@ void add_udev_rules() {
   printf("'sudo' will be used. Please have your password ready\n");
   printf("Script being run:\n%s\n", UDEV_SHELLSCRIPT);
   printf("Running script...\n");
-  (void)system(UDEV_SHELLSCRIPT);
+  int _rc = system(UDEV_SHELLSCRIPT); (void)_rc;
   printf("...Done.\n");
   exit(0);
 }
