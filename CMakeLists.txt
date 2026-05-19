@@ -71,6 +71,7 @@ target_include_directories(blink1-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(blink1-lib
     PUBLIC  USE_HIDAPI          # blink1-lib.h checks this; propagate to all consumers
     PRIVATE BLINK1_VERSION="${BLINK1_VERSION}"
+            $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
 target_compile_options(blink1-lib PRIVATE $<IF:$<C_COMPILER_ID:MSVC>,/W3,-Wall>)
@@ -97,6 +98,7 @@ add_executable(blink1-tool blink1-tool.c)
 
 target_compile_definitions(blink1-tool PRIVATE
     BLINK1_VERSION="${BLINK1_VERSION}"
+    $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
 target_compile_options(blink1-tool PRIVATE $<IF:$<C_COMPILER_ID:MSVC>,/W3,-Wall>)

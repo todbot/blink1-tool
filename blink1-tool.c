@@ -813,8 +813,8 @@ int main(int argc, char** argv)
         if (loopcnt < 0) msg("forever\n");
         else             msg("%d times\n", loopcnt+1);
 
-        // make gradient
-        uint8_t led_grad[chase_length][3];
+        // make gradient (256 covers the full uint8_t LED index range; avoids VLA)
+        uint8_t led_grad[256][3];
         for( int i=0; i<chase_length; i++ ) {
             int temp = chase_length-i-1;
             led_grad[temp][0] = c[0] * i / chase_length;
@@ -956,17 +956,16 @@ int main(int argc, char** argv)
         msg("read pattern:\n");
         uint8_t r,g,b,n;
         uint16_t msecs;
-        int maxstrlen = 2048;
         int patt_max = blink1_getPattMax(dev);
-        char str[maxstrlen];
+        char str[2048];
         str[0] = '\0';
         strcat(str, "{0");
-        char strline[maxstrlen/patt_max];
+        char strline[64];   // ",#rrggbb,0.00,d" is ~20 chars; 64 is ample
         //strcat(str, "{0"); // repeats forever
         for( int i=0; i<patt_max; i++ ) {
             rc = blink1_readPatternLineN(dev, &msecs, &r,&g,&b, &n, i );
             //if( !(msecs==0 && r==0 && g==0 && b==0) ) {
-            snprintf(strline, (maxstrlen/patt_max), ",#%2.2x%2.2x%2.2x,%0.2f,%d", r,g,b, (msecs/1000.0),n);
+            snprintf(strline, sizeof(strline), ",#%2.2x%2.2x%2.2x,%0.2f,%d", r,g,b, (msecs/1000.0),n);
             strcat(str,strline);
             //}
         }

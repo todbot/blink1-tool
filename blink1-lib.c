@@ -16,7 +16,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define   swprintf   _snwprintf
+#define swprintf    _snwprintf
+#define strcasecmp  _stricmp   // POSIX; MSVC equivalent is _stricmp
 #else
 #include <unistd.h>
 #endif
