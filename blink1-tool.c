@@ -263,7 +263,7 @@ void add_udev_rules() {
   printf("'sudo' will be used. Please have your password ready\n");
   printf("Script being run:\n%s\n", UDEV_SHELLSCRIPT);
   printf("Running script...\n");
-  system(UDEV_SHELLSCRIPT);
+  (void)system(UDEV_SHELLSCRIPT);
   printf("...Done.\n");
   exit(0);
 }
@@ -415,7 +415,7 @@ int main(int argc, char** argv)
                 break;
             case CMD_PLAYPATTERN:
             case CMD_WRITEPATTERN:
-                strncpy( (char*)argbuf, optarg, sizeof(argbuf) );
+                snprintf( (char*)argbuf, sizeof(argbuf), "%s", optarg );
                 break;
             case CMD_ON:
                 rgbbuf.r = 255; rgbbuf.g = 255; rgbbuf.b = 255;
@@ -456,7 +456,7 @@ int main(int argc, char** argv)
             millis = strtol(optarg,NULL,10);
             break;
         case 'n':
-            strncpy( (char*)argbuf, optarg, sizeof(argbuf) );
+            snprintf( (char*)argbuf, sizeof(argbuf), "%s", optarg );
             break;
         case 't':
             delayMillis = strtol(optarg,NULL,10);

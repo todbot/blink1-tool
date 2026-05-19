@@ -721,7 +721,7 @@ int main(int argc, char *argv[]) {
             msg_setquiet(1);
             break;
         case 'H':
-            strncpy(http_listen_host, optarg, sizeof(http_listen_host));
+            snprintf(http_listen_host, sizeof(http_listen_host), "%s", optarg);
             break;
         case 'p':
             port = strtod(optarg,NULL);
@@ -733,7 +733,7 @@ int main(int argc, char *argv[]) {
             }
             break;
         case 'j':
-            strncpy(patterns_json_fname, optarg, sizeof(patterns_json_fname));
+            snprintf(patterns_json_fname, sizeof(patterns_json_fname), "%s", optarg);
             break;
         case 'd':
             // s_http_server_opts.document_root = optarg;
