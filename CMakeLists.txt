@@ -41,6 +41,8 @@ else()
 endif()
 message(STATUS "blink1 version: ${BLINK1_VERSION}")
 
+include(FetchContent)
+
 # --- Build hidapi as a static library ---
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
@@ -103,6 +105,18 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 target_link_libraries(blink1-tool PRIVATE blink1-lib)
+
+# Windows (MSVC): getopt is not in the MSVC runtime; fetch a port
+if(MSVC)
+    FetchContent_Declare(
+        getopt_win
+        GIT_REPOSITORY https://github.com/ludvikjerabek/getopt-win.git
+        GIT_TAG v2.42.0
+    )
+    FetchContent_MakeAvailable(getopt_win)
+    target_link_libraries(blink1-tool PRIVATE getopt::getopt_static)
+    target_compile_definitions(blink1-tool PRIVATE STATIC_GETOPT)
+endif()
 
 # Windows (MinGW): static C runtime so the .exe runs without MinGW DLLs
 if(WIN32 AND NOT MSVC)

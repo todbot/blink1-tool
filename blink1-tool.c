@@ -17,7 +17,9 @@
 #include <stdint.h>
 #include <getopt.h>    // for getopt_long()
 #include <time.h>
+#ifndef _WIN32
 #include <unistd.h>    // getuid()
+#endif
 #include <sys/stat.h>  // stat
 
 #include "blink1-lib.h"
