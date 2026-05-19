@@ -195,7 +195,7 @@ CFLAGS += `$(OPT_HOME)/libusb-config --cflags`
 LIBS   += `$(OPT_HOME)/libusb-config --libs`
 endif
 
-LIBS += -framework IOKit -framework CoreFoundation -framework AppKit
+LIBS += -framework IOKit -framework CoreFoundation
 
 EXEFLAGS =
 #LIBFLAGS = -bundle -o $(LIBTARGET) -Wl,-search_paths_first $(LIBS)
