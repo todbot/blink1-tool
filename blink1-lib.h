@@ -76,7 +76,7 @@ typedef struct hid_device_ blink1_device; /* opaque blink1 structure */
 
 // Set blink1_lib_verbose to 1 to enable low-level debugging
 extern int blink1_lib_verbose;
-    
+
 typedef struct {
     uint8_t r; uint8_t g; uint8_t b;
 } rgb_t;
@@ -523,9 +523,9 @@ blink1Type_t blink1_deviceType( blink1_device* dev );
 const char* blink1_deviceTypeToStr(blink1Type_t t);
 
 
-const int blink1_getPattMax(blink1_device* dev);
-  
-  
+int blink1_getPattMax(blink1_device* dev);
+
+
 /**
  * Take an array of bytes and spit them out as a hex string to fp
  */
@@ -565,7 +565,7 @@ int parsePattern( char* str, int* repeats, patternline_t* pattern );
  * Returns length of string created
  */
 int toPatternString(patternline_t* pattern, int pattlen, int repeats, char* pattstr);
-    
+
 /**
  * printf that can be shut up
  *
