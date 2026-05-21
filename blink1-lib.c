@@ -20,6 +20,7 @@
 #define strcasecmp  _stricmp   // POSIX; MSVC equivalent is _stricmp
 #else
 #include <unistd.h>
+#include <strings.h>
 #endif
 
 #include "blink1-lib.h"

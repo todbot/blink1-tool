@@ -11,7 +11,6 @@
  */
 
 #include <stdio.h>
-#include <stdarg.h>    // vararg stuff
 #include <string.h>    // for memset(), strcmp(), et al
 #include <stdlib.h>
 #include <stdint.h>
