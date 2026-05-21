@@ -109,7 +109,7 @@ CFLAGS += -DBLINK1_VERSION=\"$(BLINK1_VERSION)\"
 
 CFLAGS += -lm
 # to fix usleep() not being found on Ubuntu14
-CFLAGS += -D_BSD_SOURCE
+CFLAGS += -D_DEFAULT_SOURCE
 
 CFLAGS += -Wno-pointer-to-int-cast
 CFLAGS +=  -I json-parser
