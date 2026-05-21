@@ -114,7 +114,7 @@ void usage()
 
     fprintf(stderr,
 "Supported URIs:\n");
-    for( int i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
+    for( size_t i=0; i< sizeof(supported_urls)/sizeof(url_info); i++ ) {
         fprintf(stderr,"  %s -- %s\n", supported_urls[i].url, supported_urls[i].desc);
     }
     fprintf(stderr,"\n");
@@ -453,7 +453,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         // convert JSON_Object pattern dict to a JSON_Array for output
         JSON_Value* array_val = json_value_init_array();
         JSON_Array * array = json_value_get_array(array_val);
-        int n = json_object_get_count(json_patterns_obj);
+        size_t n = json_object_get_count(json_patterns_obj);
         for (size_t i = 0; i < n; i++) {
             const char *key = json_object_get_name(json_patterns_obj, i);
             const char *val = json_object_get_string(json_patterns_obj, key);

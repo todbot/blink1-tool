@@ -171,7 +171,7 @@ PKG_CONFIG_FILE_NAME = blink1.pc
 ifeq "$(OS)" "macosx"
 BLINK1_VERSION="$(GIT_TAG)-$(OS)"
 LIBTARGET = libBlink1.dylib
-CFLAGS += -Wall
+CFLAGS += -Wall -Wextra
 CFLAGS += -mmacosx-version-min=10.8
 #CFLAGS += -mmacosx-version-min=10.6
 #CFLAGS += -fsanitize=address

@@ -197,6 +197,7 @@ int blink1_read( blink1_device* dev, void* buf, int len)
 int blink1_readRGB_mk1(blink1_device *dev, uint16_t* fadeMillis,
                        uint8_t* r, uint8_t* g, uint8_t* b)
 {
+    (void) fadeMillis;
     uint8_t buf[blink1_buf_size] = { blink1_report_id };
     int rc;
     blink1_sleep( 50 ); // FIXME:
@@ -209,9 +210,10 @@ int blink1_readRGB_mk1(blink1_device *dev, uint16_t* fadeMillis,
     return rc;
 }
 
-//
+// not implemented yet
 char *blink1_error_msg(int errCode)
 {
+    (void) errCode; 
     /*
     static char buf[80];
 
