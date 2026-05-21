@@ -21,9 +21,14 @@
  */
 
 #include <getopt.h>    // for getopt_long_only()
-#include <sys/time.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "mongoose.h"  // HTTP server
 #include "parson.h"    // JSON build and parse
