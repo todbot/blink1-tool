@@ -158,7 +158,7 @@ blink1Type_t blink1_deviceTypeById( int i )
     return blink1_infos[i].type;
 }
 
-// returns BLINK1_MK1, BLINK1_MK2, BLINK1_MK3, or BLINK1_MK4 
+// returns BLINK1_MK1, BLINK1_MK2, BLINK1_MK3, or BLINK1_MK4
 blink1Type_t blink1_deviceType( blink1_device* dev )
 {
   return blink1_deviceTypeById( blink1_getCacheIndexByDev(dev) );
@@ -191,7 +191,7 @@ int blink1_isMk2( blink1_device* dev )
     return blink1_isMk2ById( blink1_getCacheIndexByDev(dev) );
 }
 
-const int blink1_getPattMax(blink1_device* dev) {
+int blink1_getPattMax(blink1_device* dev) {
   return blink1_pattMaxes[blink1_deviceType(dev)];
 }
 
@@ -855,7 +855,7 @@ int parsePattern(char* pattstr, int* repeats, patternline_t* pattern)
 {
     char str[1000];
     sprintf(str, "%s", pattstr);  // FIXME: check size
-    
+
     remove_whitespace(str);
     char* s;
     s = strtok( str, ", ");
