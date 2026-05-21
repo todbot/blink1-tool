@@ -181,7 +181,9 @@ There are two primary USB libraries that `blink1-tool` can be built for:
 - `USBLIB_TYPE=HIDAPI` -- Uses the feature-rich cross-platform `hidapi` library (default)
 - `USBLIB_TYPE=HIDDATA` -- Uses a simple, cross-platform `hiddata` library (included)
 
-For Linux, there are to HIDAPI_TYPEs you can choose from:
+The `hiddata` library is for small, minimal Linux systems that `hidapi` does not support.
+
+For Linux, there are two HIDAPI_TYPEs you can choose from:
 - `HIDAPI_TYPE=HIDRAW` -- Uses standard `hidraw` kernel API for HID devices  (default)
 - `HIDAPI_TYPE=LIBUSB` -- Uses lower-level `libusb` commands (good for older Linuxes)
 
@@ -227,8 +229,16 @@ cmake --build build
 ```
 
 **Windows** (MinGW via MSYS2):
+
+Open an MSYS2 MinGW shell (e.g. "MSYS2 MinGW 64-bit"). CMake will auto-detect the generator:
 ```sh
-cmake -B build -G "MinGW Makefiles"
+cmake -B build
+cmake --build build
+```
+
+If cmake can't find a generator, try explicitly:
+```sh
+cmake -B build -G "MSYS Makefiles"
 cmake --build build
 ```
 

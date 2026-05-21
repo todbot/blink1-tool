@@ -43,6 +43,7 @@ curl-macosx
 json-parser
 *.tar.gz
 ThingMCertificate.p12
+build
 
 .vscode
 .idea
