@@ -1,6 +1,13 @@
 name: raspberrypi
 
-on: [push, pull_request, workflow_dispatch]
+#on: [push, pull_request, workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_release:
+        description: 'Upload installers to the latest GitHub release'
+        type: boolean
+        default: false
 
 env:
   HIDAPI_VERSION: "0.15.0"
@@ -21,7 +28,7 @@ jobs:
           copy_artifact_path: artifacts
           commands: |
             apt-get update
-            apt-get install -y build-essential pkg-config libudev-dev libusb-1.0-0-dev
+            apt-get install -y build-essential git pkg-config libudev-dev libusb-1.0-0-dev
             cd blink1-tool
             make
             make blink1-tiny-server
