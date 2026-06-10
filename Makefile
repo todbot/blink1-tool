@@ -559,6 +559,8 @@ help:
 	@echo "make blink1-tiny-server ... build tiny REST server"
 	@echo "make blink1control-tool ... build blink1control-tool (use w/Blink1Control)"
 	@echo "make test-blink1-tiny-server ... test blink1-tiny-server"
+	@echo "make install    ... copy blink1-tool and libs to install location"
+	@echo "make install-tiny-server ... install blink1-tiny-server"
 	@echo "make codesign   ... sign binaries (MacOS/Windows)"
 	@echo "make package    ... zip up blink1-tool and blink1-lib "
 	@echo "make package-tiny-server ... zip up tiny HTTP REST server"
@@ -651,6 +653,10 @@ install-dev: install-lib makepkgconfig
 install: all install-lib
 	@mkdir -p $(DESTDIR)$(EXELOCATION)
 	$(INSTALL) blink1-tool$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
+
+install-tiny-server: all blink1-tiny-server
+	@mkdir -p $(DESTDIR)$(EXELOCATION)
+	$(INSTALL) blink1-tiny-server$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tiny-server$(EXE)
 
 uninstall-lib:
 	rm -f $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
