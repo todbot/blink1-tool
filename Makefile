@@ -641,6 +641,7 @@ cpbuilds:
 	@echo "Look in 'builds' for zipfiles to publish"
 
 install-lib:
+	@mkdir -p $(DESTDIR)$(LIBLOCATION)
 	$(INSTALL) $(LIBTARGET) $(DESTDIR)$(LIBLOCATION)/$(LIBTARGET)
 
 install-dev: install-lib makepkgconfig
@@ -648,6 +649,7 @@ install-dev: install-lib makepkgconfig
 	$(INSTALL) blink1-lib.h $(DESTDIR)$(INCLOCATION)/blink1-lib.h
 
 install: all install-lib
+	@mkdir -p $(DESTDIR)$(EXELOCATION)
 	$(INSTALL) blink1-tool$(EXE) $(DESTDIR)$(EXELOCATION)/blink1-tool$(EXE)
 
 uninstall-lib:
@@ -733,4 +735,3 @@ test-blink1-lib: $(OBJS)
 	./tests/test-blink1-lib
 
 test: test-blink1-lib test-blink1-tiny-server
-
