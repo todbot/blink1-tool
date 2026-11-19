@@ -20,6 +20,10 @@
 #include <unistd.h>    // getuid()
 #endif
 #include <sys/stat.h>  // stat
+#ifdef __APPLE__
+#include <signal.h>
+#include <sys/sysctl.h>
+#endif
 
 #include "blink1-lib.h"
 extern int blink1_lib_verbose;
@@ -84,6 +88,8 @@ static void usage(char *myName)
 "  --red                       Turn blink(1) red \n"
 "  --green                     Turn blink(1) green \n"
 "  --blue                      Turn blink(1) blue \n"
+"  --orange                    Turn blink(1) orange \n"
+"  --purple                    Turn blink(1) purple \n"
 "  --cyan                      Turn blink(1) cyan (green + blue) \n"
 "  --magenta                   Turn blink(1) magenta (red + blue) \n"
 "  --yellow                    Turn blink(1) yellow (red + green) \n"
@@ -189,6 +195,8 @@ enum {
     CMD_RED,
     CMD_GRN,
     CMD_BLU,
+    CMD_ORANGE,
+    CMD_PURPLE,
     CMD_CYAN,
     CMD_MAGENTA,
     CMD_YELLOW,
@@ -221,6 +229,61 @@ enum {
 #endif
     CMD_TESTTEST
 };
+
+#ifdef __APPLE__
+// Make the newest blink1-tool invocation authoritative. This prevents an old
+// foreground/background animation from reclaiming the device after a new
+// command sets a color. This intentionally matches `pkill -x blink1-tool`, but
+// excludes the current process so it can continue with the requested command.
+static void stop_other_blink1_tools(void)
+{
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+    size_t size = 0;
+    pid_t self = getpid();
+
+    if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1 || size == 0) return;
+
+    struct kinfo_proc *processes = malloc(size);
+    if (processes == NULL) return;
+    if (sysctl(mib, 4, processes, &size, NULL, 0) == -1) {
+        free(processes);
+        return;
+    }
+
+    size_t count = size / sizeof(struct kinfo_proc);
+    for (size_t i = 0; i < count; i++) {
+        pid_t candidate = processes[i].kp_proc.p_pid;
+        const char *name = processes[i].kp_proc.p_comm;
+        if (candidate != self && strcmp(name, "blink1-tool") == 0) {
+            kill(candidate, SIGTERM);
+        }
+    }
+    free(processes);
+
+    // Give a previous process time to close its HID handle before this process
+    // enumerates and opens the device.
+    for (int attempt = 0; attempt < 25; attempt++) {
+        int found = 0;
+        size = 0;
+        if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1 || size == 0) break;
+        processes = malloc(size);
+        if (processes == NULL) break;
+        if (sysctl(mib, 4, processes, &size, NULL, 0) == 0) {
+            count = size / sizeof(struct kinfo_proc);
+            for (size_t i = 0; i < count; i++) {
+                if (processes[i].kp_proc.p_pid != self &&
+                    strcmp(processes[i].kp_proc.p_comm, "blink1-tool") == 0) {
+                    found = 1;
+                    break;
+                }
+            }
+        }
+        free(processes);
+        if (!found) break;
+        usleep(20000);
+    }
+}
+#endif
 
 
 
@@ -344,6 +407,8 @@ int main(int argc, char** argv)
         {"red",        no_argument,       &cmd,   CMD_RED },
         {"green",      no_argument,       &cmd,   CMD_GRN },
         {"blue",       no_argument,       &cmd,   CMD_BLU},
+        {"orange",     no_argument,       &cmd,   CMD_ORANGE},
+        {"purple",     no_argument,       &cmd,   CMD_PURPLE},
         {"cyan",       no_argument,       &cmd,   CMD_CYAN},
         {"magenta",    no_argument,       &cmd,   CMD_MAGENTA},
         {"yellow",     no_argument,       &cmd,   CMD_YELLOW},
@@ -434,6 +499,12 @@ int main(int argc, char** argv)
             case CMD_BLU:
                 rgbbuf.b = 255;
                 break;
+            case CMD_ORANGE:
+                rgbbuf.r = 255; rgbbuf.g = 128;
+                break;
+            case CMD_PURPLE:
+                rgbbuf.r = 224; rgbbuf.b = 160;
+                break;
             case CMD_CYAN:
                 rgbbuf.g = 255; rgbbuf.b = 255;
                 break;
@@ -523,6 +594,10 @@ int main(int argc, char** argv)
         usage( "blink1-tool" );
         exit(1);
     }
+
+#ifdef __APPLE__
+    stop_other_blink1_tools();
+#endif
 
     // get a list of all devices and their paths
     int count = 0;
@@ -667,6 +742,7 @@ int main(int argc, char** argv)
     }
     else if( cmd == CMD_RGB || cmd == CMD_ON  || cmd == CMD_OFF ||
              cmd == CMD_RED || cmd == CMD_BLU || cmd == CMD_GRN ||
+             cmd == CMD_ORANGE || cmd == CMD_PURPLE ||
              cmd == CMD_CYAN || cmd == CMD_MAGENTA || cmd == CMD_YELLOW ) {
         blink1_close(dev); // close global device, open as needed
 
