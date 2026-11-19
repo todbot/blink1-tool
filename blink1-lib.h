@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 #define blink1_max_devices 32
+#define blink1_pattern_lines_max 32
 
 #define cache_max blink1_max_devices
 //#define cache_max 16
@@ -555,6 +556,7 @@ void parsecolor(rgb_t* color, char* colorstr);
  * Parse pattern into an array of patternlines
  * - number repeats
  * - pattern array (contains {color,millis,ledn})
+ * pattern must hold blink1_pattern_lines_max entries; extra lines are dropped
  * Returns pattern length or -1 if badly-formatted pattern
  */
 int parsePattern( char* str, int* repeats, patternline_t* pattern );

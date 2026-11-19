@@ -115,7 +115,7 @@ int blink1_getCacheIndexByPath( const char* path )
 
 int blink1_getCacheIndexById( uint32_t i )
 {
-    if( i > blink1_max_devices ) { // then i is a serial number not an array index
+    if( i >= blink1_max_devices ) { // then i is a serial number not an array index
         char serialstr[serialstrmax];
         snprintf(serialstr, sizeof(serialstr), "%X", i); // convert to wchar_t*
         return blink1_getCacheIndexBySerial( serialstr );
@@ -759,13 +759,16 @@ void hexdump(FILE* fp, uint8_t *buffer, int len)
  */
 int hexread(uint8_t *buffer, char *string, int buflen)
 {
-    char    *s;
     int     pos = 0;
     if( string==NULL ) return -1;
     memset(buffer,0,buflen);  // bzero() not defined on Win32?
-    while((s = strtok(string, ", ")) != NULL && pos < buflen){
-        string = NULL;
+    // no strtok(), parsePattern() calls us mid-strtok via parsecolor()
+    char* s = string;
+    while( pos < buflen ) {
+        s += strspn(s, ", ");
+        if( *s == '\0' ) break;
         buffer[pos++] = (char)strtol(s, NULL, 0);
+        s += strcspn(s, ", ");
     }
     return pos;
 }
@@ -854,7 +857,7 @@ void parsecolor(rgb_t* color, char* colorstr)
 int parsePattern(char* pattstr, int* repeats, patternline_t* pattern)
 {
     char str[1000];
-    sprintf(str, "%s", pattstr);  // FIXME: check size
+    snprintf(str, sizeof(str), "%s", pattstr);
 
     remove_whitespace(str);
     char* s;
@@ -870,14 +873,14 @@ int parsePattern(char* pattstr, int* repeats, patternline_t* pattern)
     //        then blue over 0.5 seconds on both leds
     int i=0;
     s = strtok(NULL, ","); // prep next parse
-    while( s != NULL ) {
+    while( s != NULL && i < blink1_pattern_lines_max ) {
         parsecolor(&pattern[i].color, s);
 
         s = strtok(NULL, ",");
         if( s == NULL ) {
             msg("bad pattern on line %d: no time\n", i);  return -1;
         }
-        pattern[i].millis = atof(s) * 1000;
+        pattern[i].millis = atof(s) * 1000 + 0.5;  // round, "2.01" is 2009.999...
 
         s = strtok(NULL, ",");
         if( s == NULL ) {
