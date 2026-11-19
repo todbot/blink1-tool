@@ -57,6 +57,7 @@ typedef struct cache_info_ {
 } cache_info;
 
 static int64_t idle_atime = 1000  /* milliseconds */;
+static const uint32_t blocking_millis_max = 10000; // server is single-threaded
 static cache_info cache_infos[cache_max];
 
 static rgb_t last_rgb = {0,0,0};
@@ -198,6 +199,14 @@ void cache_flush(int idle_threshold_millis)
     }
 }
 
+static void clamp_blocking(uint16_t* millis, uint8_t* count)
+{
+    if( *millis > blocking_millis_max ) { *millis = blocking_millis_max; }
+    if( (uint32_t)*count * *millis > blocking_millis_max ) {
+        *count = blocking_millis_max / *millis;
+    }
+}
+
 void blink1_do_color(rgb_t rgb, uint32_t millis, uint32_t id,
                     uint8_t ledn, uint8_t bright, char* status)
 {
@@ -265,7 +274,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
     struct mg_str* uri = &hm->uri;
     struct mg_str* querystr = &hm->query;
 
-    mg_snprintf(uri_str, sizeof(uri_str), "%s", uri->ptr); // uri->ptr gives us char ptr
+    mg_snprintf(uri_str, sizeof(uri_str), "%.*s", (int)uri->len, uri->ptr); // uri->ptr isn't NUL-terminated
 
     // handle parsing all possible query args
     if( mg_http_get_var(querystr, "millis", tmpstr, sizeof(tmpstr)) > 0 ) {
@@ -273,7 +282,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         json_object_set_number(json_root_obj, "millis", millis);
     }
     if( mg_http_get_var(querystr, "time", tmpstr, sizeof(tmpstr)) > 0 ) {
-        millis = 1000 * strtof(tmpstr,NULL);
+        millis = 1000 * strtod(tmpstr,NULL) + 0.5;
         json_object_set_number(json_root_obj, "millis", millis);
     }
     if( mg_http_get_var(querystr, "rgb", tmpstr, sizeof(tmpstr)) > 0 ) {
@@ -421,7 +430,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         if( count==0 ) { count = 3; }
         if( millis==0 ) { millis = 300; }
         int repeats = -1;
-        patternline_t pattern[32];
+        patternline_t pattern[blink1_pattern_lines_max];
         blink1_adjustBrightness(bright, &rgb.r, &rgb.g, &rgb.b);
         sprintf(tmpstr, "%d,#%02x%02x%02x,%.3f,%d,#000000,%.3f,0",
                 count, rgb.r,rgb.g,rgb.b, (float)millis/1000.0, ledn,
@@ -517,9 +526,13 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         
         if( pattstr[0] != 0 ) { 
             // lookup worked or using 'pattern' query arg, so parse the pattern str
-            patternline_t pattern[32];
+            patternline_t pattern[blink1_pattern_lines_max];
             int repeats = -1;
             int pattlen = parsePattern(pattstr, &repeats, pattern);
+            if( pattlen <= 0 ) {
+                snprintf(status, sizeof(status), "blink1 pattern play error: bad pattern");
+                pattlen = 0;
+            }
             char pattstr_verify[1000];   // hack
             // verify we get back the same pattern string we put in
             toPatternString(pattern, pattlen, repeats, pattstr_verify);
@@ -529,7 +542,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
             //    pnamestr, pattstr, pattstr_verify, pattlen, repeats);
         
             json_object_set_string(json_root_obj, "pattern", pattstr_verify);
-            blink1_device* dev = cache_getDeviceById(id);
+            blink1_device* dev = (pattlen > 0) ? cache_getDeviceById(id) : NULL;
             if( dev ) {
                 for( int i=0; i<pattlen; i++ ) {
                     patternline_t pat = pattern[i];
@@ -561,6 +574,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         sprintf(status, "blink1 blinkserver");
         //if( r==0 && g==0 && b==0 ) { r = 255; g = 255; b = 255; }
         if( millis==0 ) { millis = 200; }
+        clamp_blocking(&millis, &count);
 
         blink1_device* dev = cache_getDeviceById(id);
         if( dev ) {
@@ -597,6 +611,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data)
         sprintf(status, "blink1 random");
         if( count==0 ) { count = 1; }
         if( millis==0 ) { millis = 200; }
+        clamp_blocking(&millis, &count);
         blink1_device* dev = cache_getDeviceById(id);
         if( dev ) {
             for( int i=0; i<count; i++ ) {
