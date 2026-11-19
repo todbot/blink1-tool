@@ -501,7 +501,7 @@ int main(int argc, char** argv)
                 //int base = 0;
                 pch = strtok( optarg, " ,");
                 numDevicesToUse = 0;
-                while( pch != NULL ) {
+                while( pch != NULL && numDevicesToUse < blink1_max_devices ) {
                     int base = (strlen(pch)==8) ? 16:0;
                     deviceIds[numDevicesToUse++] = strtol(pch,NULL,base);
                     pch = strtok(NULL, " ,");
@@ -898,7 +898,7 @@ int main(int argc, char** argv)
         msg("play pattern: %s\n",argbuf);
 
         int repeats = -1;
-        patternline_t pattern[32];
+        patternline_t pattern[blink1_pattern_lines_max];
         int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
         if( pattlen == -1 ) {  // bad pattern
             msg("bad pattern\n");
@@ -927,7 +927,7 @@ int main(int argc, char** argv)
         msg("write pattern: %s\n", argbuf);
 
         int repeats = -1;
-        patternline_t pattern[32];  // FIXME: patt_max
+        patternline_t pattern[blink1_pattern_lines_max];
         int pattlen = parsePattern( (char*)argbuf, &repeats, pattern);
         //msg("repeats: %d is ignored for writepattern\n", repeats);
         if( pattlen == -1 ) {  // bad pattern
