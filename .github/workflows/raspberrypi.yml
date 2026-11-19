@@ -16,7 +16,9 @@ jobs:
   build:
     permissions:
       contents: write  # for 'gh release upload'
-    runs-on: ubuntu-latest
+    # arm-runner-action@v2 needs qemu-user-static, gone in newer Ubuntu
+    # TODO: back to ubuntu-latest once pguyot/arm-runner-action#144 lands
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
