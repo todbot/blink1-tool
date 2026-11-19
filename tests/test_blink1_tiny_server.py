@@ -11,6 +11,7 @@ import sys
 import signal
 import urllib.request
 import urllib.error
+import urllib.parse
 
 SERVER_CMD = ["./blink1-tiny-server", "--port", "8000", "--quiet"]
 BASE_URL   = "http://localhost:8000"
@@ -239,6 +240,109 @@ def test_patterns_count_stable_after_add_del():
     count_after = len(js["patterns"])
     if count_before != count_after:
         raise AssertionError(f"Pattern count changed: {count_before} → {count_after}")
+
+@test
+def test_pattern_play_overlong_no_crash():
+    patt = "1" + ",%230,0,0" * 140
+    js = http_get_json("/blink1/pattern/play?pattern=" + patt)
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    if len(js["pattern"].split(",")) != 1 + 3*32:
+        raise AssertionError("Overlong pattern not capped at 32 lines")
+    code, _ = http_get("/blink1/id")
+    if code != 200:
+        raise AssertionError("Server stopped responding after overlong pattern")
+
+@test
+def test_pattern_play_bad_pattern():
+    js = http_get_json("/blink1/pattern/play?pattern=1,%23ff0000")
+    status = js.get("status", "")
+    if "error" not in status:
+        raise AssertionError(f"Expected error in status for bad pattern, got '{status}'")
+
+@test
+def test_id_at_max_devices_no_crash():
+    js = http_get_json("/blink1/off?id=32")
+    assert_json_field(js, ["rgb"], "#000000")
+
+@test
+def test_random_blocking_capped():
+    start = time.time()
+    http_get_json("/blink1/random?count=255&millis=60000")
+    if time.time() - start > 15:
+        raise AssertionError("/blink1/random blocked too long")
+
+@test
+def test_named_color_endpoints():
+    named = {"on": "#ffffff", "off": "#000000", "red": "#ff0000",
+             "green": "#00ff00", "blue": "#0000ff", "cyan": "#00ffff",
+             "yellow": "#ffff00", "magenta": "#ff00ff"}
+    for name, rgb in named.items():
+        js = http_get_json("/blink1/" + name)
+        assert_json_field(js, ["rgb"], rgb)
+
+@test
+def test_fadeToRGB_color_formats():
+    # distinct channel values so r/g/b swaps get caught
+    for arg in ["%23123456", "123456", "0x123456", "18,52,86", "0x12,0x34,0x56"]:
+        js = http_get_json("/blink1/fadeToRGB?rgb=" + arg)
+        assert_json_field(js, ["rgb"], "#123456")
+
+@test
+def test_fadeToRGB_uppercase_hex():
+    js = http_get_json("/blink1/fadeToRGB?rgb=%23ABCDEF")
+    assert_json_field(js, ["rgb"], "#abcdef")
+
+@test
+def test_lastColor_tracks_fadeToRGB():
+    http_get_json("/blink1/fadeToRGB?rgb=%23123456")
+    js = http_get_json("/blink1/lastColor")
+    assert_json_field(js, ["lastColor"], "#123456")
+
+@test
+def test_time_arg_rounds_to_millis():
+    for t, ms in [("0.3", 300), ("2.01", 2010), ("8.19", 8190), ("1", 1000)]:
+        js = http_get_json("/blink1/fadeToRGB?rgb=ff0000&time=" + t)
+        assert_json_field(js, ["millis"], ms)
+
+@test
+def test_pattern_play_normalizes():
+    # uppercase hex, no '#', integer times, and spaces all normalize
+    patt = urllib.parse.quote("2, #FF0000, 1, 1, 00FF00 ,0.25,2")
+    js = http_get_json("/blink1/pattern/play?pattern=" + patt)
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    assert_json_field(js, ["pattern"], "2,#ff0000,1.00,1,#00ff00,0.25,2")
+
+@test
+def test_pattern_play_channel_order():
+    js = http_get_json("/blink1/pattern/play?pattern=1,%23123456,0.5,0")
+    assert_json_field(js, ["pattern"], "1,#123456,0.50,0")
+
+@test
+def test_pattern_play_max_lines():
+    patt = "1" + "".join(f",%23{i:02x}0000,0.1,0" for i in range(32))
+    js = http_get_json("/blink1/pattern/play?pattern=" + patt)
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    lines = js["pattern"].split(",")[1:]
+    if len(lines) != 3*32:
+        raise AssertionError(f"Expected 32 lines, got {len(lines)//3}")
+    if lines[-3] != "#1f0000":
+        raise AssertionError(f"Last line color was {lines[-3]}, expected #1f0000")
+
+@test
+def test_pattern_add_then_play_by_pname():
+    http_get_json("/blink1/pattern/add?pname=colortest&pattern=4,%23ABCDEF,0.5,1")
+    js = http_get_json("/blink1/pattern/play?pname=colortest")
+    assert_json_field(js, ["status"], "blink1 pattern play")
+    assert_json_field(js, ["pattern"], "4,#abcdef,0.50,1")
+    http_get_json("/blink1/pattern/del?pname=colortest")
+
+@test
+def test_builtin_patterns_all_play():
+    js = http_get_json("/blink1/patterns")
+    for p in js["patterns"]:
+        pjs = http_get_json("/blink1/pattern/play?pname=" + urllib.parse.quote(p["name"]))
+        if pjs.get("status") != "blink1 pattern play":
+            raise AssertionError(f"pattern '{p['name']}' failed: {pjs.get('status')}")
 
 @test
 def test_lastColor_tracks_off():
