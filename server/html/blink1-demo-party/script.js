@@ -5,11 +5,15 @@ document.getElementById('start-button').addEventListener('click', handleClick);
 document.getElementById('stop-button').addEventListener('click', handleClickStop);
 
 let timer;
+let serials = [];
+fetch('/blink1/id').then(r => r.json()).then(j => serials = j.blink1_serialnums);
 
 async function handleClickStop() {
     clearTimeout(timer);
     timer = null;
-    await fadeToColor([0,0,0], 100, 0);
+    for( const serial of serials ) {
+        await fadeToColor([0,0,0], 100, 0, serial);
+    }
 }
 
 async function handleClick() {
@@ -22,7 +26,8 @@ async function startParty() {
     let acolor = randColor();
     const ledn = 1 + Math.floor(Math.random()*2);
     const fadeMillis = 100;
-    await fadeToColor(acolor, fadeMillis, ledn );
+    const serial = serials[Math.floor(Math.random()*serials.length)];
+    await fadeToColor(acolor, fadeMillis, ledn, serial );
 }
 
 // http://www.javascripter.net/faq/rgbtohex.htm
@@ -34,11 +39,12 @@ function toHex(n) {
     return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
 }
 
-async function fadeToColor([r, g, b], fadeMillis, ledn ) {
+async function fadeToColor([r, g, b], fadeMillis, ledn, serial ) {
     const f = (x) => 256 * (x / 256) ** 2;  // gamma of 0.5
 
     const searchParams = new URLSearchParams(location.search)
     searchParams.set('rgb', rgbToHex(f(r), f(g), f(b)))
+    if (serial) searchParams.set('id', serial)
     if (!searchParams.has('time')) searchParams.set('time', fadeMillis / 1000)
     if (!searchParams.has('ledn')) searchParams.set('ledn', ledn)
 

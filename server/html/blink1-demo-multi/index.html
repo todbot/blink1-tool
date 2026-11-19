@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport" content="width=device-width,maximum-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/style-slate.css">
+    <title>blink(1) URL API demo multi</title>
+
+    <script type="module" src="script.js"></script>
+  </head>
+  <body>
+
+    <div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+
+    <p><a href="../">&larr; all blink1-tiny-server demos</a></p>
+    <h1>blink(1) URL API demo multi</h1>
+
+    <p>This demo is for the
+      <a href="https://blink1.thingm.com">blink(1) USB notification light</a></p>
+    <p>For more details on URL API, see the
+      <a href="https://github.com/todbot/blink1/blob/master/docs/app-url-api.md">documentation </a> </p>
+    <p>For more tools, see <a href="https://github.com/todbot/blink1-tool">blink1-tool</a>
+    </p>
+
+    <p>Control several blink(1)s at once. All blink(1)s plugged into the
+       computer running <code>blink1-tiny-server</code> are listed below.
+       Click 'Rescan' after plugging in or unplugging a device.</p>
+
+    <p>
+      <button id="rescan-button"> Rescan </button>
+      &nbsp; Status: <span id="status"> no blink(1)s</span>
+    </p>
+    <p>All: <span id="all-swatches"></span></p>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>serial</th><th>color</th><th></th></tr>
+      </thead>
+      <tbody id="blink1s"></tbody>
+    </table>
+
+  </section>
+  </div>
+
+  </body>
+</html>
