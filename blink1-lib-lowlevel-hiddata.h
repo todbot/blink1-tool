@@ -136,7 +136,7 @@ blink1_device* blink1_openBySerial(const char* serial)
 //
 blink1_device* blink1_openById( uint32_t i ) 
 { 
-    if( i > blink1_max_devices ) { // then i is a serial number not array index
+    if( i >= blink1_max_devices ) { // then i is a serial number not array index
         char serialstr[serialstrmax];
         snprintf(serialstr, sizeof(serialstr), "%X", i); // convert to wchar_t*
         return blink1_openBySerial( serialstr );  
