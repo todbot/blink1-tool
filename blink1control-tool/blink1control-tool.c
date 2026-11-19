@@ -522,9 +522,9 @@ int main(int argc, char** argv)
                 //int base = 0;
                 pch = strtok( optarg, " ,");
                 numDevicesToUse = 0;
-                while( pch != NULL ) {
+                while( pch != NULL && numDevicesToUse < blink1_max_devices ) {
                     //int base = (strlen(pch)==8) ? 16:0;
-                    strcpy( deviceIds[numDevicesToUse++], pch );
+                    snprintf( deviceIds[numDevicesToUse++], sizeof(deviceIds[0]), "%s", pch );
                     pch = strtok(NULL, " ,");
                 }
                 // verbose
