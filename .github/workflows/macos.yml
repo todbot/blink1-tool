@@ -16,6 +16,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write  # for 'gh release upload'
     runs-on: macos-latest
 
     steps:
@@ -120,3 +122,10 @@ jobs:
         with:
           name: blink1-tool-all-artifacts-macos
           path: blink1*.zip
+
+      - name: Attach zips to GitHub release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" blink1*.zip --clobber

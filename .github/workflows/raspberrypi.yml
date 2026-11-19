@@ -14,11 +14,19 @@ env:
 
 jobs:
   build:
+    permissions:
+      contents: write  # for 'gh release upload'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           path: blink1-tool
+      - name: Get git tags
+        # Makefile reads .git-tag if present; no git tag lookup needed in the arm chroot
+        run: |
+          cd blink1-tool
+          git fetch --tags
+          git tag --sort=v:refname | tail -1 > .git-tag
       - uses: pguyot/arm-runner-action@v2
         with:
           base_image: raspios_lite_arm64:latest
@@ -41,4 +49,11 @@ jobs:
         with:
           name: blink1-tool-raspberrypi
           path: artifacts/*.zip
+
+      - name: Attach zips to latest GitHub release
+        if: inputs.upload_to_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}  # checkout is in a subdir, so no repo in cwd
+        run: gh release upload "$(gh release view --json tagName -q .tagName)" artifacts/*.zip --clobber
 
